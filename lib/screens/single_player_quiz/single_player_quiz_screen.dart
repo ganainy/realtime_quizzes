@@ -28,8 +28,15 @@ class SinglePlayerQuizScreen extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        Text('Score: ' +
+            singlePlayerQuizController.currentScore.value.toString()),
+        const SizedBox(
+          height: MyTheme.largePadding,
+        ),
+        //add one to index because index starts with 0
         Text('Question: ' +
-            singlePlayerQuizController.currentQuestionIndex.value.toString()),
+            (singlePlayerQuizController.currentQuestionIndex.value + 1)
+                .toString()),
         const SizedBox(
           height: MyTheme.largePadding,
         ),
@@ -37,19 +44,26 @@ class SinglePlayerQuizScreen extends StatelessWidget {
         const SizedBox(
           height: MyTheme.largePadding,
         ),
-        Text(shuffledAnswers[0]),
-        const SizedBox(
-          height: MyTheme.mediumPadding,
+        ...(shuffledAnswers).map((answer) {
+          return Answer(singlePlayerQuizController, answer,
+              currentQuestion.correctAnswer);
+        }),
+        Text('temporary text right answer: ' + currentQuestion.correctAnswer)
+      ],
+    );
+  }
+
+  Answer(SinglePlayerQuizController singlePlayerQuizController, String answer,
+      String correctAnswer) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextButton(
+          child: Text(answer),
+          onPressed: () {
+            singlePlayerQuizController.checkAnswer(answer, correctAnswer);
+          },
         ),
-        Text(shuffledAnswers[1]),
-        const SizedBox(
-          height: MyTheme.mediumPadding,
-        ),
-        Text(shuffledAnswers[2]),
-        const SizedBox(
-          height: MyTheme.mediumPadding,
-        ),
-        Text(shuffledAnswers[3]),
         const SizedBox(
           height: MyTheme.mediumPadding,
         ),
