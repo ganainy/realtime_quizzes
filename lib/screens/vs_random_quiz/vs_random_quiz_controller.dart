@@ -3,43 +3,21 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
-import 'package:realtime_quizzes/models/quiz_specs.dart';
-import 'package:realtime_quizzes/network/dio_helper.dart';
 
-import '../../models/questions.dart';
 import '../../models/single_player_quiz_result.dart';
 import '../single_player_quiz_result.dart';
 
-class SinglePlayerQuizController extends GetxController {
+class VersusRandomQuizController extends GetxController {
   var questions = [].obs;
   var currentQuestionIndex = 0.obs;
   var currentScore = 0.obs;
   var isQuestionAnswered = false.obs;
   var timerValue = 0.obs;
 
-  var errorLoadingQuestions = Rxn<String>();
   var rightAnswerIndex = Rxn<int>();
   var wrongAnswerIndex = Rxn<int>();
   var selectedAnswer = Rxn<String>();
   var timerCounter = Rxn<int>();
-
-  fetchQuiz(QuizSpecs quizSpecs) {
-    print(quizSpecs.selectedDifficulty.difficultyType);
-    DioHelper.getQuestions(queryParams: quizSpecs.toMap()).then((json) {
-      QuizModel questionsModel = QuizModel.fromJson(json.data);
-      if (questionsModel.questions.isEmpty) {
-        errorLoadingQuestions.value = 'error_loading_quiz'.tr;
-        //todo show error loading questions
-      } else {
-        questions.value = questionsModel.questions;
-        startTimer();
-      }
-    }).onError((error, stackTrace) {
-      //todo show error loading questions
-      errorLoadingQuestions.value =
-          'this_error_occurred_while_loading_quiz'.tr + error.toString();
-    });
-  }
 
   void checkAnswer({
     //answer that user selected or null if timer runs out without any answer selected

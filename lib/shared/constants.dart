@@ -8,8 +8,8 @@ class Constants {
     'en_US': {
       'num_questions': 'Number of Questions',
       'category': 'Category',
-      'create_quiz_challenge_other_players':
-          'Create quiz and challenge other players',
+      'create_quiz': 'Create quiz',
+      'find_quiz': 'Find quiz',
       'difficulty': 'Difficulty',
       'general_knowledge': 'General Knowledge',
       'books': 'Books',
@@ -37,6 +37,7 @@ class Constants {
       'this_error_occurred_while_loading_quiz':
           'This error occurred while loading quiz: ',
       'error_loading_quiz': 'Error loading quiz',
+      'continue_as_guest': 'Continue as guest',
     },
     'de_DE': {}
   };

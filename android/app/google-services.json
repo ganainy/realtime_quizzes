@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "538582149911",
+    "project_id": "realtime-quizzes",
+    "storage_bucket": "realtime-quizzes.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:538582149911:android:a57072f8b9002cf633a552",
+        "android_client_info": {
+          "package_name": "com.example.realtime_quizzes"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "538582149911-sb36soh8mfc05mhgohu2749vpmk8dmq6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.realtime_quizzes",
+            "certificate_hash": "9d84650996ab09d9f7444777d38ea62346993874"
+          }
+        },
+        {
+          "client_id": "538582149911-k12s4he72f1c5ja3ug55si4pe7rhhos7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtdMTPJep6Liy2GFSVY07b0RYGEw2GGP4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "538582149911-k12s4he72f1c5ja3ug55si4pe7rhhos7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>538582149911-0gu9rpfar29savm280nvudq69o4snrvp.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.538582149911-0gu9rpfar29savm280nvudq69o4snrvp</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>538582149911-sb36soh8mfc05mhgohu2749vpmk8dmq6.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCcuW0CJU22iLuOyxuoF5znmOGRWoa4z10</string>
+	<key>GCM_SENDER_ID</key>
+	<string>538582149911</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.realtimeQuizzes</string>
+	<key>PROJECT_ID</key>
+	<string>realtime-quizzes</string>
+	<key>STORAGE_BUCKET</key>
+	<string>realtime-quizzes.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:538582149911:ios:eb38b6a9d8f08dd833a552</string>
+</dict>
+</plist>

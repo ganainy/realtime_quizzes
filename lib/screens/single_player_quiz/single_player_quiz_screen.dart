@@ -32,49 +32,56 @@ class SinglePlayerQuizScreen extends StatelessWidget {
         .elementAt(singlePlayerQuizController.currentQuestionIndex.value);
     var shuffledAnswers = currentQuestion.shuffledAnswers;
 
-    return Container(
-      width: double.infinity,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('Your score: ' +
-              singlePlayerQuizController.currentScore.value.toString()),
-          const SizedBox(
-            height: MyTheme.largePadding,
-          ),
-          //add one to index because index starts with 0
-          Text(
-              'Question: ${(singlePlayerQuizController.currentQuestionIndex.value + 1)}/${(singlePlayerQuizController.questions.value.length)}'),
-          const SizedBox(
-            height: MyTheme.largePadding,
-          ),
-          Obx(() {
-            return Text('Timer: ' +
-                singlePlayerQuizController.timerCounter.value.toString());
-          }),
+    return WillPopScope(
+      onWillPop: () async {
+        singlePlayerQuizController.cancelTimer();
+        return true;
+      },
+      child: Container(
+        width: double.infinity,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Your score: ' +
+                singlePlayerQuizController.currentScore.value.toString()),
+            const SizedBox(
+              height: MyTheme.largePadding,
+            ),
+            //add one to index because index starts with 0
+            Text(
+                'Question: ${(singlePlayerQuizController.currentQuestionIndex.value + 1)}/${(singlePlayerQuizController.questions.value.length)}'),
+            const SizedBox(
+              height: MyTheme.largePadding,
+            ),
+            Obx(() {
+              return Text('Timer: ' +
+                  singlePlayerQuizController.timerCounter.value.toString());
+            }),
 
-          const SizedBox(
-            height: MyTheme.largePadding,
-          ),
-          Text(currentQuestion.question),
-          const SizedBox(
-            height: MyTheme.largePadding,
-          ),
-          ...mapIndexed(
-              (shuffledAnswers),
-              (index, String answer) => Answer(
-                    singlePlayerQuizController,
-                    answer,
-                    currentQuestion.correctAnswer,
-                  )),
-          MaterialButton(
-              color: Colors.grey,
-              onPressed: () {
-                singlePlayerQuizController.endQuiz();
-              },
-              child: Text('END QUIZ')),
-          Text('temporary text right answer: ' + currentQuestion.correctAnswer)
-        ],
+            const SizedBox(
+              height: MyTheme.largePadding,
+            ),
+            Text(currentQuestion.question),
+            const SizedBox(
+              height: MyTheme.largePadding,
+            ),
+            ...mapIndexed(
+                (shuffledAnswers),
+                (index, String answer) => Answer(
+                      singlePlayerQuizController,
+                      answer,
+                      currentQuestion.correctAnswer,
+                    )),
+            MaterialButton(
+                color: Colors.grey,
+                onPressed: () {
+                  singlePlayerQuizController.endQuiz();
+                },
+                child: Text('END QUIZ')),
+            Text(
+                'temporary text right answer: ' + currentQuestion.correctAnswer)
+          ],
+        ),
       ),
     );
   }

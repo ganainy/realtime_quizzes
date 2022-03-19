@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:realtime_quizzes/models/difficulty.dart';
 import 'package:realtime_quizzes/screens/create_quiz/create_quiz_controller.dart';
+import 'package:realtime_quizzes/shared/shared.dart';
 
 import '../../shared/components.dart';
 import '../../shared/constants.dart';
@@ -17,15 +18,26 @@ class CreateQuizScreen extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Expanded(child: CategoriesListView(createQuizController)),
-              QuestionNumberSlider(createQuizController),
-              DifficultyRow(createQuizController),
-              GameTypeWidget(createQuizController),
-            ],
-          ),
+          child: Obx(() {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                createQuizController.downloadState.value ==
+                        DownloadState.LOADING
+                    ? const LinearProgressIndicator()
+                    : const SizedBox(),
+                Expanded(child: CategoriesListView(createQuizController)),
+                QuestionNumberSlider(createQuizController),
+                DifficultyRow(createQuizController),
+                MaterialButton(
+                  onPressed: () {
+                    createQuizController.fetchQuiz();
+                  },
+                  child: Text('Create quiz'),
+                ),
+              ],
+            );
+          }),
         ),
       ),
     );
@@ -74,34 +86,5 @@ class CreateQuizScreen extends StatelessWidget {
         DifficultySelector(hard, createQuizController),
       ]);
     });
-  }
-
-  GameTypeWidget(CreateQuizController createQuizController) {
-    return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      MaterialButton(
-        onPressed: () {
-          createQuizController.goToQuizScreen(GameType.SINGLE);
-        },
-        child: Text('Single'),
-      ),
-      MaterialButton(
-        onPressed: () {
-          createQuizController.goToQuizScreen(GameType.VS_FRIEND);
-        },
-        child: Text('Vs friend'),
-      ),
-      MaterialButton(
-        onPressed: () {
-          createQuizController.goToQuizScreen(GameType.VS_RANDOM);
-        },
-        child: Text('vs random'),
-      ),
-      MaterialButton(
-        onPressed: () {
-          createQuizController.goToQuizScreen(GameType.VS_RANDOMS);
-        },
-        child: Text('vs randoms'),
-      ),
-    ]);
   }
 }
