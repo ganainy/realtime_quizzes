@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:realtime_quizzes/models/difficulty.dart';
 import 'package:realtime_quizzes/screens/create_quiz/create_quiz_controller.dart';
-import 'package:realtime_quizzes/shared/components.dart';
 
+import '../../shared/components.dart';
 import '../../shared/constants.dart';
 
 class CreateQuizScreen extends StatelessWidget {

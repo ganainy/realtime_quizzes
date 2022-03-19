@@ -20,11 +20,13 @@ class QuestionData {
   late String question;
   late String correctAnswer;
   late List<dynamic> incorrectAnswers;
-  late List<dynamic> _shuffledAnswers;
+  List<String> allAnswers = [];
 
-  List<dynamic> get shuffledAnswers {
-    var allAnswers = [...incorrectAnswers, correctAnswer];
-    allAnswers.shuffle();
+  List<String> get shuffledAnswers {
+    if (allAnswers.isEmpty) {
+      allAnswers = [...incorrectAnswers, correctAnswer];
+      allAnswers.shuffle();
+    }
     return allAnswers;
   }
 
