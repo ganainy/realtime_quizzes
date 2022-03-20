@@ -54,10 +54,20 @@ class HomeController extends GetxController {
       invites.value = [];
       event.docs.forEach((inviteJson) {
         var invite = InviteModel.fromJson(inviteJson);
-        if (invite.players.contains(auth.currentUser?.email)) {
-          invites.value.add(invite);
-          debugPrint('  invite found: ' + invites.value.length.toString());
-        }
+        //المشكله هنا
+        invite.players.forEach((player) {
+          //show only as invite if user email is in invite players list and if the invite quiz not made by user
+          if (invite.quiz.user?.email != auth.currentUser?.email) {
+            if (player.playerEmail == auth.currentUser?.email) {
+              debugPrint('  wtf: ' + player.playerEmail.toString());
+              debugPrint('  wtf: ${auth.currentUser?.email.toString()}');
+              debugPrint('  wtf: ${invite.quiz.user?.email}');
+
+              invites.value.add(invite);
+              debugPrint('  invite found: ' + invites.value.length.toString());
+            }
+          }
+        });
       });
     }).onError((error) {
       debugPrint('error getting invites: ' + error.toString());

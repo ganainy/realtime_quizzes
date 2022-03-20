@@ -8,8 +8,20 @@ class InviteModel {
 
   InviteModel.fromJson(var json) {
     quiz = QuizModelFireStore.fromJson(json['quiz']);
-    json['players'].forEach((player) {
-      players.add(player);
+    json['players'].forEach((playerJson) {
+      players.add(PlayerModel.fromJson(playerJson));
     });
+  }
+}
+
+class PlayerModel {
+  bool? isReady; //this flag will be true if player accept invite
+  String? playerEmail;
+
+  PlayerModel({required this.playerEmail, this.isReady = false});
+
+  PlayerModel.fromJson(json) {
+    isReady = json['isReady'];
+    playerEmail = json['playerEmail'];
   }
 }

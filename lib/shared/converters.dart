@@ -38,8 +38,20 @@ questionDataFireStoreToJson(QuestionDataFireStore question) {
 }
 
 inviteModelToJson(InviteModel inviteModel) {
+  var playersList = [];
+  inviteModel.players.forEach((player) {
+    playersList.add(playerModelToJson(player));
+  });
+
   return {
     'quiz': inviteModel.quiz.quizModelFireStoreToJson(),
-    'players': inviteModel.players,
+    'players': playersList,
+  };
+}
+
+playerModelToJson(PlayerModel playerModel) {
+  return {
+    'isReady': playerModel.isReady,
+    'playerEmail': playerModel.playerEmail,
   };
 }

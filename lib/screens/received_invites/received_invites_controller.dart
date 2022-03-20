@@ -4,29 +4,27 @@ import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:realtime_quizzes/models/invite.dart';
+import 'package:realtime_quizzes/shared/converters.dart';
 
 import '../../models/quiz.dart';
-import '../../shared/converters.dart';
 import '../../shared/shared.dart';
 import '../vs_random_quiz/vs_random_quiz_screen.dart';
 
-class InviteController extends GetxController {
+class ReceivedInviteController extends GetxController {
   var downloadState = DownloadState.INITIAL.obs;
 
   var errorLoadingQuestions = Rxn<String>();
   var selectedQuizObs = Rxn<QuizModelFireStore>();
+  var receivedInvites = Rxn<List<dynamic>>();
   var timerCounter = Rxn<int>();
-  var inviteObs = Rxn<InviteModel>();
 
-  sendPlayInvite(QuizModelFireStore selectedQuiz) {
-    selectedQuizObs.value = selectedQuiz;
+  startGame() {
+    /*selectedQuizObs.value = selectedQuiz;
 
     var players = [];
-    players.add(PlayerModel(playerEmail: selectedQuiz.user?.email));
-    players
-        .add(PlayerModel(playerEmail: auth.currentUser?.email, isReady: true));
+    players.add(selectedQuiz.user?.email);
+    players.add(auth.currentUser?.email);
     InviteModel invite = InviteModel(selectedQuiz, players);
-    inviteObs.value = invite;
 
     invitesCollection
         .doc(selectedQuiz.quizId.toString())
@@ -37,7 +35,7 @@ class InviteController extends GetxController {
       observeInviteChanges();
     }).onError((error, stackTrace) {
       debugPrint('invite error' + error.toString());
-    });
+    });*/
   }
 
   Timer? _timer;
@@ -47,7 +45,7 @@ class InviteController extends GetxController {
     debugPrint('startTimer()');
     //reset timer if it was running to begin again from 10
     cancelTimer();
-    timerCounter.value = 10000; //todo 30sec
+    timerCounter.value = 10; //todo 30sec
 
     _timer = Timer.periodic(
       oneSec,
@@ -81,25 +79,30 @@ class InviteController extends GetxController {
     });
   }
 
-  void observeInviteChanges() {
-    // this method will listen to the invite and start game when other player accepts
-    invitesCollection
-        .doc(inviteObs.value?.quiz.quizId.toString())
-        .snapshots()
-        .listen((inviteJson) {
-      var invite = InviteModel.fromJson(inviteJson.data());
-      invite.players.forEach((player) {
-        //check if other player is ready
-        if (player.playerEmail != auth.currentUser?.email && player.isReady) {
-          debugPrint('other player ready');
-          Get.off(
-            () => VersusRandomQuizScreen(),
-            arguments: inviteObs.value,
-          );
-        }
-      });
-    }).onError((error) {
-      debugPrint('observe invite error' + error.toString());
+  void acceptInvite(int index) {
+    InviteModel invite = receivedInvites.value?.elementAt(index);
+
+    invite.players.forEach((player) {
+      if (player.playerEmail == auth.currentUser?.email) {
+        player.isReady = true;
+      }
     });
+
+    invitesCollection
+        .doc(selectedQuizObs.value?.quizId.toString())
+        .update(inviteModelToJson(invite))
+        .then((value) {
+      Get.off(
+        () => VersusRandomQuizScreen(),
+        arguments: invite,
+      );
+      debugPrint('invite accept success ');
+    }).onError((error, stackTrace) {
+      debugPrint('invite accept error' + error.toString());
+    });
+  }
+
+  setInitialInvites(initialInvites) {
+    receivedInvites.value = initialInvites;
   }
 }

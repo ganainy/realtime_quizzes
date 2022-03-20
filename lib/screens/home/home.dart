@@ -5,6 +5,7 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/customization/theme.dart';
 import 'package:realtime_quizzes/screens/available_quizzes/available_quizzes.dart';
 import 'package:realtime_quizzes/screens/home/home_controller.dart';
+import 'package:realtime_quizzes/screens/received_invites/received_invites.dart';
 
 import '../create_quiz/create_quiz.dart';
 
@@ -24,6 +25,9 @@ class HomeScreen extends StatelessWidget {
           InkWell(
             onTap: () {
               //show invites
+
+              Get.to(() => ReceivedInviteScreen(),
+                  arguments: homeController.invites.value);
             },
             child: Obx(() {
               return Badge(
