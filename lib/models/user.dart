@@ -4,7 +4,8 @@ class UserModel {
   String? name;
   String? email;
   String? imageUrl;
-  bool? isOnline; //todo this value will change based on if user online or not
+  bool? isOnline;
+  List<dynamic>? quizzesIds;
 
   UserModel(this.name, this.email, this.imageUrl);
 
@@ -12,5 +13,7 @@ class UserModel {
     name = json['name'];
     email = json['email'];
     imageUrl = json['imageUrl'];
+    quizzesIds = json['quizzesIds'];
+    isOnline = json['isOnline'];
   }
 }

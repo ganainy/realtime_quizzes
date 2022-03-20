@@ -6,7 +6,7 @@ import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:realtime_quizzes/models/quiz_specs.dart';
 import 'package:realtime_quizzes/network/dio_helper.dart';
 
-import '../../models/questions.dart';
+import '../../models/quiz.dart';
 import '../../models/single_player_quiz_result.dart';
 import '../single_player_quiz_result.dart';
 
@@ -24,9 +24,9 @@ class SinglePlayerQuizController extends GetxController {
   var timerCounter = Rxn<int>();
 
   fetchQuiz(QuizSpecs quizSpecs) {
-    print(quizSpecs.selectedDifficulty.difficultyType);
+    print(quizSpecs.selectedDifficulty?.difficultyType);
     DioHelper.getQuestions(queryParams: quizSpecs.toMap()).then((json) {
-      QuizModel questionsModel = QuizModel.fromJson(json.data);
+      QuizModelApi questionsModel = QuizModelApi.fromJson(json.data);
       if (questionsModel.questions.isEmpty) {
         errorLoadingQuestions.value = 'error_loading_quiz'.tr;
         //todo show error loading questions

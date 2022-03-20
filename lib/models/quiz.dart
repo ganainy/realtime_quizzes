@@ -1,10 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:realtime_quizzes/models/quiz_specs.dart';
 import 'package:realtime_quizzes/models/user.dart';
 
-class QuizModel {
+//this class will parse received data from Api then will add some fields and serialize needed fields to upload to firebase
+class QuizModelApi {
   //response=0 if api request was successful
   late int responseCode;
-  List<QuestionData> questions = [];
+  List<QuestionDataApi> questions = [];
   QuizSpecs? quizSpecs;
   //info of the user who created the quiz
   UserModel? user;
@@ -13,12 +15,12 @@ class QuizModel {
   DateTime? createdAt;
   int? quizId;
 
-  QuizModel.fromJson(json) {
+  QuizModelApi.fromJson(json) {
     responseCode = json['response_code'];
     //response code == 0 means success
     if (responseCode == 0) {
       json['results'].forEach((questionJson) {
-        questions.add(QuestionData.fromJson(questionJson));
+        questions.add(QuestionDataApi.fromJson(questionJson));
       });
 
       createdAt = DateTime.now();
@@ -39,14 +41,15 @@ class QuizModel {
       'isOnline': isOnline,
       'quizSpecs': quizSpecsToJson(quizSpecs),
       'quizId': quizId,
+      'createdAt': createdAt,
     };
   }
 
   quizSpecsToJson(QuizSpecs? quizSpecs) {
     return {
-      'difficulty': quizSpecs?.selectedDifficulty.difficultyType,
+      'difficulty': quizSpecs?.selectedDifficulty?.difficultyType,
       'amount': quizSpecs?.numberOfQuestions,
-      'category': quizSpecs?.selectedCategory.categoryName,
+      'category': quizSpecs?.selectedCategory?.categoryName,
     };
   }
 
@@ -58,7 +61,7 @@ class QuizModel {
     };
   }
 
-  questionDataToJson(QuestionData question) {
+  questionDataToJson(QuestionDataApi question) {
     return {
       'category': question.category,
       'question': question.question,
@@ -68,7 +71,47 @@ class QuizModel {
   }
 }
 
-class QuestionData {
+//this class will parse received quiz data from firestore
+class QuizModelFireStore {
+  List<QuestionDataFireStore> questions = [];
+  QuizSpecs? quizSpecs;
+  //info of the user who created the quiz
+  UserModel? user;
+  bool?
+      isOnline; //todo this value will change based on if user is online or not
+  DateTime? createdAt;
+  int? quizId;
+
+  QuizModelFireStore.fromJson(var json) {
+    createdAt = (json['createdAt'] as Timestamp).toDate();
+    quizId = json['quizId'];
+
+    isOnline = json['isOnline'];
+    user = UserModel.fromJson(json['creator']);
+    quizSpecs = QuizSpecs.fromJson(json['quizSpecs']);
+    json['questions'].forEach((questionJson) {
+      questions.add(QuestionDataFireStore.fromJson(questionJson));
+    });
+  }
+}
+
+class QuestionDataFireStore {
+  String? category;
+  String? difficulty;
+  String? question;
+  String? correctAnswer;
+  List<dynamic> allAnswers = [];
+
+  QuestionDataFireStore.fromJson(questionJson) {
+    category = questionJson['category'];
+    difficulty = questionJson['difficulty'];
+    question = questionJson['question'];
+    correctAnswer = questionJson['correctAnswer'];
+    allAnswers = questionJson['allAnswers'];
+  }
+}
+
+class QuestionDataApi {
   late String category;
   late String type;
   late String difficulty;
@@ -85,7 +128,7 @@ class QuestionData {
     return allAnswers;
   }*/
 
-  QuestionData.fromJson(questionJson) {
+  QuestionDataApi.fromJson(questionJson) {
     category = questionJson['category'];
     type = questionJson['type'];
     difficulty = questionJson['difficulty'];

@@ -1,5 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:realtime_quizzes/screens/home/home.dart';
 import 'package:realtime_quizzes/screens/register/register.dart';
@@ -7,6 +9,7 @@ import 'package:realtime_quizzes/shared/constants.dart';
 import 'package:realtime_quizzes/shared/shared.dart';
 
 import 'customization/theme.dart';
+import 'main_controller.dart';
 import 'network/dio_helper.dart';
 
 Future<void> main() async {
@@ -23,12 +26,53 @@ Future<void> main() async {
     startWidget = RegisterScreen();
   }
 
-  runApp(GetMaterialApp(
-    debugShowCheckedModeBanner: false,
-    title: 'Quiz',
-    locale: Locale('en', 'US'),
-    translationsKeys: Constants.translation,
-    theme: MyTheme.lighTheme,
-    home: startWidget,
-  ));
+  runApp(MyApp(startWidget));
+}
+
+class MyApp extends StatefulWidget {
+  Widget startWidget;
+
+  MyApp(this.startWidget, {Key? key}) : super(key: key);
+
+  @override
+  State<MyApp> createState() => _MyAppState(startWidget);
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  Widget startWidget;
+  _MyAppState(this.startWidget);
+
+  final MainController mainController = Get.put(MainController())
+    ..changeUserStatus(true);
+
+  @override
+  void initState() {
+    WidgetsBinding.instance?.addObserver(this);
+    super.initState();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      //TODO: set status to online here in firestore
+      mainController.changeUserStatus(true);
+      debugPrint('user online ');
+    } else {
+      //TODO: set status to offline here in firestore
+      debugPrint('user offline  ' + state.toString());
+      mainController.changeUserStatus(false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GetMaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Quiz',
+      locale: Locale('en', 'US'),
+      translationsKeys: Constants.translation,
+      theme: MyTheme.lighTheme,
+      home: startWidget,
+    );
+  }
 }

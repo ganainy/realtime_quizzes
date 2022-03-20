@@ -1,59 +1,87 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:realtime_quizzes/customization/theme.dart';
+import 'package:realtime_quizzes/screens/home/home_controller.dart';
 
 import '../create_quiz/create_quiz.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  HomeScreen({Key? key}) : super(key: key);
+
+  final HomeController homeController = Get.put(HomeController())..getQuizzes();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'My Quizezs',
-              style: Theme.of(context).textTheme.headline3,
-            ),
-            Text(
-              'Your quizzes are available to other players when you are online,'
-              ' wait for another player to join or play alone',
-              style: Theme.of(context).textTheme.subtitle1,
-            ),
-            ListView.builder(
-                itemCount: 5,
-                shrinkWrap: true,
-                itemBuilder: (context, index) {
-                  return Container(
-                    margin: const EdgeInsets.all(8.0),
-                    child: Card(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Text('category: '),
-                          Text('num questions: '),
-                          Text('difficulty: ')
-                        ],
-                      ),
-                    ),
-                  );
-                }),
-            TextButton(
-              onPressed: () {
-                Get.to(() => CreateQuizScreen());
-              },
-              child: Text('create_quiz'.tr),
-            ),
-            TextButton(
-              onPressed: () {},
-              child: Text('find_quiz'.tr),
-            ),
-          ],
-        ),
-      ),
+      body: SafeArea(child: Obx(() {
+        //todo remove get quizzes button, do it automatic-- why list  no update after create new quiz
+        return SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'My Quizezs',
+                style: Theme.of(context).textTheme.headline3,
+              ),
+              Text(
+                'Your quizzes are available to other players when you are online,'
+                ' wait for another player to join or play alone',
+                style: Theme.of(context).textTheme.subtitle1,
+              ),
+              homeController.quizzes.value.isNotEmpty
+                  ? Obx(() {
+                      return Padding(
+                        padding: const EdgeInsets.all(MyTheme.smallPadding),
+                        child: ListView.builder(
+                            itemCount: homeController.quizzes.value.length,
+                            shrinkWrap: true,
+                            itemBuilder: (context, index) {
+                              return Card(
+                                color: Colors.grey[200],
+                                child: Padding(
+                                  padding: const EdgeInsets.all(
+                                      MyTheme.mediumPadding),
+                                 child:
+                                        Wrap(
+                                            spacing:
+                                                20, // to apply margin in the main axis of the wrap
+                                            runSpacing:
+                                                20, // to apply margin in the cross axis of the wrap
+                                            alignment:
+                                                WrapAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                  'category: ${homeController.quizzes.value.elementAt(index).quizSpecs?.selectedCategory?.categoryName}'),
+                                              Text(
+                                                  'num questions: ${homeController.quizzes.value.elementAt(index).quizSpecs?.numberOfQuestions}'),
+                                              Text(
+                                                  'difficulty: ${homeController.quizzes.value.elementAt(index).quizSpecs?.selectedDifficulty?.difficultyType}')
+                                            ],
+                                  ),
+                                ),
+                              );
+                            }),
+                      );
+                    })
+                  : Obx(() {
+                      return Text(
+                          'You have created ${homeController.quizzes.value.length} quizzes');
+                    }),
+              TextButton(
+                onPressed: () {
+                  Get.to(() => CreateQuizScreen());
+                },
+                child: Text('create_quiz'.tr),
+              ),
+              TextButton(
+                onPressed: () {},
+                child: Text('find_quiz'.tr),
+              ),
+            ],
+          ),
+        );
+      })),
     );
   }
 }

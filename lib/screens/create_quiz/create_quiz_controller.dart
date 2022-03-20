@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
@@ -6,7 +7,7 @@ import 'package:realtime_quizzes/models/quiz_specs.dart';
 import 'package:realtime_quizzes/screens/home/home.dart';
 
 import '../../models/difficulty.dart';
-import '../../models/questions.dart';
+import '../../models/quiz.dart';
 import '../../models/user.dart';
 import '../../network/dio_helper.dart';
 import '../../shared/shared.dart';
@@ -19,7 +20,7 @@ class CreateQuizController extends GetxController {
   var downloadState = DownloadState.INITIAL.obs;
 
   var errorLoadingQuestions = Rxn<String>();
-  var quizModel = Rxn<QuizModel>();
+  var quizModel = Rxn<QuizModelApi>();
 
   fetchQuiz() {
     downloadState.value = DownloadState.LOADING;
@@ -29,7 +30,7 @@ class CreateQuizController extends GetxController {
 
     //download quiz from api
     DioHelper.getQuestions(queryParams: quizSpecs.toMap()).then((json) {
-      quizModel.value = QuizModel.fromJson(json.data);
+      quizModel.value = QuizModelApi.fromJson(json.data);
       quizModel.value?.quizSpecs = quizSpecs;
 
       if (quizModel.value!.questions.isEmpty) {
@@ -52,19 +53,31 @@ class CreateQuizController extends GetxController {
 
   //upload quiz to firebase
   void uploadQuiz() {
+    //get logged user data because it will be added to the quiz info that we will upload to firestore later
     usersCollection.doc(auth.currentUser?.email).get().then((value) {
       debugPrint('sucess' + value.data().toString());
       UserModel user = UserModel.fromJson(value.data());
       quizModel.value?.user = user;
 
+      //upload quiz to firestore
       quizzesCollection
           .doc(quizModel.value?.quizId.toString())
           .set(quizModel.value?.toMap())
           .then((value) {
         debugPrint('firestore save quiz success ');
-        Get.off(
-          () => HomeScreen(),
-        );
+        //saved quiz id to the user
+        usersCollection.doc(auth.currentUser?.email).update({
+          "quizzesIds":
+              FieldValue.arrayUnion([quizModel.value?.quizId.toString()])
+        }).then((value) {
+          debugPrint('save created quiz id success ');
+          Get.off(
+            () => HomeScreen(),
+          );
+        }).onError((error, stackTrace) {
+          downloadState.value = DownloadState.ERROR;
+          debugPrint('save created quiz id error ' + error.toString());
+        });
       }).onError((error, stackTrace) {
         downloadState.value = DownloadState.ERROR;
         debugPrint('firestore error : ' + error.toString());
