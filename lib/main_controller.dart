@@ -22,7 +22,7 @@ class MainController extends GetxController {
       //get quizzes created by user
       debugPrint('getQuizzes()');
 
-      //first get quizzesIds from user document then use it to fetch quizzess created by user
+      //first get quizzesIds from user document then use it to fetch quizzes created by user
       usersCollection.doc(auth.currentUser?.email).get().then((value) {
         UserModel user = UserModel.fromJson(value.data());
 
@@ -31,6 +31,7 @@ class MainController extends GetxController {
           return;
         }
 
+        //change every quiz created by user status to online/offline based on user status
         quizzesCollection
             .where(FieldPath.documentId, whereIn: user.quizzesIds)
             .get()

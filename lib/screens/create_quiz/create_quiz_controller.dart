@@ -62,7 +62,7 @@ class CreateQuizController extends GetxController {
       //upload quiz to firestore
       quizzesCollection
           .doc(quizModel.value?.quizId.toString())
-          .set(quizModel.value?.toMap())
+          .set(quizModel.value?.quizModelApiToJson())
           .then((value) {
         debugPrint('firestore save quiz success ');
         //saved quiz id to the user

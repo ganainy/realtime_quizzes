@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:realtime_quizzes/models/quiz_specs.dart';
 import 'package:realtime_quizzes/models/user.dart';
 
+import '../shared/converters.dart';
+
 //this class will parse received data from Api then will add some fields and serialize needed fields to upload to firebase
 class QuizModelApi {
   //response=0 if api request was successful
@@ -10,8 +12,7 @@ class QuizModelApi {
   QuizSpecs? quizSpecs;
   //info of the user who created the quiz
   UserModel? user;
-  bool?
-      isOnline; //todo this value will change based on if user is online or not
+  bool? isOnline;
   DateTime? createdAt;
   int? quizId;
 
@@ -29,10 +30,10 @@ class QuizModelApi {
   }
 
   //shape the shape of the model that will be stored in firebase
-  toMap() {
+  quizModelApiToJson() {
     var questionsSerialized = [];
     questions.forEach((question) {
-      questionsSerialized.add(questionDataToJson(question));
+      questionsSerialized.add(questionDataApiToJson(question));
     });
 
     return {
@@ -44,31 +45,6 @@ class QuizModelApi {
       'createdAt': createdAt,
     };
   }
-
-  quizSpecsToJson(QuizSpecs? quizSpecs) {
-    return {
-      'difficulty': quizSpecs?.selectedDifficulty?.difficultyType,
-      'amount': quizSpecs?.numberOfQuestions,
-      'category': quizSpecs?.selectedCategory?.categoryName,
-    };
-  }
-
-  userModelToJson(UserModel? user) {
-    return {
-      'name': user?.name,
-      'email': user?.email,
-      'imageUrl': user?.imageUrl,
-    };
-  }
-
-  questionDataToJson(QuestionDataApi question) {
-    return {
-      'category': question.category,
-      'question': question.question,
-      'allAnswers': question.allAnswers,
-      'correctAnswer': question.correctAnswer,
-    };
-  }
 }
 
 //this class will parse received quiz data from firestore
@@ -77,21 +53,35 @@ class QuizModelFireStore {
   QuizSpecs? quizSpecs;
   //info of the user who created the quiz
   UserModel? user;
-  bool?
-      isOnline; //todo this value will change based on if user is online or not
+  bool? isOnline;
   DateTime? createdAt;
   int? quizId;
 
   QuizModelFireStore.fromJson(var json) {
     createdAt = (json['createdAt'] as Timestamp).toDate();
     quizId = json['quizId'];
-
     isOnline = json['isOnline'];
     user = UserModel.fromJson(json['creator']);
     quizSpecs = QuizSpecs.fromJson(json['quizSpecs']);
     json['questions'].forEach((questionJson) {
       questions.add(QuestionDataFireStore.fromJson(questionJson));
     });
+  }
+
+  quizModelFireStoreToJson() {
+    var questionsSerialized = [];
+    questions.forEach((question) {
+      questionsSerialized.add(questionDataFireStoreToJson(question));
+    });
+
+    return {
+      'questions': questionsSerialized,
+      'creator': userModelToJson(user),
+      'isOnline': isOnline,
+      'quizSpecs': quizSpecsToJson(quizSpecs),
+      'quizId': quizId,
+      'createdAt': createdAt,
+    };
   }
 }
 
