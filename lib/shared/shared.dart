@@ -7,5 +7,6 @@ FirebaseAuth auth = FirebaseAuth.instance;
 CollectionReference quizzesCollection = firestore.collection('quizzes');
 CollectionReference invitesCollection = firestore.collection('invites');
 CollectionReference usersCollection = firestore.collection('users');
+CollectionReference queueCollection = firestore.collection('queue');
 
 enum DownloadState { INITIAL, LOADING, SUCCESS, ERROR }

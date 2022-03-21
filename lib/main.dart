@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/root/get_material_app.dart';
-import 'package:realtime_quizzes/screens/home/home.dart';
 import 'package:realtime_quizzes/screens/register/register.dart';
 import 'package:realtime_quizzes/shared/constants.dart';
 import 'package:realtime_quizzes/shared/shared.dart';
 
 import 'customization/theme.dart';
+import 'layouts/home/home.dart';
 import 'main_controller.dart';
 import 'network/dio_helper.dart';
 

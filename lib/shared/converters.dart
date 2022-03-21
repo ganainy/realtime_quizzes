@@ -1,3 +1,6 @@
+import 'package:realtime_quizzes/models/category.dart';
+import 'package:realtime_quizzes/models/difficulty.dart';
+
 import '../models/invite.dart';
 import '../models/quiz.dart';
 import '../models/quiz_specs.dart';
@@ -54,4 +57,19 @@ playerModelToJson(PlayerModel playerModel) {
     'isReady': playerModel.isReady,
     'playerEmail': playerModel.playerEmail,
   };
+
+
 }
+
+categoryModelToJson(Category? category) {
+  return {
+    'categoryName': category?.categoryName,
+    'apiParam': category?.api_param,
+  };
+}
+  difficultyModelToJson(Difficulty? difficulty) {
+    return {
+      'difficultyType': difficulty?.difficultyType,
+      'apiParam': difficulty?.api_param,
+    };
+  }

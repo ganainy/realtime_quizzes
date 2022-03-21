@@ -28,6 +28,7 @@ class InviteController extends GetxController {
     InviteModel invite = InviteModel(selectedQuiz, players);
     inviteObs.value = invite;
 
+    //add invite to invites
     invitesCollection
         .doc(selectedQuiz.quizId.toString())
         .set(inviteModelToJson(invite))

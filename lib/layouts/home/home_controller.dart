@@ -15,8 +15,10 @@ class HomeController extends GetxController {
 
   var errorLoadingQuestions = Rxn<String>();
 
+  var bottomSelectedIndex = 0.obs;
+
   //get quizzes created by user
-  getQuizzes() {
+ /* getQuizzes() {
     debugPrint('getQuizzes()');
 
     //first get quizzesIds from user document then use it to fetch quizzess created by user
@@ -56,7 +58,8 @@ class HomeController extends GetxController {
         var invite = InviteModel.fromJson(inviteJson);
         //المشكله هنا
         invite.players.forEach((player) {
-          //show only as invite if user email is in invite players list and if the invite quiz not made by user
+          //show only as invite if user email is in invite players list and
+          // if the invite quiz not made by user
           if (invite.quiz.user?.email != auth.currentUser?.email) {
             if (player.playerEmail == auth.currentUser?.email) {
               debugPrint('  wtf: ' + player.playerEmail.toString());
@@ -72,5 +75,5 @@ class HomeController extends GetxController {
     }).onError((error) {
       debugPrint('error getting invites: ' + error.toString());
     });
-  }
+  }*/
 }

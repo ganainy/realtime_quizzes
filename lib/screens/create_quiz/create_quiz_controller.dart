@@ -4,8 +4,8 @@ import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:realtime_quizzes/models/category.dart';
 import 'package:realtime_quizzes/models/quiz_specs.dart';
-import 'package:realtime_quizzes/screens/home/home.dart';
 
+import '../../layouts/home/home.dart';
 import '../../models/difficulty.dart';
 import '../../models/quiz.dart';
 import '../../models/user.dart';

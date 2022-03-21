@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
-import 'package:realtime_quizzes/screens/register/register_controller.dart';
+import 'package:realtime_quizzes/screens/login/login_controller.dart';
 
 import '../../shared/components.dart';
 import '../../shared/shared.dart';
-import '../login/login.dart';
+import '../register/register.dart';
 
-class RegisterScreen extends StatelessWidget {
-  RegisterScreen({Key? key}) : super(key: key);
+class LoginScreen extends StatelessWidget {
+  LoginScreen({Key? key}) : super(key: key);
 
-  TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  final RegisterController registerController = Get.put(RegisterController());
+  final LoginController loginController = Get.put(LoginController());
 
   @override
   Widget build(BuildContext context) {
@@ -33,14 +32,14 @@ class RegisterScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'REGISTER ',
+                        'LOGIN ',
                         style: Theme.of(context)
                             .textTheme
                             .headline6
                             ?.copyWith(fontSize: 32),
                       ),
                       Text(
-                        'Register to challenge friends and view your statistics ',
+                        'Login to access your challenges and statistics ',
                         style: Theme.of(context)
                             .textTheme
                             .bodyText1
@@ -49,18 +48,7 @@ class RegisterScreen extends StatelessWidget {
                       const SizedBox(
                         height: 16,
                       ),
-                      DefaultFormField(
-                        labelText: 'Name',
-                        controller: nameController,
-                        prefixIcon: const Icon(Icons.account_circle),
-                        validator: (value) {
-                          if (value.toString().isEmpty) {
-                            return 'Please enter your name';
-                          } else {
-                            return null;
-                          }
-                        },
-                      ),
+
                       const SizedBox(
                         height: 16,
                       ),
@@ -86,14 +74,14 @@ class RegisterScreen extends StatelessWidget {
                         prefixIcon: const Icon(Icons.lock),
                         suffixIcon: IconButton(
                           onPressed: () {
-                            registerController.changePasswordVisibility();
+                            loginController.changePasswordVisibility();
                           },
-                          icon: registerController.isPasswordVisible.value
+                          icon: loginController.isPasswordVisible.value
                               ? const Icon(Icons.visibility_off)
                               : const Icon(Icons.visibility),
                         ),
                         obscureText:
-                            !registerController.isPasswordVisible.value,
+                            !loginController.isPasswordVisible.value,
                         validator: (value) {
                           if (value.toString().isEmpty) {
                             return 'Please enter password';
@@ -105,20 +93,19 @@ class RegisterScreen extends StatelessWidget {
                       const SizedBox(
                         height: 16,
                       ),
-                      registerController.downloadState.value ==
+                      loginController.downloadState.value ==
                               DownloadState.LOADING
                           ? LoadingButton()
                           : DefaultButton(
                               onPressed: () {
                                 if (_formKey.currentState!.validate()) {
-                                  registerController.register(
+                                  loginController.login(
                                     email: emailController.text,
                                     password: passwordController.text,
-                                    name: nameController.text,
                                   );
                                 }
                               },
-                              text: 'register'),
+                              text: 'login'),
                       const SizedBox(
                         height: 16,
                       ),
@@ -126,16 +113,16 @@ class RegisterScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Already have an account? ',
+                            'Don\'t have an account? ',
                             style: Theme.of(context).textTheme.bodyText1,
                           ),
                           TextButton(
                             onPressed: () {
                               Get.off(
-                                    () => LoginScreen(),
+                                    () => RegisterScreen(),
                               );
                             },
-                            child: const Text('Login'),
+                            child: const Text('Register'),
                           ),
                         ],
                       ),
