@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:realtime_quizzes/models/difficulty.dart';
 import 'package:realtime_quizzes/screens/create_quiz/create_quiz_controller.dart';
 import 'package:realtime_quizzes/shared/shared.dart';
 
@@ -31,7 +30,7 @@ class CreateQuizScreen extends StatelessWidget {
                 DifficultyRow(createQuizController),
                 MaterialButton(
                   onPressed: () {
-                    createQuizController.fetchQuiz();
+                   // createQuizController.fetchQuiz();
                   },
                   child: Text('Create quiz'),
                 ),
@@ -63,10 +62,10 @@ class CreateQuizScreen extends StatelessWidget {
       itemBuilder: (BuildContext context, int index) {
         return Card(
           child: TextButton(
-            child: Text(Constants.categoryListTesting[index].categoryName),
+            child: Text('Constants.categoryListTesting[index].category'),
             onPressed: () {
-              createQuizController.selectedCategory.value =
-                  Constants.categoryListTesting[index];
+             /* createQuizController.selectedCategory.value =
+                  Constants.categoryListTesting[index];*/
             },
           ),
         );
@@ -75,16 +74,26 @@ class CreateQuizScreen extends StatelessWidget {
   }
 
   DifficultyRow(CreateQuizController createQuizController) {
-    Difficulty easy = Difficulty('easy'.tr, 'easy');
-    Difficulty medium = Difficulty('medium'.tr, 'medium');
-    Difficulty hard = Difficulty('hard'.tr, 'hard');
+    var easy =  {'difficulty':'easy'.tr,
+      'api':'easy'
+    };
+
+    var medium =  {'difficulty':'medium'.tr,
+      'api':'medium'
+    };
+
+    var hard =  {'difficulty':'hard'.tr,
+      'api':'hard'
+    };
+
 
     return Obx(() {
-      return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+      return Container();
+    /*  return Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         DifficultySelector(easy, createQuizController),
         DifficultySelector(medium, createQuizController),
         DifficultySelector(hard, createQuizController),
-      ]);
+      ]);*/
     });
-  }
+}
 }

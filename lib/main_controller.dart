@@ -4,14 +4,14 @@ import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 
 import '../../shared/shared.dart';
-import 'models/quiz.dart';
+import 'models/question.dart';
 import 'models/user.dart';
 
 class MainController extends GetxController {
   var isOnlineObs = Rxn<bool>();
 
   //upload quiz to firebase
-  void changeUserStatus(bool isOnline) {
+  /*void changeUserStatus(bool isOnline) {
     //get logged user data because it will be added to the quiz info that we will upload to firestore later
     usersCollection.doc(auth.currentUser?.email).update({
       'isOnline': isOnline,
@@ -54,5 +54,5 @@ class MainController extends GetxController {
         debugPrint('update user status failed: ' + error.toString());
       });
     });
-  }
+  }*/
 }

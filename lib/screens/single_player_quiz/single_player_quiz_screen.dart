@@ -11,7 +11,7 @@ class SinglePlayerQuizScreen extends StatelessWidget {
   SinglePlayerQuizScreen({Key? key}) : super(key: key);
 
   final SinglePlayerQuizController singlePlayerQuizController =
-      Get.put(SinglePlayerQuizController())..fetchQuiz(Get.arguments);
+      Get.put(SinglePlayerQuizController())/*..fetchQuiz(Get.arguments)*/;
 
   @override
   Widget build(BuildContext context) {

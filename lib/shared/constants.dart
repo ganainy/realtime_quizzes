@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 
-import '../models/category.dart';
-import '../models/difficulty.dart';
+
 
 class Constants {
   static Map<String, Map<String, String>> translation = {
@@ -42,40 +41,84 @@ class Constants {
     'de_DE': {}
   };
 
-  static List<Difficulty> difficultyList = [
-    Difficulty('easy'.tr, 'easy'),
-    Difficulty('medium'.tr, 'medium'),
-    Difficulty('hard'.tr, 'hard'),
+  static List<Map<String,dynamic>> difficultyList = [
+    {'difficulty':'easy'.tr,
+      'api':'easy'
+    },
+    {'difficulty':'medium'.tr,
+      'api':'medium'
+    },
+    {'difficulty':'hard'.tr,
+      'api':'hard'
+    },
   ];
 
   //todo remove
-  static List<Category> categoryListTesting = [
-    Category('general_knowledge'.tr, 9),
-    Category('books'.tr, 10),
-    Category('films'.tr, 11),
-    Category('music'.tr, 12),
+  static List<Map<String,dynamic>> categoryListTesting = [
+    {'category':'general_knowledge'.tr,
+      'api':9
+    },
+    {'category':'books'.tr,
+      'api':10
+    },
+    {'category':'films'.tr,
+      'api':11
+    },
+    {'category':'music'.tr,
+      'api':12
+    },
   ];
 
-  static List<Category> categoryList = [
-    Category('general_knowledge'.tr, 9),
-    Category('books'.tr, 10),
-    Category('films'.tr, 11),
-    Category('music'.tr, 12),
-    Category('musicals_and_theaters'.tr, 13),
-    Category('television'.tr, 14),
-    Category('video_games'.tr, 15),
-    Category('board_games'.tr, 16),
-    Category('science_and_nature'.tr, 17),
-    Category('computers'.tr, 18),
-    Category('mathematics'.tr, 19),
-    Category('mythology'.tr, 20),
-    Category('sports'.tr, 21),
-    Category('geography'.tr, 22),
-    Category('history'.tr, 23),
-    Category('politics'.tr, 24),
-    Category('art'.tr, 25),
-    Category('celebrities'.tr, 26),
-    Category('animals'.tr, 27),
+  static List<Map<String,dynamic>> categoryList = [
+    {'category':'general_knowledge'.tr,
+    'api':9
+    },
+    {'category':'books'.tr,
+      'api':10
+    },
+    {'category':'films'.tr,
+      'api':11
+    },
+    {'category':'music'.tr,
+      'api':12
+    },
+  {'category':'musicals_and_theaters'.tr,
+      'api':13
+    },
+  {'category':'television'.tr,
+      'api':14
+    },
+  {'category':'video_games'.tr,
+      'api':15
+    },
+  {'category':'board_games'.tr,
+      'api':16
+    },
+  {'category':'science_and_nature'.tr,
+      'api':17
+    },
+  {'category':'computers'.tr,
+      'api':18
+    }, {'category':'mathematics'.tr,
+      'api':19
+    }, {'category':'mythology'.tr,
+      'api':20
+    }, {'category':'sports'.tr,
+      'api':21
+    }, {'category':'geography'.tr,
+      'api':22
+    }, {'category':'history'.tr,
+      'api':23
+    },{'category':'politics'.tr,
+      'api':24
+    },{'category':'art'.tr,
+      'api':25
+    },{'category':'celebrities'.tr,
+      'api':26
+    },{'category':'animals'.tr,
+      'api':27
+    }
+
   ];
 }
 

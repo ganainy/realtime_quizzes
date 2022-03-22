@@ -2,9 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
-import 'package:realtime_quizzes/models/invite.dart';
+import 'package:realtime_quizzes/models/player.dart';
 
-import '../../models/quiz.dart';
+import '../../models/question.dart';
 import '../../models/user.dart';
 import '../../shared/shared.dart';
 

@@ -1,16 +1,14 @@
-import 'package:realtime_quizzes/models/category.dart';
-import 'package:realtime_quizzes/models/difficulty.dart';
 
-import '../models/invite.dart';
-import '../models/quiz.dart';
+import '../models/player.dart';
+import '../models/question.dart';
 import '../models/quiz_specs.dart';
 import '../models/user.dart';
 
 quizSpecsToJson(QuizSpecs? quizSpecs) {
   return {
-    'difficulty': quizSpecs?.selectedDifficulty?.difficultyType,
+    'difficulty': quizSpecs?.difficulty,
     'amount': quizSpecs?.numberOfQuestions,
-    'category': quizSpecs?.selectedCategory?.categoryName,
+    'category': quizSpecs?.category,
   };
 }
 
@@ -22,7 +20,7 @@ userModelToJson(UserModel? user) {
   };
 }
 
-questionDataApiToJson(QuestionDataApi question) {
+questionDataApiToJson(QuestionModel question) {
   return {
     'category': question.category,
     'question': question.question,
@@ -31,16 +29,7 @@ questionDataApiToJson(QuestionDataApi question) {
   };
 }
 
-questionDataFireStoreToJson(QuestionDataFireStore question) {
-  return {
-    'category': question.category,
-    'question': question.question,
-    'allAnswers': question.allAnswers,
-    'correctAnswer': question.correctAnswer,
-  };
-}
-
-inviteModelToJson(InviteModel inviteModel) {
+/*inviteModelToJson(InviteModel inviteModel) {
   var playersList = [];
   inviteModel.players.forEach((player) {
     playersList.add(playerModelToJson(player));
@@ -50,26 +39,14 @@ inviteModelToJson(InviteModel inviteModel) {
     'quiz': inviteModel.quiz.quizModelFireStoreToJson(),
     'players': playersList,
   };
-}
+}*/
 
-playerModelToJson(PlayerModel playerModel) {
+playerModelToJson(PlayerModel? playerModel) {
   return {
-    'isReady': playerModel.isReady,
-    'playerEmail': playerModel.playerEmail,
+    'isReady': playerModel?.isReady,
+    'playerEmail': playerModel?.playerEmail,
   };
 
 
 }
 
-categoryModelToJson(Category? category) {
-  return {
-    'categoryName': category?.categoryName,
-    'apiParam': category?.api_param,
-  };
-}
-  difficultyModelToJson(Difficulty? difficulty) {
-    return {
-      'difficultyType': difficulty?.difficultyType,
-      'apiParam': difficulty?.api_param,
-    };
-  }

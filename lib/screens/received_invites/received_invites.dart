@@ -42,7 +42,7 @@ class ReceivedInviteScreen extends StatelessWidget {
                       return InkWell(
                         onTap: () {
                           //start game
-                          receivedInvitesController.acceptInvite(index);
+                       //   receivedInvitesController.acceptInvite(index);
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(MyTheme.smallPadding),
@@ -60,7 +60,7 @@ class ReceivedInviteScreen extends StatelessWidget {
                                 children: [
                                   Obx(() {
                                     return Text(
-                                        'category: ${receivedInvitesController.receivedInvites.value?.elementAt(index).quiz?.quizSpecs?.selectedCategory?.categoryName}');
+                                        'category: ${receivedInvitesController.receivedInvites.value?.elementAt(index).quiz?.quizSpecs?.category?.category}');
                                   }),
                                   Obx(() {
                                     return Text(
@@ -68,7 +68,7 @@ class ReceivedInviteScreen extends StatelessWidget {
                                   }),
                                   Obx(() {
                                     return Text(
-                                        'difficulty: ${receivedInvitesController.receivedInvites.value?.elementAt(index).quiz?.quizSpecs?.selectedDifficulty?.difficultyType}');
+                                        'difficulty: ${receivedInvitesController.receivedInvites.value?.elementAt(index).quiz?.quizSpecs?.difficulty?.difficultyType}');
                                   })
                                 ],
                               ),

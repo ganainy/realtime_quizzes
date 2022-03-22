@@ -1,6 +1,6 @@
-import 'package:realtime_quizzes/models/quiz.dart';
+import 'package:realtime_quizzes/models/question.dart';
 
-class InviteModel {
+/*class InviteModel {
   late QuizModelFireStore quiz;
   List<dynamic> players = []; //list of user emails participating in quiz
 
@@ -12,7 +12,7 @@ class InviteModel {
       players.add(PlayerModel.fromJson(playerJson));
     });
   }
-}
+}*/
 
 class PlayerModel {
   bool? isReady; //this flag will be true if player accept invite

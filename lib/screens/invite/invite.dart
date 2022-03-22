@@ -9,7 +9,7 @@ class InviteScreen extends StatelessWidget {
   InviteScreen({Key? key}) : super(key: key);
 
   final InviteController inviteController = Get.put(InviteController())
-    ..sendPlayInvite(Get.arguments);
+   /* ..sendPlayInvite(Get.arguments)*/;
 
   @override
   Widget build(BuildContext context) {
@@ -53,9 +53,9 @@ class InviteScreen extends StatelessWidget {
                             20, // to apply margin in the cross axis of the wrap
                         alignment: WrapAlignment.spaceBetween,
                         children: [
-                          Obx(() {
+                         /* Obx(() {
                             return Text(
-                                'category: ${inviteController.selectedQuizObs.value?.quizSpecs?.selectedCategory?.categoryName}');
+                                'category: ${inviteController.selectedQuizObs.value?.quizSpecs?.category}');
                           }),
                           Obx(() {
                             return Text(
@@ -63,8 +63,8 @@ class InviteScreen extends StatelessWidget {
                           }),
                           Obx(() {
                             return Text(
-                                'difficulty: ${inviteController.selectedQuizObs.value?.quizSpecs?.selectedDifficulty?.difficultyType}');
-                          })
+                                'difficulty: ${inviteController.selectedQuizObs.value?.quizSpecs?.difficulty}');
+                          })*/
                         ],
                       ),
                     ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:realtime_quizzes/customization/theme.dart';
-import 'package:realtime_quizzes/models/difficulty.dart';
 
 import '../screens/create_quiz/create_quiz_controller.dart';
 import '../screens/find_game/find_game_controller.dart';

@@ -11,7 +11,7 @@ class AvailableQuizzesScreen extends StatelessWidget {
   AvailableQuizzesScreen({Key? key}) : super(key: key);
 
   final AvailableQuizzesController availableQuizzesController =
-      Get.put(AvailableQuizzesController())..findActiveQuizzes();
+      Get.put(AvailableQuizzesController())/*..findActiveQuizzes()*/;
 
   @override
   Widget build(BuildContext context) {
@@ -54,11 +54,11 @@ class AvailableQuizzesScreen extends StatelessWidget {
                                       alignment: WrapAlignment.spaceBetween,
                                       children: [
                                         Text(
-                                            'category: ${availableQuizzesController.quizzes.value.elementAt(index).quizSpecs?.selectedCategory?.categoryName}'),
+                                            'category: ${availableQuizzesController.quizzes.value.elementAt(index).quizSpecs?.category?.category}'),
                                         Text(
                                             'num questions: ${availableQuizzesController.quizzes.value.elementAt(index).quizSpecs?.numberOfQuestions}'),
                                         Text(
-                                            'difficulty: ${availableQuizzesController.quizzes.value.elementAt(index).quizSpecs?.selectedDifficulty?.difficultyType}')
+                                            'difficulty: ${availableQuizzesController.quizzes.value.elementAt(index).quizSpecs?.difficulty?.difficultyType}')
                                       ],
                                     ),
                                   ),

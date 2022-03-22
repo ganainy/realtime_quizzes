@@ -4,7 +4,6 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 
 import '../../customization/theme.dart';
-import '../../models/difficulty.dart';
 import '../../shared/components.dart';
 import '../../shared/constants.dart';
 import '../../shared/shared.dart';
@@ -32,8 +31,14 @@ class FindGameScreen extends StatelessWidget {
               Expanded(child: CategoriesListView(findGameController)),
               QuestionNumberSlider(findGameController),
               DifficultyRow(findGameController),
-              DefaultButton(text:' Find Game', onPressed: (){  findGameController.enterQueue(context);})
+              DefaultButton(text:' Find Game', onPressed: (){
+                findGameController.searchAvailableQueues(context);
+              })
              ,
+              DefaultButton(text:' TEST API', onPressed: (){
+                findGameController.testFetchQuiz();
+              })
+
 
             ],
           );
@@ -70,10 +75,10 @@ class FindGameScreen extends StatelessWidget {
       itemBuilder: (BuildContext context, int index) {
         return Card(
           child: TextButton(
-            child: Text('${Constants.categoryListTesting[index].categoryName}'),
+            child: Text('${Constants.categoryListTesting[index]['category']}'),
             onPressed: () {
               findGameController.selectedCategory.value =
-              Constants.categoryListTesting[index];
+              Constants.categoryListTesting[index]['category'];
             },
           ),
         );
@@ -82,9 +87,6 @@ class FindGameScreen extends StatelessWidget {
   }
 
   DifficultyRow(FindGameController findGameController) {
-    Difficulty easy = Difficulty('easy'.tr, 'easy');
-    Difficulty medium = Difficulty('medium'.tr, 'medium');
-    Difficulty hard = Difficulty('hard'.tr, 'hard');
 
     return Obx(() {
       return Column(
@@ -92,9 +94,9 @@ class FindGameScreen extends StatelessWidget {
 
           Text('Difficulty:'),
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            DifficultySelector(easy, findGameController),
-            DifficultySelector(medium, findGameController),
-            DifficultySelector(hard, findGameController),
+            DifficultySelector('easy'.tr, findGameController),
+            DifficultySelector('medium'.tr, findGameController),
+            DifficultySelector('hard'.tr, findGameController),
           ]),
         ],
       );
@@ -102,7 +104,7 @@ class FindGameScreen extends StatelessWidget {
   }
 
    DifficultySelector(
-       Difficulty difficulty, FindGameController findGameController) {
+       String difficulty, FindGameController findGameController) {
      return Container(
        margin:  EdgeInsets.all(MyTheme.smallPadding),
        child: InkWell(
@@ -117,9 +119,9 @@ class FindGameScreen extends StatelessWidget {
            //todo handle unselected color in dark mode
                : Colors.white,
            child: CircleAvatar(
-             backgroundColor: difficulty.difficultyType == 'easy'.tr
+             backgroundColor: difficulty == 'easy'.tr
                  ? Colors.green
-                 : difficulty.difficultyType == 'medium'.tr
+                 : difficulty == 'medium'.tr
                  ? Colors.yellow
                  : Colors.red,
              radius: 20.0,

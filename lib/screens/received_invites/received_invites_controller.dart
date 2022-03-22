@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
-import 'package:realtime_quizzes/models/invite.dart';
+import 'package:realtime_quizzes/models/player.dart';
 import 'package:realtime_quizzes/shared/converters.dart';
 
-import '../../models/quiz.dart';
+import '../../models/question.dart';
 import '../../shared/shared.dart';
 import '../vs_random_quiz/vs_random_quiz_screen.dart';
 
@@ -14,7 +14,7 @@ class ReceivedInviteController extends GetxController {
   var downloadState = DownloadState.INITIAL.obs;
 
   var errorLoadingQuestions = Rxn<String>();
-  var selectedQuizObs = Rxn<QuizModelFireStore>();
+  //var selectedQuizObs = Rxn<QuizModelFireStore>();
   var receivedInvites = Rxn<List<dynamic>>();
   var timerCounter = Rxn<int>();
 
@@ -41,7 +41,7 @@ class ReceivedInviteController extends GetxController {
   Timer? _timer;
   final oneSec = const Duration(seconds: 1);
 
-  void startTimer() {
+  /*void startTimer() {
     debugPrint('startTimer()');
     //reset timer if it was running to begin again from 10
     cancelTimer();
@@ -59,14 +59,14 @@ class ReceivedInviteController extends GetxController {
         }
       },
     );
-  }
+  }*/
 
   void cancelTimer() {
     if (_timer != null) {
       _timer!.cancel();
     }
   }
-
+/*
   void deleteInvite() {
     cancelTimer();
     invitesCollection
@@ -100,7 +100,7 @@ class ReceivedInviteController extends GetxController {
     }).onError((error, stackTrace) {
       debugPrint('invite accept error' + error.toString());
     });
-  }
+  }*/
 
   setInitialInvites(initialInvites) {
     receivedInvites.value = initialInvites;

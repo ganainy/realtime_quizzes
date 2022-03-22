@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 
-import '../../models/quiz.dart';
+import '../../models/question.dart';
 import '../../shared/shared.dart';
 
 class AvailableQuizzesController extends GetxController {
@@ -10,7 +10,7 @@ class AvailableQuizzesController extends GetxController {
   var quizzes = [].obs;
 
   var errorLoadingQuestions = Rxn<String>();
-
+/*
   //get all online quizzes
   void findActiveQuizzes() {
     quizzesCollection.snapshots().listen((event) {
@@ -28,5 +28,5 @@ class AvailableQuizzesController extends GetxController {
         }
       });
     });
-  }
+  }*/
 }

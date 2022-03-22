@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
-import 'package:realtime_quizzes/models/invite.dart';
+import 'package:realtime_quizzes/models/player.dart';
 
-import '../../models/quiz.dart';
+import '../../models/question.dart';
 import '../../shared/converters.dart';
 import '../../shared/shared.dart';
 import '../vs_random_quiz/vs_random_quiz_screen.dart';
@@ -14,11 +14,11 @@ class InviteController extends GetxController {
   var downloadState = DownloadState.INITIAL.obs;
 
   var errorLoadingQuestions = Rxn<String>();
-  var selectedQuizObs = Rxn<QuizModelFireStore>();
+  //var selectedQuizObs = Rxn<QuizModelFireStore>();
   var timerCounter = Rxn<int>();
-  var inviteObs = Rxn<InviteModel>();
+ // var inviteObs = Rxn<InviteModel>();
 
-  sendPlayInvite(QuizModelFireStore selectedQuiz) {
+ /* sendPlayInvite(QuizModelFireStore selectedQuiz) {
     selectedQuizObs.value = selectedQuiz;
 
     var players = [];
@@ -39,7 +39,7 @@ class InviteController extends GetxController {
     }).onError((error, stackTrace) {
       debugPrint('invite error' + error.toString());
     });
-  }
+  }*/
 
   Timer? _timer;
   final oneSec = const Duration(seconds: 1);
@@ -54,7 +54,7 @@ class InviteController extends GetxController {
       oneSec,
       (Timer timer) {
         if (timerCounter.value == 0) {
-          deleteInvite();
+          //deleteInvite();
           debugPrint('timer ended');
         } else {
           timerCounter.value = timerCounter.value! - 1;
@@ -70,7 +70,7 @@ class InviteController extends GetxController {
     }
   }
 
-  void deleteInvite() {
+  /*void deleteInvite() {
     cancelTimer();
     invitesCollection
         .doc(selectedQuizObs.value?.quizId.toString())
@@ -80,9 +80,9 @@ class InviteController extends GetxController {
     }).onError((error, stackTrace) {
       debugPrint('invite delete error' + error.toString());
     });
-  }
+  }*/
 
-  void observeInviteChanges() {
+ /* void observeInviteChanges() {
     // this method will listen to the invite and start game when other player accepts
     invitesCollection
         .doc(inviteObs.value?.quiz.quizId.toString())
@@ -102,5 +102,5 @@ class InviteController extends GetxController {
     }).onError((error) {
       debugPrint('observe invite error' + error.toString());
     });
-  }
+  }*/
 }

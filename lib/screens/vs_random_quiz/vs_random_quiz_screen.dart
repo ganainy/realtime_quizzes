@@ -3,6 +3,7 @@ import 'package:flutter/src/scheduler/ticker.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/customization/theme.dart';
+import 'package:realtime_quizzes/models/queue_entry.dart';
 import 'package:realtime_quizzes/screens/vs_random_quiz/vs_random_quiz_controller.dart';
 
 import '../../shared/components.dart';
@@ -16,11 +17,14 @@ class VersusRandomQuizScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SafeArea(child: Scaffold(
-      body: Obx(() {
+      body:
+      Text('${queueEntryModelToJson(Get.arguments)}'
+          '/////////////'
+          )/*Obx(() {
         return versusRandomQuizController.questions.value.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : Question(versusRandomQuizController, context);
-      }),
+      })*/,
     ));
   }
 
@@ -118,7 +122,6 @@ class VersusRandomQuizScreen extends StatelessWidget {
 
   @override
   Ticker createTicker(TickerCallback onTick) {
-    // TODO: implement createTicker
     throw UnimplementedError();
   }
 }

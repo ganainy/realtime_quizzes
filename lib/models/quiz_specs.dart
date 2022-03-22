@@ -1,28 +1,27 @@
-import 'package:realtime_quizzes/models/category.dart';
 
-import 'difficulty.dart';
+
 
 class QuizSpecs {
   int? numberOfQuestions;
-  Category? selectedCategory;
-  Difficulty? selectedDifficulty;
+  String? category;
+  String? difficulty;
   //currently app only supports MCQ questions so this param is fixed
   String quizType = 'multiple';
 
   QuizSpecs(
-      this.numberOfQuestions, this.selectedCategory, this.selectedDifficulty);
+      this.numberOfQuestions, this.category, this.difficulty);
 
   QuizSpecs.fromJson(json) {
-    numberOfQuestions = json['amount'];
-    selectedCategory = Category.withNameOnly(json['category']);
-    selectedDifficulty = Difficulty.withTypeOnly(json['difficulty']);
+    numberOfQuestions = json['numberOfQuestions'];
+    category = json['category'];
+    difficulty = json['difficulty'];
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'difficulty': selectedDifficulty?.api_param,
+      'difficulty': difficulty,
       'amount': numberOfQuestions,
-      'category': selectedCategory?.api_param,
+      'category': category,
       'type': quizType,
     };
   }

@@ -43,7 +43,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   _MyAppState(this.startWidget);
 
   final MainController mainController = Get.put(MainController())
-    ..changeUserStatus(true);
+    /*..changeUserStatus(true)*/;
 
   @override
   void initState() {
@@ -55,12 +55,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       //TODO: set status to online here in firestore
-      mainController.changeUserStatus(true);
+    //  mainController.changeUserStatus(true);
       debugPrint('user online ');
     } else {
       //TODO: set status to offline here in firestore
       debugPrint('user offline  ' + state.toString());
-      mainController.changeUserStatus(false);
+   //   mainController.changeUserStatus(false);
     }
   }
 
