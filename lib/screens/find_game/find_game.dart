@@ -6,63 +6,47 @@ import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import '../../customization/theme.dart';
 import '../../shared/components.dart';
 import '../../shared/constants.dart';
-import '../../shared/shared.dart';
 import 'find_game_controller.dart';
 
 class FindGameScreen extends StatelessWidget {
-   FindGameScreen({Key? key}) : super(key: key);
+  FindGameScreen({Key? key}) : super(key: key);
 
   final FindGameController findGameController = Get.put(FindGameController());
 
-
   @override
   Widget build(BuildContext context) {
-    return  SafeArea(
+    findGameController.observe(context);
+    return SafeArea(
       child: Center(
-        child: Obx(() {
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              findGameController.downloadState.value ==
-                  DownloadState.LOADING
-                  ? const LinearProgressIndicator()
-                  : const SizedBox(),
-              Text('Select game settings'),
-              Expanded(child: CategoriesListView(findGameController)),
-              QuestionNumberSlider(findGameController),
-              DifficultyRow(findGameController),
-              DefaultButton(text:' Find Game', onPressed: (){
+          child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('Select game settings'),
+          Expanded(child: CategoriesListView(findGameController)),
+          QuestionNumberSlider(findGameController),
+          DifficultyRow(findGameController),
+          DefaultButton(
+              text: ' Find Game',
+              onPressed: () {
                 findGameController.searchAvailableQueues(context);
-              })
-             ,
-              DefaultButton(text:' TEST API', onPressed: (){
-                findGameController.
-                testFetchQuiz();
-              })
-
-
-            ],
-          );
-        }),
-      ),
+              }),
+        ],
+      )),
     );
   }
-
 
   QuestionNumberSlider(FindGameController findGameController) {
     return Obx(() {
       return Column(
-
         children: [
           Text('Number of questions:'),
           Slider(
-            value: findGameController.numOfQuestions.value,
+            value: findGameController.numOfQuestionsObs.value,
             max: 20,
-            divisions: 3,
             min: 5,
-            label: findGameController.numOfQuestions.round().toString(),
+            label: findGameController.numOfQuestionsObs.round().toString(),
             onChanged: (double value) {
-              findGameController.numOfQuestions.value = value;
+              findGameController.numOfQuestionsObs.value = value;
             },
           ),
         ],
@@ -78,8 +62,8 @@ class FindGameScreen extends StatelessWidget {
           child: TextButton(
             child: Text('${Constants.categoryListTesting[index]['category']}'),
             onPressed: () {
-              findGameController.selectedCategory.value =
-              Constants.categoryListTesting[index]['category'];
+              findGameController.selectedCategoryObs.value =
+                  Constants.categoryListTesting[index]['category'];
             },
           ),
         );
@@ -88,11 +72,9 @@ class FindGameScreen extends StatelessWidget {
   }
 
   DifficultyRow(FindGameController findGameController) {
-
     return Obx(() {
       return Column(
         children: [
-
           Text('Difficulty:'),
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             DifficultySelector('easy'.tr, findGameController),
@@ -104,35 +86,30 @@ class FindGameScreen extends StatelessWidget {
     });
   }
 
-   DifficultySelector(
-       String difficulty, FindGameController findGameController) {
-     return Container(
-       margin:  EdgeInsets.all(MyTheme.smallPadding),
-       child: InkWell(
-         onTap: () {
-           findGameController.selectedDifficulty.value = difficulty;
-         },
-         child: CircleAvatar(
-           radius: 25.0,
-           backgroundColor:
-           difficulty == findGameController.selectedDifficulty.value
-               ? Colors.grey[400]
-           //todo handle unselected color in dark mode
-               : Colors.white,
-           child: CircleAvatar(
-             backgroundColor: difficulty == 'easy'.tr
-                 ? Colors.green
-                 : difficulty == 'medium'.tr
-                 ? Colors.yellow
-                 : Colors.red,
-             radius: 20.0,
-           ),
-         ),
-       ),
-     );
-   }
-
-
-
-
+  DifficultySelector(String difficulty, FindGameController findGameController) {
+    return Container(
+      margin: EdgeInsets.all(MyTheme.smallPadding),
+      child: InkWell(
+        onTap: () {
+          findGameController.selectedDifficultyObs.value = difficulty;
+        },
+        child: CircleAvatar(
+          radius: 25.0,
+          backgroundColor:
+              difficulty == findGameController.selectedDifficultyObs.value
+                  ? Colors.grey[400]
+                  //todo handle unselected color in dark mode
+                  : Colors.white,
+          child: CircleAvatar(
+            backgroundColor: difficulty == 'easy'.tr
+                ? Colors.green
+                : difficulty == 'medium'.tr
+                    ? Colors.yellow
+                    : Colors.red,
+            radius: 20.0,
+          ),
+        ),
+      ),
+    );
+  }
 }

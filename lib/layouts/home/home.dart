@@ -8,7 +8,8 @@ import '../../screens/friends/friends.dart';
 class HomeScreen extends StatelessWidget {
   HomeScreen({Key? key}) : super(key: key);
 
-  final HomeController homeController = Get.put(HomeController());
+  final HomeController homeController = Get.put(HomeController())
+  ;
     /*..getQuizzes()
     ..observeInvites();*/
 

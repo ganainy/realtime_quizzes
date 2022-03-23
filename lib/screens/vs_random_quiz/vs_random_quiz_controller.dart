@@ -7,11 +7,8 @@ import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:realtime_quizzes/models/player.dart';
 import 'package:realtime_quizzes/models/question.dart';
 import 'package:realtime_quizzes/models/queue_entry.dart';
-import 'package:realtime_quizzes/shared/converters.dart';
 import 'package:realtime_quizzes/shared/shared.dart';
 
-import '../../models/single_player_quiz_result.dart';
-import '../single_player_quiz_result.dart';
 import '../vs_random_result/vs_random_result_screen.dart';
 
 class VersusRandomQuizController extends GetxController {
@@ -37,7 +34,6 @@ class VersusRandomQuizController extends GetxController {
   Timer? _timer;
   Timer? _nextQuestionTimer;
 
-
   //with every read to queue entry we update all values
   void updateValues(QueueEntryModel queueEntryModel) {
     queueEntryModelObs.value = queueEntryModel;
@@ -57,7 +53,7 @@ class VersusRandomQuizController extends GetxController {
     });
   }
 
-  void updateIndex(){
+  void updateIndex() {
     currentQuestionObs.value =
         questionsObs.value.elementAt(currentQuestionIndexObs.value);
     correctAnswerObs.value = currentQuestionObs.value?.correctAnswer;
@@ -117,7 +113,7 @@ class VersusRandomQuizController extends GetxController {
       observeGame(queueEntryModel.queueEntryId);
       print("Player set to ready $value");
     }).catchError(
-            (error) => print("Failed to update player ready state: $error"));
+        (error) => print("Failed to update player ready state: $error"));
   }
 
   void observeGame(String? queueEntryId) {
@@ -131,24 +127,23 @@ class VersusRandomQuizController extends GetxController {
           someoneNotReady = true;
         }
       });
-      if(someoneNotReady)
-      {
+      if (someoneNotReady) {
         debugPrint('not all players ready yet');
         return;
       }
+
       ///
       updateValues(_queueEntryModel);
       if (!isGameAlreadyStartedObs.value) {
         debugPrint('all ready start game');
         startQuestionTimer();
-        isGameAlreadyStartedObs.value=true;
+        isGameAlreadyStartedObs.value = true;
       }
-
-
     }).onError((error) {
       debugPrint('listen to ready state error ' + error.toString());
     });
   }
+
   //update current question index in firestore so game goes to next question
   void updateCurrentQuestionIndex() {
     //reset local selected answer to remove selected answer yellow  background
@@ -162,38 +157,8 @@ class VersusRandomQuizController extends GetxController {
     updateIndex();
     //start timer again for the new question
     startQuestionTimer();
-
-   /* FirebaseFirestore.instance.runTransaction((transaction) async {
-      // Get the document
-      DocumentSnapshot snapshot = await transaction
-          .get(queueCollection.doc(queueEntryModelObs.value?.queueEntryId));
-
-      if (!snapshot.exists) {
-        throw Exception("Queue entry does not exist!");
-      }
-
-      var _queueEntryModel = QueueEntryModel.fromJson(snapshot.data());
-      updateValues(_queueEntryModel);
-
-      //only logged user will update the index so it will increase by one not two
-      if(queueEntryModelObs.value?.queueEntryId!=auth.currentUser?.email) {
-        _queueEntryModel.currentQuestionIndex =
-            _queueEntryModel.currentQuestionIndex + 1;
-        transaction.update(
-            queueCollection.doc(queueEntryModelObs.value?.queueEntryId),
-            queueEntryModelToJson(_queueEntryModel));
-      }
-
-    }).then((value) {
-      //reset local selected answer to remove selected answer yellow  background
-      selectedAnswerLocalObs.value = null;
-      //reset question to not answered to remove red and green answer background
-      isQuestionAnsweredObs.value = false;
-      //start timer again for the new question
-      startTimer();
-    }).catchError(
-            (error) => print("Failed to update game current index: $error"));*/
   }
+
   //this method is called when time runs out and user doesn't select an answer
   void updateScores() {
     cancelTimer(_timer);
@@ -212,10 +177,10 @@ class VersusRandomQuizController extends GetxController {
 
       _queueEntryModel.players.forEach((player) {
         //increase player score if right answer
-        if (player?.playerEmail==auth.currentUser?.email&&
-        player!.answers.length > currentQuestionIndexObs.value&&
-        player.answers.elementAt(currentQuestionIndexObs.value) ==
-            currentQuestionObs.value?.correctAnswer) {
+        if (player?.playerEmail == auth.currentUser?.email &&
+            player!.answers.length > currentQuestionIndexObs.value &&
+            player.answers.elementAt(currentQuestionIndexObs.value) ==
+                currentQuestionObs.value?.correctAnswer) {
           player.score = player.score + 1;
         }
       });
@@ -225,16 +190,12 @@ class VersusRandomQuizController extends GetxController {
     }).then((value) {
       print("updated player scores $value");
     }).catchError((error) => print("Failed to update player scores: $error"));
-
-
   }
-
 
   void showResultScreen() {
-         Get.off(() => VersusRandomResultScreen(),
-        arguments:queueEntryModelObs.value);
+    Get.off(() => VersusRandomResultScreen(),
+        arguments: queueEntryModelObs.value);
   }
-
 
   // start 10 sec timer as time limit for question
   void startQuestionTimer() {
@@ -250,7 +211,7 @@ class VersusRandomQuizController extends GetxController {
         if (timerValueObs.value == 0) {
           cancelTimer(_timer);
           //register answer as empty if no answer selected
-          if(selectedAnswerLocalObs.value==null)registerAnswer('');
+          if (selectedAnswerLocalObs.value == null) registerAnswer('');
           //increase score if player got correct answer
           updateScores();
           //wait two seconds and show next answer or show quiz result if no more questions
@@ -272,7 +233,7 @@ class VersusRandomQuizController extends GetxController {
 
     _nextQuestionTimer = Timer.periodic(
       const Duration(seconds: 1),
-          (Timer timer) {
+      (Timer timer) {
         if (nextQuestionTimerValueObs.value == 0) {
           cancelTimer(_nextQuestionTimer);
           debugPrint('timer ended');
@@ -285,14 +246,13 @@ class VersusRandomQuizController extends GetxController {
   }
 
   void waitThenUpdateQuestionIndex() {
-
     isQuestionTimeEndedObs.value = true;
     startNextQuestionTimer();
 
     Future.delayed(const Duration(seconds: 10), () {
-
       //todo remove comment
-      if (currentQuestionIndexObs.value /*>*/== /*questionsObs.value.length -*/ 1) {
+      if (currentQuestionIndexObs
+          .value /*>*/ == /*questionsObs.value.length -*/ 0) {
         showResultScreen();
       } else {
         updateCurrentQuestionIndex();
@@ -306,8 +266,6 @@ class VersusRandomQuizController extends GetxController {
     }
   }
 
-
-
   //return true if answer is right
   bool getIsCorrectAnswer(String text) {
     return (isQuestionTimeEndedObs.value &&
@@ -316,7 +274,8 @@ class VersusRandomQuizController extends GetxController {
 
   //return true if answer is wrong and user selected it
   bool getIsSelectedWrongAnswer(String text) {
-    return (loggedPlayer.value!.answers.length>currentQuestionIndexObs.value &&
+    return (loggedPlayer.value!.answers.length >
+            currentQuestionIndexObs.value &&
         isQuestionTimeEndedObs.value &&
         loggedPlayer.value?.answers.elementAt(currentQuestionIndexObs.value) ==
             text);
@@ -325,7 +284,7 @@ class VersusRandomQuizController extends GetxController {
   //this flag used to show logged player avatar beside the selected answer
   bool getIsSelectedLoggedPlayer(String text) {
     return isQuestionTimeEndedObs.value &&
-        loggedPlayer.value!.answers.length>currentQuestionIndexObs.value &&
+        loggedPlayer.value!.answers.length > currentQuestionIndexObs.value &&
         text ==
             loggedPlayer.value?.answers
                 .elementAt(currentQuestionIndexObs.value);
@@ -334,15 +293,13 @@ class VersusRandomQuizController extends GetxController {
   //this flag used to show other player avatar beside the selected answer
   bool getIsSelectedOtherPlayer(String text) {
     return isQuestionTimeEndedObs.value &&
-        otherPlayer.value!.answers.length>currentQuestionIndexObs.value &&
+        otherPlayer.value!.answers.length > currentQuestionIndexObs.value &&
         text ==
             otherPlayer.value?.answers.elementAt(currentQuestionIndexObs.value);
   }
 
   //this flag used to show orange background to indicate that player selected this answer
   getIsSelectedLocalAnswer(String text) {
-    return
-      isQuestionAnsweredObs.value &&
-      text==selectedAnswerLocalObs.value;
+    return isQuestionAnsweredObs.value && text == selectedAnswerLocalObs.value;
   }
 }
