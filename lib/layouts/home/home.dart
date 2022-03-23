@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+
 import '../../layouts/home/home_controller.dart';
 import '../../screens/find_game/find_game.dart';
 import '../../screens/friends/friends.dart';
+import '../../screens/history/history.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({Key? key}) : super(key: key);
 
-  final HomeController homeController = Get.put(HomeController())
-  ;
-    /*..getQuizzes()
+  final HomeController homeController = Get.put(HomeController());
+  /*..getQuizzes()
     ..observeInvites();*/
 
   final PageController pageController = PageController();
@@ -21,6 +22,13 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Quizzes'),
         actions: [
+          InkWell(
+              onTap: () {
+                Get.to(HistoryScreen());
+              },
+              child: Icon(
+                Icons.account_circle,
+              )),
           /* InkWell(
             onTap: () {
               //show invites
@@ -49,15 +57,16 @@ class HomeScreen extends StatelessWidget {
       bottomNavigationBar: Obx(() {
         return BottomNavigationBar(
           currentIndex: homeController.bottomSelectedIndex.value,
-          items: buildBottomNavBarItems(),onTap: ((index){
-          homeController.bottomSelectedIndex.value=index;
-          pageController.animateToPage(index, duration: Duration(milliseconds: 500), curve: Curves.ease);
-        }),
+          items: buildBottomNavBarItems(),
+          onTap: ((index) {
+            homeController.bottomSelectedIndex.value = index;
+            pageController.animateToPage(index,
+                duration: Duration(milliseconds: 500), curve: Curves.ease);
+          }),
         );
       }),
     );
   }
-
 
   List<BottomNavigationBarItem> buildBottomNavBarItems() {
     return [
@@ -69,11 +78,8 @@ class HomeScreen extends StatelessWidget {
         icon: new Icon(Icons.supervised_user_circle_outlined),
         label: 'Friends',
       ),
-
     ];
   }
-
-
 
   Widget buildPageView() {
     return PageView(
@@ -87,6 +93,4 @@ class HomeScreen extends StatelessWidget {
       ],
     );
   }
-
 }
-
