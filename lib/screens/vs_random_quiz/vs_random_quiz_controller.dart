@@ -1,117 +1,348 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
+import 'package:realtime_quizzes/models/player.dart';
+import 'package:realtime_quizzes/models/question.dart';
+import 'package:realtime_quizzes/models/queue_entry.dart';
+import 'package:realtime_quizzes/shared/converters.dart';
+import 'package:realtime_quizzes/shared/shared.dart';
 
 import '../../models/single_player_quiz_result.dart';
 import '../single_player_quiz_result.dart';
+import '../vs_random_result/vs_random_result_screen.dart';
 
 class VersusRandomQuizController extends GetxController {
-  var questions = [].obs;
-  var currentQuestionIndex = 0.obs;
-  var currentScore = 0.obs;
-  var isQuestionAnswered = false.obs;
-  var timerValue = 0.obs;
+  //fire store
+  var queueEntryModelObs = Rxn<QueueEntryModel?>();
+  var questionsObs = [].obs;
+  var currentQuestionObs = Rxn<QuestionModel?>();
+  var correctAnswerObs = Rxn<String>();
+  var players = Rxn<List<PlayerModel?>>();
+  var loggedPlayer = Rxn<PlayerModel?>();
+  var otherPlayer = Rxn<PlayerModel?>();
 
-  var rightAnswerIndex = Rxn<int>();
-  var wrongAnswerIndex = Rxn<int>();
-  var selectedAnswer = Rxn<String>();
-  var timerCounter = Rxn<int>();
-
-  void checkAnswer({
-    //answer that user selected or null if timer runs out without any answer selected
-    required String answer,
-  }) {
-    //user already selected an answer or time runs out -> stop timer
-    cancelTimer();
-
-    String correctAnswer =
-        questions.value.elementAt(currentQuestionIndex.value).correctAnswer;
-
-    if (answer == correctAnswer) {
-      currentScore.value++;
-    } else {
-      //this string to only show red background on the selected item
-      selectedAnswer.value = answer;
-    }
-
-    //this flag used to show green background for right answer
-    isQuestionAnswered.value = true;
-
-    //wait two seconds and show next answer or show quiz result if no more questions
-    Future.delayed(const Duration(milliseconds: 2000), () {
-      if (currentQuestionIndex.value >= questions.value.length - 1) {
-        endQuiz();
-      } else {
-        currentQuestionIndex++;
-        //reset
-        isQuestionAnswered.value = false;
-        startTimer();
-      }
-    });
-  }
-
-  //this method is called when time runs out and user doesn't select an answer
-  void showRightAnswer() {
-    cancelTimer();
-
-    String correctAnswer =
-        questions.value.elementAt(currentQuestionIndex.value).correctAnswer;
-
-    //this flag used to show green background for right answer
-    isQuestionAnswered.value = true;
-
-    //wait two seconds and show next answer or show quiz result if no more questions
-    Future.delayed(const Duration(milliseconds: 2000), () {
-      if (currentQuestionIndex.value >= questions.value.length - 1) {
-        endQuiz();
-      } else {
-        currentQuestionIndex++;
-        //reset
-        isQuestionAnswered.value = false;
-        startTimer();
-      }
-    });
-  }
-
-  //skip remaining questions and jump to result screen
-  void endQuiz() {
-    cancelTimer();
-
-    Get.off(() => SinglePlayerQuizResultScreen(),
-        arguments:
-            SinglePlayerQuizResult(currentScore.value, questions.value.length));
-  }
-
+  //local
+  var timerValueObs = 0.obs;
+  var nextQuestionTimerValueObs = 0.obs;
+  var currentQuestionIndexObs = 0.obs;
+  var isQuestionAnsweredObs = false.obs;
+  var isQuestionTimeEndedObs = false.obs;
+  var isGameAlreadyStartedObs = false.obs;
+  var selectedAnswerLocalObs =
+      Rxn<String?>(); //to show orange background for answer selected by user
+  var wrongAnswerObs = Rxn<int>();
   Timer? _timer;
-  final oneSec = const Duration(seconds: 1);
+  Timer? _nextQuestionTimer;
+
+
+  //with every read to queue entry we update all values
+  void updateValues(QueueEntryModel queueEntryModel) {
+    queueEntryModelObs.value = queueEntryModel;
+    questionsObs.value = queueEntryModel.questions;
+    currentQuestionObs.value =
+        questionsObs.value.elementAt(currentQuestionIndexObs.value);
+    correctAnswerObs.value = queueEntryModel.questions
+        .elementAt(currentQuestionIndexObs.value)
+        ?.correctAnswer;
+    players.value = queueEntryModel.players;
+    queueEntryModel.players.forEach((player) {
+      if (player?.playerEmail == auth.currentUser?.email) {
+        loggedPlayer.value = player;
+      } else {
+        otherPlayer.value = player;
+      }
+    });
+  }
+
+  void updateIndex(){
+    currentQuestionObs.value =
+        questionsObs.value.elementAt(currentQuestionIndexObs.value);
+    correctAnswerObs.value = currentQuestionObs.value?.correctAnswer;
+  }
+
+  //save user answer in fire store
+  void registerAnswer(String answer) {
+    selectedAnswerLocalObs.value = answer;
+    isQuestionAnsweredObs.value = true;
+
+    FirebaseFirestore.instance.runTransaction((transaction) async {
+      // Get the document
+      DocumentSnapshot snapshot = await transaction
+          .get(queueCollection.doc(queueEntryModelObs.value?.queueEntryId));
+
+      if (!snapshot.exists) {
+        throw Exception("Queue entry does not exist!");
+      }
+
+      var _queueEntryModel = QueueEntryModel.fromJson(snapshot.data());
+      updateValues(_queueEntryModel);
+
+      _queueEntryModel.players.forEach((player) {
+        if (player?.playerEmail == auth.currentUser?.email) {
+          player?.answers.add(answer);
+        }
+      });
+      transaction.update(
+          queueCollection.doc(queueEntryModelObs.value?.queueEntryId),
+          queueEntryModelToJson(_queueEntryModel));
+    }).then((value) {
+      print("added answer to player $value");
+    }).catchError((error) => print("Failed to update player answers: $error"));
+  }
+
+  //marks player state as ready- match begins when all players ready
+  setPlayerReady(QueueEntryModel queueEntryModel) {
+    FirebaseFirestore.instance.runTransaction((transaction) async {
+      // Get the document
+      DocumentSnapshot snapshot = await transaction
+          .get(queueCollection.doc(queueEntryModel.queueEntryId));
+
+      if (!snapshot.exists) {
+        throw Exception("Queue entry does not exist!");
+      }
+
+      var _queueEntryModel = QueueEntryModel.fromJson(snapshot.data());
+
+      _queueEntryModel.players.forEach((player) {
+        if (player?.playerEmail == auth.currentUser?.email) {
+          player?.isReady = true;
+        }
+      });
+      transaction.update(queueCollection.doc(queueEntryModel.queueEntryId),
+          queueEntryModelToJson(_queueEntryModel));
+    }).then((value) {
+      observeGame(queueEntryModel.queueEntryId);
+      print("Player set to ready $value");
+    }).catchError(
+            (error) => print("Failed to update player ready state: $error"));
+  }
+
+  void observeGame(String? queueEntryId) {
+    queueCollection.doc(queueEntryId).snapshots().listen((event) {
+      QueueEntryModel _queueEntryModel = QueueEntryModel.fromJson(event.data());
+
+      //do nothing if not all players ready
+      bool someoneNotReady = false;
+      _queueEntryModel.players.forEach((player) {
+        if (player != null && !player.isReady) {
+          someoneNotReady = true;
+        }
+      });
+      if(someoneNotReady)
+      {
+        debugPrint('not all players ready yet');
+        return;
+      }
+      ///
+      updateValues(_queueEntryModel);
+      if (!isGameAlreadyStartedObs.value) {
+        debugPrint('all ready start game');
+        startQuestionTimer();
+        isGameAlreadyStartedObs.value=true;
+      }
+
+
+    }).onError((error) {
+      debugPrint('listen to ready state error ' + error.toString());
+    });
+  }
+  //update current question index in firestore so game goes to next question
+  void updateCurrentQuestionIndex() {
+    //reset local selected answer to remove selected answer yellow  background
+    selectedAnswerLocalObs.value = null;
+    //reset question to not answered to remove red and green answer background
+    isQuestionAnsweredObs.value = false;
+    //reset question to not answered to remove red and green answer background
+    isQuestionTimeEndedObs.value = false;
+    //update current question index to show next question
+    currentQuestionIndexObs.value++;
+    updateIndex();
+    //start timer again for the new question
+    startQuestionTimer();
+
+   /* FirebaseFirestore.instance.runTransaction((transaction) async {
+      // Get the document
+      DocumentSnapshot snapshot = await transaction
+          .get(queueCollection.doc(queueEntryModelObs.value?.queueEntryId));
+
+      if (!snapshot.exists) {
+        throw Exception("Queue entry does not exist!");
+      }
+
+      var _queueEntryModel = QueueEntryModel.fromJson(snapshot.data());
+      updateValues(_queueEntryModel);
+
+      //only logged user will update the index so it will increase by one not two
+      if(queueEntryModelObs.value?.queueEntryId!=auth.currentUser?.email) {
+        _queueEntryModel.currentQuestionIndex =
+            _queueEntryModel.currentQuestionIndex + 1;
+        transaction.update(
+            queueCollection.doc(queueEntryModelObs.value?.queueEntryId),
+            queueEntryModelToJson(_queueEntryModel));
+      }
+
+    }).then((value) {
+      //reset local selected answer to remove selected answer yellow  background
+      selectedAnswerLocalObs.value = null;
+      //reset question to not answered to remove red and green answer background
+      isQuestionAnsweredObs.value = false;
+      //start timer again for the new question
+      startTimer();
+    }).catchError(
+            (error) => print("Failed to update game current index: $error"));*/
+  }
+  //this method is called when time runs out and user doesn't select an answer
+  void updateScores() {
+    cancelTimer(_timer);
+
+    FirebaseFirestore.instance.runTransaction((transaction) async {
+      // Get the document
+      DocumentSnapshot snapshot = await transaction
+          .get(queueCollection.doc(queueEntryModelObs.value?.queueEntryId));
+
+      if (!snapshot.exists) {
+        throw Exception("Queue entry does not exist!");
+      }
+
+      var _queueEntryModel = QueueEntryModel.fromJson(snapshot.data());
+      updateValues(_queueEntryModel);
+
+      _queueEntryModel.players.forEach((player) {
+        //increase player score if right answer
+        if (player?.playerEmail==auth.currentUser?.email&&
+        player!.answers.length > currentQuestionIndexObs.value&&
+        player.answers.elementAt(currentQuestionIndexObs.value) ==
+            currentQuestionObs.value?.correctAnswer) {
+          player.score = player.score + 1;
+        }
+      });
+      transaction.update(
+          queueCollection.doc(queueEntryModelObs.value?.queueEntryId),
+          queueEntryModelToJson(_queueEntryModel));
+    }).then((value) {
+      print("updated player scores $value");
+    }).catchError((error) => print("Failed to update player scores: $error"));
+
+
+  }
+
+
+  void showResultScreen() {
+         Get.off(() => VersusRandomResultScreen(),
+        arguments:queueEntryModelObs.value);
+  }
+
 
   // start 10 sec timer as time limit for question
-  void startTimer() {
+  void startQuestionTimer() {
     debugPrint('startTimer()');
     //reset timer if it was running to begin again from 10
-    cancelTimer();
-    timerCounter.value = 4; //todo 10sec
+    cancelTimer(_timer);
+    timerValueObs.value = 10;
+    isQuestionTimeEndedObs.value = false;
 
     _timer = Timer.periodic(
-      oneSec,
+      const Duration(seconds: 1),
       (Timer timer) {
-        if (timerCounter.value == 0) {
-          cancelTimer();
-          showRightAnswer();
+        if (timerValueObs.value == 0) {
+          cancelTimer(_timer);
+          //register answer as empty if no answer selected
+          if(selectedAnswerLocalObs.value==null)registerAnswer('');
+          //increase score if player got correct answer
+          updateScores();
+          //wait two seconds and show next answer or show quiz result if no more questions
+          waitThenUpdateQuestionIndex();
           debugPrint('timer ended');
         } else {
-          timerCounter.value = timerCounter.value! - 1;
-          debugPrint('counter:' + timerCounter.toString());
+          timerValueObs.value = timerValueObs.value - 1;
+          debugPrint('counter:' + timerValueObs.toString());
         }
       },
     );
   }
 
-  void cancelTimer() {
+  void startNextQuestionTimer() {
+    debugPrint('startNextQuestionTimer()');
+    //reset timer if it was running to begin again from 10
+    cancelTimer(_nextQuestionTimer);
+    nextQuestionTimerValueObs.value = 5;
+
+    _nextQuestionTimer = Timer.periodic(
+      const Duration(seconds: 1),
+          (Timer timer) {
+        if (nextQuestionTimerValueObs.value == 0) {
+          cancelTimer(_nextQuestionTimer);
+          debugPrint('timer ended');
+        } else {
+          nextQuestionTimerValueObs.value = nextQuestionTimerValueObs.value - 1;
+          debugPrint('counter:' + nextQuestionTimerValueObs.toString());
+        }
+      },
+    );
+  }
+
+  void waitThenUpdateQuestionIndex() {
+
+    isQuestionTimeEndedObs.value = true;
+    startNextQuestionTimer();
+
+    Future.delayed(const Duration(seconds: 10), () {
+
+      //todo remove comment
+      if (currentQuestionIndexObs.value /*>*/== /*questionsObs.value.length -*/ 1) {
+        showResultScreen();
+      } else {
+        updateCurrentQuestionIndex();
+      }
+    });
+  }
+
+  void cancelTimer(Timer? _timer) {
     if (_timer != null) {
-      _timer!.cancel();
+      _timer.cancel();
     }
+  }
+
+
+
+  //return true if answer is right
+  bool getIsCorrectAnswer(String text) {
+    return (isQuestionTimeEndedObs.value &&
+        currentQuestionObs.value?.correctAnswer == text);
+  }
+
+  //return true if answer is wrong and user selected it
+  bool getIsSelectedWrongAnswer(String text) {
+    return (loggedPlayer.value!.answers.length>currentQuestionIndexObs.value &&
+        isQuestionTimeEndedObs.value &&
+        loggedPlayer.value?.answers.elementAt(currentQuestionIndexObs.value) ==
+            text);
+  }
+
+  //this flag used to show logged player avatar beside the selected answer
+  bool getIsSelectedLoggedPlayer(String text) {
+    return isQuestionTimeEndedObs.value &&
+        loggedPlayer.value!.answers.length>currentQuestionIndexObs.value &&
+        text ==
+            loggedPlayer.value?.answers
+                .elementAt(currentQuestionIndexObs.value);
+  }
+
+  //this flag used to show other player avatar beside the selected answer
+  bool getIsSelectedOtherPlayer(String text) {
+    return isQuestionTimeEndedObs.value &&
+        otherPlayer.value!.answers.length>currentQuestionIndexObs.value &&
+        text ==
+            otherPlayer.value?.answers.elementAt(currentQuestionIndexObs.value);
+  }
+
+  //this flag used to show orange background to indicate that player selected this answer
+  getIsSelectedLocalAnswer(String text) {
+    return
+      isQuestionAnsweredObs.value &&
+      text==selectedAnswerLocalObs.value;
   }
 }

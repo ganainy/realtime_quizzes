@@ -39,14 +39,9 @@ questionDataApiToJson(QuestionModel question) {
     'quiz': inviteModel.quiz.quizModelFireStoreToJson(),
     'players': playersList,
   };
+  }
 }*/
 
-playerModelToJson(PlayerModel? playerModel) {
-  return {
-    'isReady': playerModel?.isReady,
-    'playerEmail': playerModel?.playerEmail,
-  };
 
 
-}
 

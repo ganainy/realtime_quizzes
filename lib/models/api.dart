@@ -17,3 +17,8 @@ ApiModel.fromJson(json){
   }
 
 }
+/*apiModelToJson(ApiModel apiModel){
+  return{
+
+  };
+}*/

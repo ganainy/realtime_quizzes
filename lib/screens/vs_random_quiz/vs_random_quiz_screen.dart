@@ -12,19 +12,18 @@ class VersusRandomQuizScreen extends StatelessWidget {
   VersusRandomQuizScreen({Key? key}) : super(key: key);
 
   final VersusRandomQuizController versusRandomQuizController =
-      Get.put(VersusRandomQuizController());
+      Get.put(VersusRandomQuizController())
+        ..updateValues(Get.arguments)
+        ..setPlayerReady(Get.arguments);
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(child: Scaffold(
-      body:
-      Text('${queueEntryModelToJson(Get.arguments)}'
-          '/////////////'
-          )/*Obx(() {
-        return versusRandomQuizController.questions.value.isEmpty
+      body: Obx(() {
+        return versusRandomQuizController.questionsObs.value.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : Question(versusRandomQuizController, context);
-      })*/,
+      }),
     ));
   }
 
@@ -32,86 +31,106 @@ class VersusRandomQuizScreen extends StatelessWidget {
     VersusRandomQuizController versusRandomQuizController,
     BuildContext context,
   ) {
-    var currentQuestion = versusRandomQuizController.questions.value
-        .elementAt(versusRandomQuizController.currentQuestionIndex.value);
-    var shuffledAnswers = currentQuestion.shuffledAnswers;
+    var currentQuestion = versusRandomQuizController.currentQuestionObs.value;
 
-    return Container(
-      width: double.infinity,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('Your score: ' +
-              versusRandomQuizController.currentScore.value.toString()),
-          const SizedBox(
-            height: MyTheme.largePadding,
-          ),
-          //add one to index because index starts with 0
-          Text(
-              'Question: ${(versusRandomQuizController.currentQuestionIndex.value + 1)}/${(versusRandomQuizController.questions.value.length)}'),
-          const SizedBox(
-            height: MyTheme.largePadding,
-          ),
-          Obx(() {
-            return Text('Timer: ' +
-                versusRandomQuizController.timerCounter.value.toString());
-          }),
+    return SingleChildScrollView(
+      child: Container(
+        width: double.infinity,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+                'Your score: ${versusRandomQuizController.loggedPlayer.value?.score}'),
+            const SizedBox(
+              height: MyTheme.largePadding,
+            ),
+            Text(
+                'Other player score: ${versusRandomQuizController.otherPlayer.value?.score}'),
+            const SizedBox(
+              height: MyTheme.largePadding,
+            ),
+            //add one to index because index starts with 0
+            Text(
+                'Question: ${(versusRandomQuizController.currentQuestionIndexObs.value + 1)}/${(versusRandomQuizController.questionsObs.value.length)}'),
+            const SizedBox(
+              height: MyTheme.largePadding,
+            ),
+            Obx(() {
+              return Text('Timer: ' +
+                  versusRandomQuizController.timerValueObs.value.toString());
+            }),
+            Obx(() {
+              return Text('Next question in: ' +
+                  versusRandomQuizController.nextQuestionTimerValueObs.value.toString());
+            }),
 
-          const SizedBox(
-            height: MyTheme.largePadding,
-          ),
-          Text(currentQuestion.question),
-          const SizedBox(
-            height: MyTheme.largePadding,
-          ),
-          ...mapIndexed(
-              (shuffledAnswers),
-              (index, String answer) => Answer(
-                    versusRandomQuizController,
-                    answer,
-                    currentQuestion.correctAnswer,
-                  )),
-          MaterialButton(
-              color: Colors.grey,
-              onPressed: () {
-                versusRandomQuizController.endQuiz();
-              },
-              child: Text('END QUIZ')),
-          Text('temporary text right answer: ' + currentQuestion.correctAnswer)
-        ],
+            const SizedBox(
+              height: MyTheme.largePadding,
+            ),
+            Text('${currentQuestion?.question}'),
+            const SizedBox(
+              height: MyTheme.largePadding,
+            ),
+            ...?currentQuestion?.allAnswers.map((answer) {
+              return Answer(
+                answer,
+                versusRandomQuizController,
+              );
+            }),
+            Text(
+                'temporary text right answer: ${currentQuestion?.correctAnswer}'),
+            Text(
+                'your answer: ${versusRandomQuizController.loggedPlayer.value!.answers.length>versusRandomQuizController.currentQuestionIndexObs.value ? versusRandomQuizController.loggedPlayer.value?.answers.elementAt(versusRandomQuizController.currentQuestionIndexObs.value) : 'asbr'}'),
+            Text(
+                'other player answer: ${versusRandomQuizController.otherPlayer.value!.answers.length>versusRandomQuizController.currentQuestionIndexObs.value ? versusRandomQuizController.otherPlayer.value?.answers.elementAt(versusRandomQuizController.currentQuestionIndexObs.value) : 'asbr b2a'}'),
+          ],
+        ),
       ),
     );
   }
 
-  //todo color right answer, add timer for questions
   Answer(
+    String text /*answer*/,
     VersusRandomQuizController versusRandomQuizController,
-    String answer,
-    String correctAnswer,
   ) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        TextButton(
-          style: ButtonStyle(
-              backgroundColor: answer == correctAnswer &&
-                      versusRandomQuizController.isQuestionAnswered.value
-                  ? MaterialStateProperty.all(Colors.green[200])
-                  : answer != correctAnswer &&
-                          versusRandomQuizController.isQuestionAnswered.value &&
-                          versusRandomQuizController.selectedAnswer.value ==
-                              answer
-                      ? MaterialStateProperty.all(Colors.red[200])
-                      : null),
-          child: Text(answer),
-          onPressed: () {
-            //if question is already answered do nothing
-            if (!versusRandomQuizController.isQuestionAnswered.value) {
-              versusRandomQuizController.checkAnswer(
-                answer: answer,
-              );
-            }
-          },
+        Wrap(
+          children: [
+            versusRandomQuizController.getIsSelectedLoggedPlayer(text)
+                ? Text(
+                    '${versusRandomQuizController.loggedPlayer.value?.playerEmail}')
+                : SizedBox(),
+
+            versusRandomQuizController.getIsSelectedOtherPlayer(text)
+                ? Text(
+                '${versusRandomQuizController.otherPlayer.value?.playerEmail}')
+                : SizedBox(),
+
+            TextButton(
+              style: ButtonStyle(
+                  backgroundColor:
+                      versusRandomQuizController.getIsCorrectAnswer(text)
+                          ? MaterialStateProperty.all(Colors.green[200])
+                          : versusRandomQuizController
+                                  .getIsSelectedWrongAnswer(text)
+                              ? MaterialStateProperty.all(Colors.red[200])
+                              : versusRandomQuizController.getIsSelectedLocalAnswer(text) ?
+                      MaterialStateProperty.all(Colors.orange[200])
+                          :
+                      null),
+              child: Text(text),
+              onPressed: () {
+                //if question is already answered do nothing
+                if (!versusRandomQuizController.isQuestionAnsweredObs.value) {
+                  versusRandomQuizController.registerAnswer(
+                    text,
+                  );
+                }
+              },
+            ),
+          ],
         ),
         const SizedBox(
           height: MyTheme.mediumPadding,

@@ -36,7 +36,8 @@ class FindGameScreen extends StatelessWidget {
               })
              ,
               DefaultButton(text:' TEST API', onPressed: (){
-                findGameController.testFetchQuiz();
+                findGameController.
+                testFetchQuiz();
               })
 
 

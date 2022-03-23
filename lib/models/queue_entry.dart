@@ -13,13 +13,12 @@ class QueueEntryModel {
   List<PlayerModel?> players=[];
   List<QuestionModel?> questions=[];
 
-
   QueueEntryModel(this.difficulty, this.category, this.numberOfQuestions,this.queueEntryId,this.players);
 
   QueueEntryModel.fromJson(var json) {
     difficulty = json['difficulty'];
     category = json['category'];
-    numberOfQuestions = (json['numberOfQuestions']);
+     numberOfQuestions = (json['numberOfQuestions']);
     queueEntryId = (json['queueEntryId']);
         json['players'].forEach((playerJson){
           players.add( PlayerModel.fromJson(playerJson) );
@@ -52,5 +51,5 @@ return{
   'queueEntryId':(queueEntryModel.queueEntryId),
   'players': playersList,
   'questions': questionsList,
-};
+ };
 }

@@ -36,7 +36,7 @@ class FindGameController extends GetxController {
   void enterQueue(BuildContext context) {
     queueEntryIdObs.value=auth.currentUser?.email;
     var players = [
-      PlayerModel(playerEmail: auth.currentUser?.email, isReady: true)
+      PlayerModel(playerEmail: auth.currentUser?.email)
     ];
     var queueEntryModel = QueueEntryModel(
         selectedDifficulty.value,
@@ -215,8 +215,8 @@ class FindGameController extends GetxController {
   //add the player to the list of players of the found queue entry to begin match
   void addPlayerToGamePlayers( BuildContext context) {
     var players = [
-      PlayerModel(playerEmail: auth.currentUser?.email, isReady: true),
-      PlayerModel(playerEmail: queueEntryIdObs.value, isReady: true),
+      PlayerModel(playerEmail: auth.currentUser?.email),
+      PlayerModel(playerEmail: queueEntryIdObs.value),
     ];
 
     var queueEntryModel = QueueEntryModel(
@@ -320,46 +320,6 @@ class FindGameController extends GetxController {
   }
 
 
-  void testFetchQuiz() {
-    var categoryApi;
-    var difficultyApi;
-
-    Constants.categoryList.forEach((categoryMap) {
-      if(categoryMap['category']==selectedCategory.value){
-        categoryApi=categoryMap['api'];
-      }
-    });
-
-    Constants.difficultyList.forEach((difficultyMap) {
-      if(difficultyMap['difficulty']==selectedDifficulty.value){
-        difficultyApi=difficultyMap['api'];
-      }
-    });
-
-    DioHelper.getQuestions(queryParams:  {
-      'difficulty': difficultyApi,
-      'amount': numOfQuestions.value.toInt(),
-      'category': categoryApi,
-      'type': 'multiple',
-    }).then((jsonResponse) {
-
-      ApiModel apiModel = ApiModel.fromJson(jsonResponse.data);
-      if (apiModel.responseCode==null && apiModel.responseCode!=0) {
-        errorLoadingQuestions.value = 'error_loading_quiz'.tr;
-        debugPrint('error loading questions from API');
-      } else {
-
-
-      }
-    }).onError((error, stackTrace) {
-      debugPrint('error loading questions from API'+error.toString());
-      errorLoadingQuestions.value =
-          'this_error_occurred_while_loading_quiz'.tr + error.toString();
-    });
-
-
-  }
-
   void uploadQuiz(questions) {
     debugPrint('uploadQuiz');
 
@@ -410,6 +370,9 @@ class FindGameController extends GetxController {
 
   }
 
+  void testFetchQuiz() {
+
+  }
 
 
 
