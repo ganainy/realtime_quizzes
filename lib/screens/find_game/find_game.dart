@@ -15,7 +15,7 @@ class FindGameScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    findGameController.observe(context);
+    findGameController.observe();
     return SafeArea(
       child: Center(
           child: Column(

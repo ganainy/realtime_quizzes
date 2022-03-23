@@ -3,10 +3,7 @@ import 'package:flutter/src/scheduler/ticker.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/customization/theme.dart';
-import 'package:realtime_quizzes/models/queue_entry.dart';
 import 'package:realtime_quizzes/screens/vs_random_quiz/vs_random_quiz_controller.dart';
-
-import '../../shared/components.dart';
 
 class VersusRandomQuizScreen extends StatelessWidget {
   VersusRandomQuizScreen({Key? key}) : super(key: key);
@@ -14,7 +11,7 @@ class VersusRandomQuizScreen extends StatelessWidget {
   final VersusRandomQuizController versusRandomQuizController =
       Get.put(VersusRandomQuizController())
         ..updateValues(Get.arguments)
-        ..setPlayerReady(Get.arguments);
+        ..moveToRunning(Get.arguments);
 
   @override
   Widget build(BuildContext context) {
@@ -55,14 +52,21 @@ class VersusRandomQuizScreen extends StatelessWidget {
             const SizedBox(
               height: MyTheme.largePadding,
             ),
-            Obx(() {
-              return Text('Timer: ' +
-                  versusRandomQuizController.timerValueObs.value.toString());
-            }),
-            Obx(() {
-              return Text('Next question in: ' +
-                  versusRandomQuizController.nextQuestionTimerValueObs.value.toString());
-            }),
+            versusRandomQuizController.timerValueObs.value > 0
+                ? Obx(() {
+                    return Text('Timer: ' +
+                        versusRandomQuizController.timerValueObs.value
+                            .toString());
+                  })
+                : const SizedBox(),
+            versusRandomQuizController.nextQuestionTimerValueObs.value > 0
+                ? Obx(() {
+                    return Text('Next question in: ' +
+                        versusRandomQuizController
+                            .nextQuestionTimerValueObs.value
+                            .toString());
+                  })
+                : const SizedBox(),
 
             const SizedBox(
               height: MyTheme.largePadding,
@@ -80,9 +84,9 @@ class VersusRandomQuizScreen extends StatelessWidget {
             Text(
                 'temporary text right answer: ${currentQuestion?.correctAnswer}'),
             Text(
-                'your answer: ${versusRandomQuizController.loggedPlayer.value!.answers.length>versusRandomQuizController.currentQuestionIndexObs.value ? versusRandomQuizController.loggedPlayer.value?.answers.elementAt(versusRandomQuizController.currentQuestionIndexObs.value) : 'asbr'}'),
+                'your answer: ${versusRandomQuizController.loggedPlayer.value!.answers.length > versusRandomQuizController.currentQuestionIndexObs.value ? versusRandomQuizController.loggedPlayer.value?.answers.elementAt(versusRandomQuizController.currentQuestionIndexObs.value) : 'asbr'}'),
             Text(
-                'other player answer: ${versusRandomQuizController.otherPlayer.value!.answers.length>versusRandomQuizController.currentQuestionIndexObs.value ? versusRandomQuizController.otherPlayer.value?.answers.elementAt(versusRandomQuizController.currentQuestionIndexObs.value) : 'asbr b2a'}'),
+                'other player answer: ${versusRandomQuizController.otherPlayer.value!.answers.length > versusRandomQuizController.currentQuestionIndexObs.value ? versusRandomQuizController.otherPlayer.value?.answers.elementAt(versusRandomQuizController.currentQuestionIndexObs.value) : 'asbr b2a'}'),
           ],
         ),
       ),
@@ -102,24 +106,22 @@ class VersusRandomQuizScreen extends StatelessWidget {
                 ? Text(
                     '${versusRandomQuizController.loggedPlayer.value?.playerEmail}')
                 : SizedBox(),
-
             versusRandomQuizController.getIsSelectedOtherPlayer(text)
                 ? Text(
-                '${versusRandomQuizController.otherPlayer.value?.playerEmail}')
+                    '${versusRandomQuizController.otherPlayer.value?.playerEmail}')
                 : SizedBox(),
-
             TextButton(
               style: ButtonStyle(
-                  backgroundColor:
-                      versusRandomQuizController.getIsCorrectAnswer(text)
-                          ? MaterialStateProperty.all(Colors.green[200])
+                  backgroundColor: versusRandomQuizController
+                          .getIsCorrectAnswer(text)
+                      ? MaterialStateProperty.all(Colors.green[200])
+                      : versusRandomQuizController
+                              .getIsSelectedWrongAnswer(text)
+                          ? MaterialStateProperty.all(Colors.red[200])
                           : versusRandomQuizController
-                                  .getIsSelectedWrongAnswer(text)
-                              ? MaterialStateProperty.all(Colors.red[200])
-                              : versusRandomQuizController.getIsSelectedLocalAnswer(text) ?
-                      MaterialStateProperty.all(Colors.orange[200])
-                          :
-                      null),
+                                  .getIsSelectedLocalAnswer(text)
+                              ? MaterialStateProperty.all(Colors.orange[200])
+                              : null),
               child: Text(text),
               onPressed: () {
                 //if question is already answered do nothing

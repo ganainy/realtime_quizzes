@@ -8,5 +8,6 @@ CollectionReference quizzesCollection = firestore.collection('quizzes');
 CollectionReference invitesCollection = firestore.collection('invites');
 CollectionReference usersCollection = firestore.collection('users');
 CollectionReference queueCollection = firestore.collection('queue');
+CollectionReference runningCollection = firestore.collection('running');
 
 enum DownloadState { INITIAL, LOADING, SUCCESS, ERROR }

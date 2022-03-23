@@ -3,12 +3,15 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/layouts/home/home.dart';
 import 'package:realtime_quizzes/models/queue_entry.dart';
+import 'package:realtime_quizzes/screens/vs_random_result/vs_randeom_result_controller.dart';
 import 'package:realtime_quizzes/shared/components.dart';
 
 class VersusRandomResultScreen extends StatelessWidget {
   VersusRandomResultScreen({Key? key}) : super(key: key);
 
   QueueEntryModel queueEntryModel = Get.arguments;
+  VersusRandomResultController versusRandomResultController =
+      Get.put(VersusRandomResultController(Get.arguments))..updateUsers();
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +54,7 @@ class VersusRandomResultScreen extends StatelessWidget {
               DefaultButton(
                   text: 'back home',
                   onPressed: () {
+                    versusRandomResultController.deleteGame();
                     Get.offAll(() => HomeScreen());
                   })
             ],

@@ -33,6 +33,7 @@ class VersusRandomQuizController extends GetxController {
   var wrongAnswerObs = Rxn<int>();
   Timer? _timer;
   Timer? _nextQuestionTimer;
+  StreamSubscription? observeGameListener;
 
   //with every read to queue entry we update all values
   void updateValues(QueueEntryModel queueEntryModel) {
@@ -67,7 +68,7 @@ class VersusRandomQuizController extends GetxController {
     FirebaseFirestore.instance.runTransaction((transaction) async {
       // Get the document
       DocumentSnapshot snapshot = await transaction
-          .get(queueCollection.doc(queueEntryModelObs.value?.queueEntryId));
+          .get(runningCollection.doc(queueEntryModelObs.value?.queueEntryId));
 
       if (!snapshot.exists) {
         throw Exception("Queue entry does not exist!");
@@ -82,7 +83,7 @@ class VersusRandomQuizController extends GetxController {
         }
       });
       transaction.update(
-          queueCollection.doc(queueEntryModelObs.value?.queueEntryId),
+          runningCollection.doc(queueEntryModelObs.value?.queueEntryId),
           queueEntryModelToJson(_queueEntryModel));
     }).then((value) {
       print("added answer to player $value");
@@ -94,7 +95,7 @@ class VersusRandomQuizController extends GetxController {
     FirebaseFirestore.instance.runTransaction((transaction) async {
       // Get the document
       DocumentSnapshot snapshot = await transaction
-          .get(queueCollection.doc(queueEntryModel.queueEntryId));
+          .get(runningCollection.doc(queueEntryModel.queueEntryId));
 
       if (!snapshot.exists) {
         throw Exception("Queue entry does not exist!");
@@ -107,7 +108,7 @@ class VersusRandomQuizController extends GetxController {
           player?.isReady = true;
         }
       });
-      transaction.update(queueCollection.doc(queueEntryModel.queueEntryId),
+      transaction.update(runningCollection.doc(queueEntryModel.queueEntryId),
           queueEntryModelToJson(_queueEntryModel));
     }).then((value) {
       observeGame(queueEntryModel.queueEntryId);
@@ -117,7 +118,8 @@ class VersusRandomQuizController extends GetxController {
   }
 
   void observeGame(String? queueEntryId) {
-    queueCollection.doc(queueEntryId).snapshots().listen((event) {
+    observeGameListener =
+        runningCollection.doc(queueEntryId).snapshots().listen((event) {
       QueueEntryModel _queueEntryModel = QueueEntryModel.fromJson(event.data());
 
       //do nothing if not all players ready
@@ -139,8 +141,10 @@ class VersusRandomQuizController extends GetxController {
         startQuestionTimer();
         isGameAlreadyStartedObs.value = true;
       }
-    }).onError((error) {
-      debugPrint('listen to ready state error ' + error.toString());
+    });
+
+    observeGameListener?.onError((error) {
+      printError(info: 'listen to ready state error ' + error.toString());
     });
   }
 
@@ -166,7 +170,7 @@ class VersusRandomQuizController extends GetxController {
     FirebaseFirestore.instance.runTransaction((transaction) async {
       // Get the document
       DocumentSnapshot snapshot = await transaction
-          .get(queueCollection.doc(queueEntryModelObs.value?.queueEntryId));
+          .get(runningCollection.doc(queueEntryModelObs.value?.queueEntryId));
 
       if (!snapshot.exists) {
         throw Exception("Queue entry does not exist!");
@@ -185,14 +189,17 @@ class VersusRandomQuizController extends GetxController {
         }
       });
       transaction.update(
-          queueCollection.doc(queueEntryModelObs.value?.queueEntryId),
+          runningCollection.doc(queueEntryModelObs.value?.queueEntryId),
           queueEntryModelToJson(_queueEntryModel));
     }).then((value) {
       print("updated player scores $value");
-    }).catchError((error) => print("Failed to update player scores: $error"));
+    }).catchError((error) {
+      printError(info: "Failed to update player scores: $error");
+    });
   }
 
   void showResultScreen() {
+    observeGameListener?.cancel(); //game is over, stop listening to changes
     Get.off(() => VersusRandomResultScreen(),
         arguments: queueEntryModelObs.value);
   }
@@ -247,17 +254,21 @@ class VersusRandomQuizController extends GetxController {
 
   void waitThenUpdateQuestionIndex() {
     isQuestionTimeEndedObs.value = true;
-    startNextQuestionTimer();
 
-    Future.delayed(const Duration(seconds: 10), () {
-      //todo remove comment
-      if (currentQuestionIndexObs
-          .value /*>*/ == /*questionsObs.value.length -*/ 0) {
+    //no more question show result
+    if (currentQuestionIndexObs
+        .value /*>*/ == /*questionsObs.value.length -*/ 0) {
+      Future.delayed(const Duration(seconds: 5), () {
         showResultScreen();
-      } else {
+      });
+    } else {
+      //show next question
+      startNextQuestionTimer();
+
+      Future.delayed(const Duration(seconds: 5), () {
         updateCurrentQuestionIndex();
-      }
-    });
+      });
+    }
   }
 
   void cancelTimer(Timer? _timer) {
@@ -301,5 +312,23 @@ class VersusRandomQuizController extends GetxController {
   //this flag used to show orange background to indicate that player selected this answer
   getIsSelectedLocalAnswer(String text) {
     return isQuestionAnsweredObs.value && text == selectedAnswerLocalObs.value;
+  }
+
+  //this method moves game to running collection in firebase (only unstarted games should be in queue)
+  moveToRunning(QueueEntryModel queueEntry) {
+    runningCollection
+        .doc(queueEntry.queueEntryId)
+        .set(queueEntryModelToJson(queueEntry))
+        .then((value) {
+      debugPrint('added to running collection');
+      queueCollection.doc(queueEntry.queueEntryId).delete().then((value) {
+        debugPrint('removed from queue collection');
+        setPlayerReady(queueEntry);
+      }).onError((error, stackTrace) {
+        printError(info: 'error remove from queue collection');
+      });
+    }).onError((error, stackTrace) {
+      printError(info: 'error add to running collection');
+    });
   }
 }
