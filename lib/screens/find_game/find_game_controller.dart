@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:realtime_quizzes/models/player.dart';
+import 'package:realtime_quizzes/screens/single_player_quiz/single_player_quiz_screen.dart';
 import 'package:realtime_quizzes/screens/vs_random_quiz/vs_random_quiz_screen.dart';
 
 import '../../models/api.dart';
@@ -18,8 +19,8 @@ enum DialogType { IN_QUEUE, FOUND_MATCH, LOADING, HIDE }
 
 class FindGameController extends GetxController {
   var numOfQuestionsObs = 10.00.obs;
-  var selectedCategoryObs = 'general_knowledge'.tr.obs;
-  var selectedDifficultyObs = 'medium'.tr.obs;
+  var selectedCategoryObs = ('Random'.tr).obs;
+  var selectedDifficultyObs = Rxn<String?>();
 
   var errorObs = Rxn<String?>();
   var queueEntryIdObs = Rxn<String>();
@@ -76,7 +77,17 @@ class FindGameController extends GetxController {
     );
     Widget continueButton = TextButton(
       child: Text("Play offline"),
-      onPressed: () {},
+      onPressed: () {
+        Get.back();
+        Get.to(
+          () => SinglePlayerQuizScreen(),
+          arguments: {
+            'category': selectedCategoryObs.value,
+            'difficulty': selectedDifficultyObs.value,
+            'numOfQuestions': numOfQuestionsObs.value,
+          },
+        );
+      },
     );
 
     Get.defaultDialog(
@@ -233,6 +244,7 @@ class FindGameController extends GetxController {
   //this method will be triggered if this player is matched with another player
   void searchAvailableQueues(BuildContext context) {
     dialogTypeObs.value = DialogType.LOADING;
+    //todo composite index
     //first try to find alreay existing matching queue entry
     // .where('numberOfQuestions', isEqualTo: numOfQuestions.value.toInt())
     queueCollection
@@ -262,38 +274,6 @@ class FindGameController extends GetxController {
       printError(info: 'observeOtherQueues error :' + error.toString());
     });
   }
-
-/*  //add the player to the list of players of the found queue entry to begin match
-  void addPlayerToGamePlayers(BuildContext context) {
-    var players = [
-      PlayerModel(playerEmail: auth.currentUser?.email),
-      PlayerModel(playerEmail: queueEntryIdObs.value),
-    ];
-
-    var queueEntryModel = QueueEntryModel(
-        selectedDifficultyObs.value,
-        selectedCategoryObs.value,
-        numOfQuestionsObs.value.toInt(),
-        queueEntryIdObs.value,
-        players);
-
-    queueEntryModelObs.value = queueEntryModel;
-
-    var queueEntryModelJson = queueEntryModelToJson(queueEntryModel);
-
-    queueCollection
-        .doc(queueEntryModel.queueEntryId)
-        .set(queueEntryModelJson)
-        .then((value) {
-      dialogTypeObs.value = DialogType.FOUND_MATCH;
-      startGame();
-      debugPrint('Scenario 1: add player to game players now start match');
-    }).onError((error, stackTrace) {
-      errorObs.value = (error.toString());
-      debugPrint(
-          'Scenario 1: add player to game players error :' + error.toString());
-    });
-  }*/
 
   //add the player to the list of players of the found queue entry to begin match
   void addPlayerToGamePlayers(BuildContext context) {
@@ -367,14 +347,27 @@ class FindGameController extends GetxController {
       }
     });
 
-    DioHelper.getQuestions(queryParams: {
+    var params = {
       'difficulty': difficultyApi,
       'amount': numOfQuestionsObs.value.toInt(),
       'category': categoryApi,
       'type': 'multiple',
-    }).then((jsonResponse) {
+    };
+
+    //remove null parameters from queryParams so API call won't fail
+    if (params['difficulty'] == null) {
+      params.remove('difficulty');
+    }
+    if (params['category'] == null) {
+      params.remove('category');
+    }
+    if (params['category'] == 'Random'.tr) {
+      params.remove('category');
+    } //this is not real category its just for UI
+
+    DioHelper.getQuestions(queryParams: params).then((jsonResponse) {
       ApiModel apiModel = ApiModel.fromJson(jsonResponse.data);
-      if (apiModel.responseCode == null && apiModel.responseCode != 0) {
+      if (apiModel.responseCode == null || apiModel.responseCode != 0) {
         errorObs.value = 'error_loading_quiz'.tr;
 
         printError(info: 'error loading questions from API');
@@ -441,5 +434,13 @@ class FindGameController extends GetxController {
       printError(
           info: 'observeQueueQuestionChanges error :' + error.toString());
     });
+  }
+
+  getCategoryColor(String? category) {
+    if (category == selectedCategoryObs.value) {
+      return Colors.blue[100];
+    } else {
+      return null;
+    }
   }
 }

@@ -1,7 +1,5 @@
 import 'package:get/get.dart';
 
-
-
 class Constants {
   static Map<String, Map<String, String>> translation = {
     'en_US': {
@@ -41,84 +39,33 @@ class Constants {
     'de_DE': {}
   };
 
-  static List<Map<String,dynamic>> difficultyList = [
-    {'difficulty':'easy'.tr,
-      'api':'easy'
-    },
-    {'difficulty':'medium'.tr,
-      'api':'medium'
-    },
-    {'difficulty':'hard'.tr,
-      'api':'hard'
-    },
+  static List<Map<String, dynamic>> difficultyList = [
+    {'difficulty': 'easy'.tr, 'api': 'easy'},
+    {'difficulty': 'medium'.tr, 'api': 'medium'},
+    {'difficulty': 'hard'.tr, 'api': 'hard'},
   ];
 
-  //todo remove
-  static List<Map<String,dynamic>> categoryListTesting = [
-    {'category':'general_knowledge'.tr,
-      'api':9
-    },
-    {'category':'books'.tr,
-      'api':10
-    },
-    {'category':'films'.tr,
-      'api':11
-    },
-    {'category':'music'.tr,
-      'api':12
-    },
-  ];
-
-  static List<Map<String,dynamic>> categoryList = [
-    {'category':'general_knowledge'.tr,
-    'api':9
-    },
-    {'category':'books'.tr,
-      'api':10
-    },
-    {'category':'films'.tr,
-      'api':11
-    },
-    {'category':'music'.tr,
-      'api':12
-    },
-  {'category':'musicals_and_theaters'.tr,
-      'api':13
-    },
-  {'category':'television'.tr,
-      'api':14
-    },
-  {'category':'video_games'.tr,
-      'api':15
-    },
-  {'category':'board_games'.tr,
-      'api':16
-    },
-  {'category':'science_and_nature'.tr,
-      'api':17
-    },
-  {'category':'computers'.tr,
-      'api':18
-    }, {'category':'mathematics'.tr,
-      'api':19
-    }, {'category':'mythology'.tr,
-      'api':20
-    }, {'category':'sports'.tr,
-      'api':21
-    }, {'category':'geography'.tr,
-      'api':22
-    }, {'category':'history'.tr,
-      'api':23
-    },{'category':'politics'.tr,
-      'api':24
-    },{'category':'art'.tr,
-      'api':25
-    },{'category':'celebrities'.tr,
-      'api':26
-    },{'category':'animals'.tr,
-      'api':27
-    }
-
+  static List<Map<String, dynamic>> categoryList = [
+    {'category': 'Random'.tr, 'api': null},
+    {'category': 'general_knowledge'.tr, 'api': 9},
+    {'category': 'books'.tr, 'api': 10},
+    {'category': 'films'.tr, 'api': 11},
+    {'category': 'music'.tr, 'api': 12},
+    {'category': 'musicals_and_theaters'.tr, 'api': 13},
+    {'category': 'television'.tr, 'api': 14},
+    {'category': 'video_games'.tr, 'api': 15},
+    {'category': 'board_games'.tr, 'api': 16},
+    {'category': 'science_and_nature'.tr, 'api': 17},
+    {'category': 'computers'.tr, 'api': 18},
+    {'category': 'mathematics'.tr, 'api': 19},
+    {'category': 'mythology'.tr, 'api': 20},
+    {'category': 'sports'.tr, 'api': 21},
+    {'category': 'geography'.tr, 'api': 22},
+    {'category': 'history'.tr, 'api': 23},
+    {'category': 'politics'.tr, 'api': 24},
+    {'category': 'art'.tr, 'api': 25},
+    {'category': 'celebrities'.tr, 'api': 26},
+    {'category': 'animals'.tr, 'api': 27}
   ];
 }
 

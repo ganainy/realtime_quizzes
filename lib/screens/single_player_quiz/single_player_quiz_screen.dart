@@ -5,13 +5,13 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/customization/theme.dart';
 import 'package:realtime_quizzes/screens/single_player_quiz/single_player_quiz_controller.dart';
 
-import '../../shared/components.dart';
-
 class SinglePlayerQuizScreen extends StatelessWidget {
   SinglePlayerQuizScreen({Key? key}) : super(key: key);
 
   final SinglePlayerQuizController singlePlayerQuizController =
-      Get.put(SinglePlayerQuizController())/*..fetchQuiz(Get.arguments)*/;
+      Get.put(SinglePlayerQuizController())
+        ..setInitialData(Get.arguments)
+        ..fetchQuiz();
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +30,6 @@ class SinglePlayerQuizScreen extends StatelessWidget {
   ) {
     var currentQuestion = singlePlayerQuizController.questions.value
         .elementAt(singlePlayerQuizController.currentQuestionIndex.value);
-    var shuffledAnswers = currentQuestion.shuffledAnswers;
 
     return WillPopScope(
       onWillPop: () async {
@@ -65,13 +64,13 @@ class SinglePlayerQuizScreen extends StatelessWidget {
             const SizedBox(
               height: MyTheme.largePadding,
             ),
-            ...mapIndexed(
-                (shuffledAnswers),
-                (index, String answer) => Answer(
-                      singlePlayerQuizController,
-                      answer,
-                      currentQuestion.correctAnswer,
-                    )),
+            ...currentQuestion.allAnswers.map((answer) {
+              return Answer(
+                singlePlayerQuizController,
+                answer,
+                currentQuestion.correctAnswer,
+              );
+            }),
             MaterialButton(
                 color: Colors.grey,
                 onPressed: () {
@@ -86,7 +85,6 @@ class SinglePlayerQuizScreen extends StatelessWidget {
     );
   }
 
-  //todo color right answer, add timer for questions
   Answer(
     SinglePlayerQuizController singlePlayerQuizController,
     String answer,

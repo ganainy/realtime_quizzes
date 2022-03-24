@@ -1,9 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:realtime_quizzes/customization/theme.dart';
-
-import '../screens/create_quiz/create_quiz_controller.dart';
-import '../screens/find_game/find_game_controller.dart';
 
 DefaultFormField({
   required String labelText,
@@ -93,4 +88,3 @@ Iterable<E> mapIndexed<E, T>(
     index = index + 1;
   }
 }
-

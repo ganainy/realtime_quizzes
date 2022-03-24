@@ -20,9 +20,17 @@ class FindGameScreen extends StatelessWidget {
       child: Center(
           child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text('Select game settings'),
-          Expanded(child: CategoriesListView(findGameController)),
+          Text(
+            'Select game settings',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headline3,
+          ),
+          SizedBox(
+            height: 100,
+          ),
+          Categories(findGameController),
           QuestionNumberSlider(findGameController),
           DifficultyRow(findGameController),
           DefaultButton(
@@ -39,11 +47,13 @@ class FindGameScreen extends StatelessWidget {
     return Obx(() {
       return Column(
         children: [
-          Text('Number of questions:'),
+          Text(
+              'Number of questions: ${findGameController.numOfQuestionsObs.value.toInt()}'),
           Slider(
             value: findGameController.numOfQuestionsObs.value,
             max: 20,
             min: 5,
+            divisions: 15,
             label: findGameController.numOfQuestionsObs.round().toString(),
             onChanged: (double value) {
               findGameController.numOfQuestionsObs.value = value;
@@ -54,20 +64,31 @@ class FindGameScreen extends StatelessWidget {
     });
   }
 
-  CategoriesListView(FindGameController findGameController) {
-    return ListView.builder(
-      itemCount: Constants.categoryListTesting.length,
-      itemBuilder: (BuildContext context, int index) {
-        return Card(
-          child: TextButton(
-            child: Text('${Constants.categoryListTesting[index]['category']}'),
-            onPressed: () {
-              findGameController.selectedCategoryObs.value =
-                  Constants.categoryListTesting[index]['category'];
-            },
+  Categories(FindGameController findGameController) {
+    return Column(
+      children: [
+        Text('Select category'),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              ...Constants.categoryList.map((category) => Obx(() {
+                    return Card(
+                      child: TextButton(
+                        child: Text('${category['category']}'),
+                        onPressed: () {
+                          findGameController.selectedCategoryObs.value =
+                              category['category'];
+                        },
+                      ),
+                      color: findGameController
+                          .getCategoryColor(category['category']),
+                    );
+                  }))
+            ],
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 
@@ -75,7 +96,8 @@ class FindGameScreen extends StatelessWidget {
     return Obx(() {
       return Column(
         children: [
-          Text('Difficulty:'),
+          Text(
+              'Difficulty: ${findGameController.selectedDifficultyObs.value ?? ''}'),
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             DifficultySelector('easy'.tr, findGameController),
             DifficultySelector('medium'.tr, findGameController),
@@ -98,7 +120,6 @@ class FindGameScreen extends StatelessWidget {
           backgroundColor:
               difficulty == findGameController.selectedDifficultyObs.value
                   ? Colors.grey[400]
-                  //todo handle unselected color in dark mode
                   : Colors.white,
           child: CircleAvatar(
             backgroundColor: difficulty == 'easy'.tr

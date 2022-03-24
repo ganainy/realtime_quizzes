@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
-import 'package:realtime_quizzes/models/quiz_specs.dart';
-import 'package:realtime_quizzes/network/dio_helper.dart';
 
-import '../../models/question.dart';
+import '../../models/api.dart';
 import '../../models/single_player_quiz_result.dart';
-import '../single_player_quiz_result.dart';
+import '../../network/dio_helper.dart';
+import '../../shared/constants.dart';
+import '../single_player_quiz_result/single_player_quiz_result.dart';
 
 class SinglePlayerQuizController extends GetxController {
   var questions = [].obs;
@@ -17,29 +17,70 @@ class SinglePlayerQuizController extends GetxController {
   var isQuestionAnswered = false.obs;
   var timerValue = 0.obs;
 
-  var errorLoadingQuestions = Rxn<String>();
   var rightAnswerIndex = Rxn<int>();
   var wrongAnswerIndex = Rxn<int>();
   var selectedAnswer = Rxn<String>();
   var timerCounter = Rxn<int>();
 
-/*  fetchQuiz(QuizSpecs quizSpecs) {
-    print(quizSpecs.difficulty);
-    DioHelper.getQuestions(queryParams: quizSpecs.toMap()).then((json) {
-      QuizModel questionsModel = QuizModel.fromJson(json.data);
-      if (questionsModel.questions.isEmpty) {
-        errorLoadingQuestions.value = 'error_loading_quiz'.tr;
-        //todo show error loading questions
+  var numOfQuestionsObs = 10.00.obs;
+  var selectedCategoryObs = Rxn<String?>();
+  var selectedDifficultyObs = Rxn<String?>();
+  var errorObs = Rxn<String?>();
+
+  void fetchQuiz() {
+    debugPrint('fetchQuiz');
+
+    var categoryApi;
+    var difficultyApi;
+
+    Constants.categoryList.forEach((categoryMap) {
+      if (categoryMap['category'] == selectedCategoryObs.value) {
+        categoryApi = categoryMap['api'];
+      }
+    });
+
+    Constants.difficultyList.forEach((difficultyMap) {
+      if (difficultyMap['difficulty'] == selectedDifficultyObs.value) {
+        difficultyApi = difficultyMap['api'];
+      }
+    });
+
+    var params = {
+      'difficulty': difficultyApi,
+      'amount': numOfQuestionsObs.value.toInt(),
+      'category': categoryApi,
+      'type': 'multiple',
+    };
+
+    //remove null parameters from queryParams so API call won't fail
+    if (params['difficulty'] == null) {
+      params.remove('difficulty');
+    }
+    if (params['category'] == null) {
+      params.remove('category');
+    }
+    if (params['category'] == 'Random'.tr) {
+      params.remove('category');
+    } //this is not real category its just for UI
+    debugPrint('params' + params.length.toString());
+
+    DioHelper.getQuestions(queryParams: params).then((jsonResponse) {
+      ApiModel apiModel = ApiModel.fromJson(jsonResponse.data);
+
+      if (apiModel.responseCode == null || apiModel.responseCode != 0) {
+        errorObs.value = 'error_loading_quiz'.tr;
+
+        printError(info: 'error loading questions from API');
       } else {
-        questions.value = questionsModel.questions;
+        questions.value = apiModel.questions;
         startTimer();
       }
     }).onError((error, stackTrace) {
-      //todo show error loading questions
-      errorLoadingQuestions.value =
+      printError(info: 'error loading questions from API' + error.toString());
+      errorObs.value =
           'this_error_occurred_while_loading_quiz'.tr + error.toString();
     });
-  }*/
+  }
 
   void checkAnswer({
     //answer that user selected or null if timer runs out without any answer selected
@@ -135,5 +176,12 @@ class SinglePlayerQuizController extends GetxController {
     if (_timer != null) {
       _timer!.cancel();
     }
+  }
+
+  //get arguments of find game screen(difficulty-category-numOfQuestions
+  setInitialData(arguments) {
+    selectedCategoryObs.value = arguments['category'];
+    selectedDifficultyObs.value = arguments['difficulty'];
+    numOfQuestionsObs.value = arguments['numOfQuestions'];
   }
 }

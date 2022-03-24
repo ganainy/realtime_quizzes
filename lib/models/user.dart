@@ -8,6 +8,8 @@ class UserModel {
   String? imageUrl;
   bool? isOnline;
   var results = []; // list of ResultModel
+  var friends = []; //list of String
+  List<dynamic> receivedFriendRequests = [];
 
   UserModel(this.name, this.email, this.imageUrl);
 
@@ -15,6 +17,8 @@ class UserModel {
     name = json['name'];
     email = json['email'];
     imageUrl = json['imageUrl'];
+    friends = json['friends'];
+    receivedFriendRequests = json['receivedFriendRequests'];
     isOnline = json['isOnline'];
     if (json['results'] != null) {
       json['results'].forEach((result) {
@@ -36,5 +40,7 @@ userModelToJson(UserModel userModel) {
     'imageUrl': userModel.imageUrl,
     'isOnline': userModel.isOnline,
     'results': resultsJson,
+    'friends': userModel.friends,
+    'receivedFriendRequests': userModel.receivedFriendRequests,
   };
 }
