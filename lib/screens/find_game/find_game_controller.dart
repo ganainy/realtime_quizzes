@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:realtime_quizzes/models/player.dart';
 import 'package:realtime_quizzes/screens/single_player_quiz/single_player_quiz_screen.dart';
-import 'package:realtime_quizzes/screens/vs_random_quiz/vs_random_quiz_screen.dart';
 
 import '../../models/api.dart';
 import '../../models/question.dart';
@@ -14,6 +13,7 @@ import '../../models/queue_entry.dart';
 import '../../network/dio_helper.dart';
 import '../../shared/constants.dart';
 import '../../shared/shared.dart';
+import '../multiplayer_quiz/multiplayer_quiz_screen.dart';
 
 enum DialogType { IN_QUEUE, FOUND_MATCH, LOADING, HIDE }
 
@@ -396,7 +396,7 @@ class FindGameController extends GetxController {
     }).then((value) {
       queueCollection.doc(queueEntryIdObs.value).get().then((value) {
         dialogTypeObs.value = DialogType.HIDE; //hide any dialog alerts
-        Get.to(() => VersusRandomQuizScreen(),
+        Get.to(() => MultiPlayerQuizScreen(),
             arguments: QueueEntryModel.fromJson(value.data()));
       }).onError((error, stackTrace) {
         printError(
@@ -424,7 +424,7 @@ class FindGameController extends GetxController {
       if (queueEntry.questions.isNotEmpty) {
         debugPrint('queueEntry.questions.isNotEmpty');
         observeQueueQuestionChangesStreamSubscription?.cancel();
-        Get.to(() => VersusRandomQuizScreen(), arguments: queueEntry);
+        Get.to(() => MultiPlayerQuizScreen(), arguments: queueEntry);
       } else {
         printError(info: 'queueEntry.questions.isEmpty');
       }

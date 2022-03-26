@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
-import 'package:realtime_quizzes/screens/vs_friend_quiz/vs_friend_quiz_screen.dart';
 
 import '../../models/api.dart';
 import '../../models/player.dart';
@@ -14,6 +13,7 @@ import '../../models/user.dart';
 import '../../network/dio_helper.dart';
 import '../../shared/constants.dart';
 import '../../shared/shared.dart';
+import '../multiplayer_quiz/multiplayer_quiz_screen.dart';
 
 class FriendsController extends GetxController {
   var loggedUserObs = Rxn<UserModel>(); // UserModel
@@ -466,7 +466,7 @@ class FriendsController extends GetxController {
   void startGame() {
     //scenario 1,2
     queueEntryListener?.cancel();
-    Get.to(() => VersusFriendQuizScreen(),
+    Get.to(() => MultiPlayerQuizScreen(),
         arguments: (sentInviteQueueEntryModelObs.value));
   }
 

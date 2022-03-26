@@ -1,14 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
-import 'package:realtime_quizzes/models/player.dart';
-import 'package:realtime_quizzes/shared/converters.dart';
 
-import '../../models/question.dart';
 import '../../shared/shared.dart';
-import '../vs_random_quiz/vs_random_quiz_screen.dart';
 
 class ReceivedInviteController extends GetxController {
   var downloadState = DownloadState.INITIAL.obs;

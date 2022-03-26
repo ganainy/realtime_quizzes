@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
+import 'package:realtime_quizzes/models/answer.dart';
 import 'package:realtime_quizzes/models/player.dart';
 import 'package:realtime_quizzes/models/question.dart';
 import 'package:realtime_quizzes/models/queue_entry.dart';
@@ -11,7 +12,7 @@ import 'package:realtime_quizzes/shared/shared.dart';
 
 import '../result/result_screen.dart';
 
-class VersusFriendQuizController extends GetxController {
+class MultiPlayerQuizController extends GetxController {
   //fire store
   var queueEntryModelObs = Rxn<QueueEntryModel?>();
   var questionsObs = [].obs;
@@ -25,15 +26,49 @@ class VersusFriendQuizController extends GetxController {
   var timerValueObs = 0.obs;
   var nextQuestionTimerValueObs = 0.obs;
   var currentQuestionIndexObs = 0.obs;
-  var isQuestionAnsweredObs = false.obs;
+  var isQuestionAnswered = false;
   var isQuestionTimeEndedObs = false.obs;
-  var isGameAlreadyStartedObs = false.obs;
+  var isGameAlreadyStarted = false;
   var selectedAnswerLocalObs =
       Rxn<String?>(); //to show orange background for answer selected by user
   var wrongAnswerObs = Rxn<int>();
   Timer? _timer;
   Timer? _nextQuestionTimer;
   StreamSubscription? observeGameListener;
+
+  QueueEntryModel game;
+  MultiPlayerQuizController(this.game);
+
+  //to calculate player score and only update it when different as old score
+  var _loggedUserScore = 0;
+
+  @override
+  void onInit() {
+    moveToRunning(game).then((value) {
+      setPlayerReady(game).then((value) {
+        print("Player set to ready $value");
+      }).catchError((error) {
+        printError(info: "error setPlayerReady" + error.toString());
+      });
+      observeGame(game.queueEntryId);
+      deleteFromInvites(game.queueEntryId).onError((error, stackTrace) {
+        printError(info: 'error deleteFromInvites' + error.toString());
+      });
+      deleteFromQueue(game.queueEntryId).onError((error, stackTrace) {
+        printError(info: 'error deleteFromQueue' + error.toString());
+      });
+    }).onError((error, stackTrace) {
+      printError(info: 'error moveToRunning' + error.toString());
+    });
+
+    super.onInit();
+  }
+
+  @override
+  void onClose() {
+    observeGameListener?.cancel();
+    super.onClose();
+  }
 
   //with every read to queue entry we update all values
   void updateValues(QueueEntryModel queueEntryModel) {
@@ -63,39 +98,53 @@ class VersusFriendQuizController extends GetxController {
   //save user answer in fire store
   void registerAnswer(String answer) {
     selectedAnswerLocalObs.value = answer;
-    isQuestionAnsweredObs.value = true;
+    isQuestionAnswered = true;
 
-    FirebaseFirestore.instance.runTransaction((transaction) async {
-      // Get the document
-      DocumentSnapshot snapshot = await transaction
-          .get(invitesCollection.doc(queueEntryModelObs.value?.queueEntryId));
+    var _isCorrectAnswer = queueEntryModelObs.value?.questions
+            .elementAt(currentQuestionIndexObs.value)
+            ?.correctAnswer ==
+        answer;
 
-      if (!snapshot.exists) {
-        throw Exception("Queue entry does not exist!");
+    queueEntryModelObs.value?.players.forEach((player) {
+      if (player?.playerEmail == auth.currentUser?.email) {
+        var answers = addUniqueAnswer(
+            answer:
+                AnswerModel(answer: answer, isCorrectAnswer: _isCorrectAnswer),
+            answers: player?.answers);
+        player?.answers = answers;
       }
+    });
 
-      var _queueEntryModel = QueueEntryModel.fromJson(snapshot.data());
-      updateValues(_queueEntryModel);
+    runningCollection
+        .doc(queueEntryModelObs.value?.queueEntryId)
+        .set(queueEntryModelToJson(queueEntryModelObs.value))
+        .then((value) {
+      debugPrint("added answer to player ");
+    }).onError((error, stackTrace) {
+      printError(info: "Failed to update player answers: $error");
+    });
+  }
 
-      _queueEntryModel.players.forEach((player) {
-        if (player?.playerEmail == auth.currentUser?.email) {
-          player?.answers.add(answer);
-        }
-      });
-      transaction.update(
-          invitesCollection.doc(queueEntryModelObs.value?.queueEntryId),
-          queueEntryModelToJson(_queueEntryModel));
-    }).then((value) {
-      print("added answer to player $value");
-    }).catchError((error) => print("Failed to update player answers: $error"));
+  List<AnswerModel> addUniqueAnswer(
+      {answers: List<AnswerModel>, answer: AnswerModel}) {
+    bool isUnique = true;
+    answers.forEach((listItem) {
+      if (listItem.answer == answer.answer) {
+        isUnique = false;
+      }
+    });
+    if (isUnique) {
+      answers.add(answer);
+    }
+    return answers;
   }
 
   //marks player state as ready- match begins when all players ready
-  setPlayerReady(QueueEntryModel queueEntryModel) {
-    FirebaseFirestore.instance.runTransaction((transaction) async {
+  Future<dynamic> setPlayerReady(QueueEntryModel queueEntryModel) async {
+    return await FirebaseFirestore.instance.runTransaction((transaction) async {
       // Get the document
       DocumentSnapshot snapshot = await transaction
-          .get(invitesCollection.doc(queueEntryModel.queueEntryId));
+          .get(runningCollection.doc(queueEntryModel.queueEntryId));
 
       if (!snapshot.exists) {
         throw Exception("Queue entry does not exist!");
@@ -108,39 +157,39 @@ class VersusFriendQuizController extends GetxController {
           player?.isReady = true;
         }
       });
-      transaction.update(invitesCollection.doc(queueEntryModel.queueEntryId),
+      transaction.update(runningCollection.doc(queueEntryModel.queueEntryId),
           queueEntryModelToJson(_queueEntryModel));
-    }).then((value) {
-      observeGame(queueEntryModel.queueEntryId);
-      print("Player set to ready $value");
-    }).catchError(
-        (error) => print("Failed to update player ready state: $error"));
+    });
   }
 
+  //this method will listen to any change in game and update UI accordingly
   void observeGame(String? queueEntryId) {
     observeGameListener =
-        invitesCollection.doc(queueEntryId).snapshots().listen((event) {
+        runningCollection.doc(queueEntryId).snapshots().listen((event) {
       QueueEntryModel _queueEntryModel = QueueEntryModel.fromJson(event.data());
 
-      //do nothing if not all players ready
-      bool someoneNotReady = false;
-      _queueEntryModel.players.forEach((player) {
-        if (player != null && !player.isReady) {
-          someoneNotReady = true;
-        }
-      });
-      if (someoneNotReady) {
-        debugPrint('not all players ready yet');
-        return;
+      updateValues(_queueEntryModel);
+
+      //if game didn't already start, check if all players ready then
+      // start game otherwise do nothing
+      if (!isGameAlreadyStarted && areAllPlayersReady(_queueEntryModel)) {
+        isGameAlreadyStarted = true;
+        startQuestionTimer();
       }
 
-      ///
-      updateValues(_queueEntryModel);
-      if (!isGameAlreadyStartedObs.value) {
-        debugPrint('all ready start game');
-        startQuestionTimer();
-        isGameAlreadyStartedObs.value = true;
-      }
+      //calculate player score
+      var _score = 0;
+      _queueEntryModel.players.forEach((player) {
+        if (player?.playerEmail == auth.currentUser?.email) {
+          player?.answers.forEach((answer) {
+            if (answer.isCorrectAnswer) {
+              _score++;
+            }
+          });
+        }
+      });
+      _loggedUserScore = _score;
+      updateScore(_loggedUserScore);
     });
 
     observeGameListener?.onError((error) {
@@ -148,12 +197,28 @@ class VersusFriendQuizController extends GetxController {
     });
   }
 
+  //this method checks if each player isReady
+  bool areAllPlayersReady(QueueEntryModel _queueEntryModel) {
+    bool someoneNotReady = false;
+    _queueEntryModel.players.forEach((player) {
+      if (player != null && !player.isReady) {
+        someoneNotReady = true;
+      }
+    });
+
+    if (someoneNotReady) {
+      debugPrint('not all players ready yet');
+    }
+
+    return someoneNotReady;
+  }
+
   //update current question index in firestore so game goes to next question
   void updateCurrentQuestionIndex() {
     //reset local selected answer to remove selected answer yellow  background
     selectedAnswerLocalObs.value = null;
     //reset question to not answered to remove red and green answer background
-    isQuestionAnsweredObs.value = false;
+    isQuestionAnswered = false;
     //reset question to not answered to remove red and green answer background
     isQuestionTimeEndedObs.value = false;
     //update current question index to show next question
@@ -164,50 +229,36 @@ class VersusFriendQuizController extends GetxController {
   }
 
   //this method is called when time runs out and user doesn't select an answer
-  void updateScores() {
-    cancelTimer(_timer);
-
-    FirebaseFirestore.instance.runTransaction((transaction) async {
-      // Get the document
-      DocumentSnapshot snapshot = await transaction
-          .get(invitesCollection.doc(queueEntryModelObs.value?.queueEntryId));
-
-      if (!snapshot.exists) {
-        throw Exception("Queue entry does not exist!");
+  void updateScore(int newScore) {
+    queueEntryModelObs.value?.players.forEach((player) {
+      //increase player score if right answer
+      if (player?.playerEmail == auth.currentUser?.email) {
+        player?.score = newScore;
       }
+    });
 
-      var _queueEntryModel = QueueEntryModel.fromJson(snapshot.data());
-      updateValues(_queueEntryModel);
-
-      _queueEntryModel.players.forEach((player) {
-        //increase player score if right answer
-        if (player?.playerEmail == auth.currentUser?.email &&
-            player!.answers.length > currentQuestionIndexObs.value &&
-            player.answers.elementAt(currentQuestionIndexObs.value) ==
-                currentQuestionObs.value?.correctAnswer) {
-          player.score = player.score + 1;
-        }
-      });
-      transaction.update(
-          invitesCollection.doc(queueEntryModelObs.value?.queueEntryId),
-          queueEntryModelToJson(_queueEntryModel));
-    }).then((value) {
-      print("updated player scores $value");
+    runningCollection
+        .doc(queueEntryModelObs.value?.queueEntryId)
+        .set(queueEntryModelToJson(queueEntryModelObs.value))
+        .then((value) {
+      debugPrint(
+          "updated player scores ${auth.currentUser!.email}  ${queueEntryModelObs.value?.players.firstWhere((element) {
+        return element!.playerEmail == auth.currentUser!.email;
+      })?.score}");
     }).catchError((error) {
       printError(info: "Failed to update player scores: $error");
     });
   }
 
   void showResultScreen() {
-    observeGameListener?.cancel(); //game is over, stop listening to changes
     Get.off(() => ResultScreen(), arguments: queueEntryModelObs.value);
   }
 
-  // start 10 sec timer as time limit for question
+  // start 10 sec timer as time limit for question && increase index to show
+  //next question or result on countdown end
   void startQuestionTimer() {
     debugPrint('startTimer()');
     //reset timer if it was running to begin again from 10
-    cancelTimer(_timer);
     timerValueObs.value = 10;
     isQuestionTimeEndedObs.value = false;
 
@@ -217,9 +268,9 @@ class VersusFriendQuizController extends GetxController {
         if (timerValueObs.value == 0) {
           cancelTimer(_timer);
           //register answer as empty if no answer selected
-          if (selectedAnswerLocalObs.value == null) registerAnswer('');
-          //increase score if player got correct answer
-          updateScores();
+          if (selectedAnswerLocalObs.value == null) {
+            registerAnswer('');
+          }
           //wait two seconds and show next answer or show quiz result if no more questions
           waitThenUpdateQuestionIndex();
           debugPrint('timer ended');
@@ -233,9 +284,8 @@ class VersusFriendQuizController extends GetxController {
 
   void startNextQuestionTimer() {
     debugPrint('startNextQuestionTimer()');
-    //reset timer if it was running to begin again from 10
-    cancelTimer(_nextQuestionTimer);
-    nextQuestionTimerValueObs.value = 5;
+    //reset next question timer to begin again from 5
+    nextQuestionTimerValueObs.value = 10; //todo 5
 
     _nextQuestionTimer = Timer.periodic(
       const Duration(seconds: 1),
@@ -256,14 +306,14 @@ class VersusFriendQuizController extends GetxController {
 
     //no more question show result
     if (currentQuestionIndexObs
-        .value /*>*/ >= /*questionsObs.value.length -*/ 1) {
+        .value /*>*/ == /*questionsObs.value.length -*/ 0) {
       Future.delayed(const Duration(seconds: 5), () {
         showResultScreen();
       });
     } else {
-      //show next question
+      //show countdown to indicate that new question will be showin in 5 seconds
       startNextQuestionTimer();
-
+      //show next question
       Future.delayed(const Duration(seconds: 5), () {
         updateCurrentQuestionIndex();
       });
@@ -278,6 +328,8 @@ class VersusFriendQuizController extends GetxController {
 
   //return true if answer is right
   bool getIsCorrectAnswer(String text) {
+    debugPrint(
+        'anta atbdnt${isQuestionTimeEndedObs.value && currentQuestionObs.value?.correctAnswer == text}');
     return (isQuestionTimeEndedObs.value &&
         currentQuestionObs.value?.correctAnswer == text);
   }
@@ -287,7 +339,9 @@ class VersusFriendQuizController extends GetxController {
     return (loggedPlayer.value!.answers.length >
             currentQuestionIndexObs.value &&
         isQuestionTimeEndedObs.value &&
-        loggedPlayer.value?.answers.elementAt(currentQuestionIndexObs.value) ==
+        loggedPlayer.value?.answers
+                .elementAt(currentQuestionIndexObs.value)
+                .answer ==
             text);
   }
 
@@ -297,7 +351,8 @@ class VersusFriendQuizController extends GetxController {
         loggedPlayer.value!.answers.length > currentQuestionIndexObs.value &&
         text ==
             loggedPlayer.value?.answers
-                .elementAt(currentQuestionIndexObs.value);
+                .elementAt(currentQuestionIndexObs.value)
+                .answer;
   }
 
   //this flag used to show other player avatar beside the selected answer
@@ -305,21 +360,30 @@ class VersusFriendQuizController extends GetxController {
     return isQuestionTimeEndedObs.value &&
         otherPlayer.value!.answers.length > currentQuestionIndexObs.value &&
         text ==
-            otherPlayer.value?.answers.elementAt(currentQuestionIndexObs.value);
+            otherPlayer.value?.answers
+                .elementAt(currentQuestionIndexObs.value)
+                .answer;
   }
 
   //this flag used to show orange background to indicate that player selected this answer
   getIsSelectedLocalAnswer(String text) {
-    return isQuestionAnsweredObs.value && text == selectedAnswerLocalObs.value;
+    return isQuestionAnswered && text == selectedAnswerLocalObs.value;
   }
 
-  loadQuestions(queueEntryId) {
-    invitesCollection.doc(queueEntryId).get().then((value) {
-      var invite = QueueEntryModel.fromJson(value.data());
-      setPlayerReady(invite);
-      updateValues(invite);
-    }).onError((error, stackTrace) {
-      printError(info: 'error load questions' + error.toString());
-    });
+  //this method moves game to running collection in firebase (only unstarted games should be in queue)
+  Future<void> moveToRunning(QueueEntryModel queueEntry) async {
+    return await runningCollection
+        .doc(queueEntry.queueEntryId)
+        .set(queueEntryModelToJson(queueEntry));
+  }
+
+  //delete from invites collection (friends game)
+  Future<void> deleteFromInvites(String? queueEntryId) async {
+    return await invitesCollection.doc(queueEntryId).delete();
+  }
+
+  //delete from queue collection (randoms game)
+  Future<void> deleteFromQueue(String? queueEntryId) async {
+    return await queueCollection.doc(queueEntryId).delete();
   }
 }

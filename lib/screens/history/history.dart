@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/customization/theme.dart';
 
-import '../invite/invite.dart';
 import 'history_controller.dart';
 
 class HistoryScreen extends StatelessWidget {
@@ -35,40 +34,32 @@ class HistoryScreen extends StatelessWidget {
                                     historyController.resultsObs.value!.length,
                                 shrinkWrap: true,
                                 itemBuilder: (context, index) {
-                                  return InkWell(
-                                    onTap: () {
-                                      Get.to(() => InviteScreen(),
-                                          arguments: historyController
-                                              .resultsObs.value!
-                                              .elementAt(index));
-                                    },
-                                    child: Card(
-                                      color: Colors.grey[200],
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(
-                                            MyTheme.mediumPadding),
-                                        child: Wrap(
-                                          spacing:
-                                              20, // to apply margin in the main axis of the wrap
-                                          runSpacing:
-                                              20, // to apply margin in the cross axis of the wrap
-                                          alignment: WrapAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                                'status: ${historyController.resultsObs.value!.elementAt(index).type}'),
-                                            Text(
-                                                'category: ${historyController.resultsObs.value!.elementAt(index).category}'),
-                                            Text(
-                                                'difficulty: ${historyController.resultsObs.value!.elementAt(index).difficulty}'),
-                                            Text(
-                                                'score: ${historyController.resultsObs.value!.elementAt(index).score}/'
-                                                '${historyController.resultsObs.value!.elementAt(index).maxScore}'),
-                                            Text(
-                                                'opponent: ${historyController.resultsObs.value!.elementAt(index).otherPlayerEmail}'),
-                                            Text(
-                                                'date: ${DateTime.fromMillisecondsSinceEpoch(historyController.resultsObs.value!.elementAt(index).createdAt)}'),
-                                          ],
-                                        ),
+                                  return Card(
+                                    color: Colors.grey[200],
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(
+                                          MyTheme.mediumPadding),
+                                      child: Wrap(
+                                        spacing:
+                                            20, // to apply margin in the main axis of the wrap
+                                        runSpacing:
+                                            20, // to apply margin in the cross axis of the wrap
+                                        alignment: WrapAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                              'status: ${historyController.resultsObs.value!.elementAt(index).type}'),
+                                          Text(
+                                              'category: ${historyController.resultsObs.value!.elementAt(index).category}'),
+                                          Text(
+                                              'difficulty: ${historyController.resultsObs.value!.elementAt(index).difficulty}'),
+                                          Text(
+                                              'score: ${historyController.resultsObs.value!.elementAt(index).score}/'
+                                              '${historyController.resultsObs.value!.elementAt(index).maxScore}'),
+                                          Text(
+                                              'opponent: ${historyController.resultsObs.value!.elementAt(index).otherPlayerEmail}'),
+                                          Text(
+                                              'date: ${DateTime.fromMillisecondsSinceEpoch(historyController.resultsObs.value!.elementAt(index).createdAt)}'),
+                                        ],
                                       ),
                                     ),
                                   );

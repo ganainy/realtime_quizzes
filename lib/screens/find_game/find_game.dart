@@ -17,29 +17,31 @@ class FindGameScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     findGameController.observe();
     return SafeArea(
-      child: Center(
-          child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'Select game settings',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headline3,
-          ),
-          SizedBox(
-            height: 100,
-          ),
-          Categories(findGameController),
-          QuestionNumberSlider(findGameController),
-          DifficultyRow(findGameController),
-          DefaultButton(
-              text: ' Find Game',
-              onPressed: () {
-                findGameController.searchAvailableQueues(context);
-              }),
-        ],
-      )),
+      child: SingleChildScrollView(
+        child: Center(
+            child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              'Select game settings',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headline3,
+            ),
+            SizedBox(
+              height: 100,
+            ),
+            Categories(findGameController),
+            QuestionNumberSlider(findGameController),
+            DifficultyRow(findGameController),
+            DefaultButton(
+                text: ' Find Game',
+                onPressed: () {
+                  findGameController.searchAvailableQueues(context);
+                }),
+          ],
+        )),
+      ),
     );
   }
 

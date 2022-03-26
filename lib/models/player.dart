@@ -12,12 +12,14 @@
   }
 }*/
 
+import 'answer.dart';
+
 class PlayerModel {
   late bool isReady; //this flag will be true if player ready to begin quiz
   String? playerEmail;
   String? playerName;
   int score = 0;
-  List<dynamic> answers = [];
+  List<AnswerModel> answers = [];
 
   PlayerModel({required this.playerEmail, this.isReady = false});
 
@@ -25,17 +27,24 @@ class PlayerModel {
     isReady = json['isReady'] ?? false;
     playerEmail = json['playerEmail'];
     playerName = json['playerName'];
-    answers = json['answers'];
+    json['answers'].forEach((answerJson) {
+      answers.add(AnswerModel.fromJson(answerJson));
+    });
     score = json['score'];
   }
 }
 
 playerModelToJson(PlayerModel? playerModel) {
+  var answersJson = [];
+  playerModel?.answers.forEach((answer) {
+    answersJson.add(answerModelToJson(answer));
+  });
+
   return {
     'isReady': playerModel?.isReady,
     'playerEmail': playerModel?.playerEmail,
     'playerName': playerModel?.playerName,
-    'answers': playerModel?.answers,
+    'answers': answersJson,
     'score': playerModel?.score,
   };
 }
