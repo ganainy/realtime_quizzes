@@ -1,21 +1,15 @@
-
-
-
 import 'package:realtime_quizzes/models/question.dart';
 
-class ApiModel{
+class ApiModel {
+  List<QuestionModel> questions = [];
+  var responseCode;
 
-var questions=[];
-var responseCode;
-
-ApiModel.fromJson(json){
-
-  responseCode=json['response_code'];
-    json['results'].forEach((questionJson){
+  ApiModel.fromJson(json) {
+    responseCode = json['response_code'];
+    json['results'].forEach((questionJson) {
       questions.add(QuestionModel.fromJson(questionJson));
     });
   }
-
 }
 /*apiModelToJson(ApiModel apiModel){
   return{

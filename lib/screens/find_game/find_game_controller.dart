@@ -187,7 +187,8 @@ class FindGameController extends GetxController {
         selectedCategoryObs.value,
         numOfQuestionsObs.value.toInt(),
         auth.currentUser?.email,
-        players);
+        players,
+        DateTime.now().millisecondsSinceEpoch);
 
     var queueEntryModelJson = queueEntryModelToJson(queueEntryModel);
 

@@ -45,6 +45,29 @@ class Constants {
     {'difficulty': 'hard'.tr, 'api': 'hard'},
   ];
 
+  static List<String> categoryNames = [
+    'Random'.tr,
+    'general_knowledge'.tr,
+    'books'.tr,
+    'films'.tr,
+    'music'.tr,
+    'musicals_and_theaters'.tr,
+    'television'.tr,
+    'video_games'.tr,
+    'board_games'.tr,
+    'science_and_nature'.tr,
+    'computers'.tr,
+    'mathematics'.tr,
+    'mythology'.tr,
+    'sports'.tr,
+    'geography'.tr,
+    'history'.tr,
+    'politics'.tr,
+    'art'.tr,
+    'celebrities'.tr,
+    'animals'.tr,
+  ];
+
   static List<Map<String, dynamic>> categoryList = [
     {'category': 'Random'.tr, 'api': null},
     {'category': 'general_knowledge'.tr, 'api': 9},

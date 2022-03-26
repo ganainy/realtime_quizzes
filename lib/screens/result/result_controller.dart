@@ -8,10 +8,10 @@ import 'package:realtime_quizzes/models/result.dart';
 import 'package:realtime_quizzes/models/user.dart';
 import 'package:realtime_quizzes/shared/shared.dart';
 
-class VersusRandomResultController extends GetxController {
+class ResultController extends GetxController {
   final QueueEntryModel queueEntryModel;
 
-  VersusRandomResultController(this.queueEntryModel);
+  ResultController(this.queueEntryModel);
 
   // var timerCounter = Rxn<int>();
 
@@ -70,12 +70,18 @@ class VersusRandomResultController extends GetxController {
         (error) => printError(info: "Failed to upload player result: $error"));
   }
 
-  //delete game from runningCollection
+  //delete game from runningCollection if random & invitesCollection if friends
   deleteGame() {
     runningCollection.doc(queueEntryModel.queueEntryId).delete().then((value) {
       debugPrint('removed from runningCollection');
     }).onError((error, stackTrace) {
       printError(info: 'error remove from runningCollection');
+    });
+
+    invitesCollection.doc(queueEntryModel.queueEntryId).delete().then((value) {
+      debugPrint('removed from invitesCollection');
+    }).onError((error, stackTrace) {
+      printError(info: 'error remove from invitesCollection');
     });
   }
 }

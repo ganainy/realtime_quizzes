@@ -11,7 +11,7 @@ import 'package:realtime_quizzes/shared/shared.dart';
 
 import '../result/result_screen.dart';
 
-class VersusRandomQuizController extends GetxController {
+class VersusFriendQuizController extends GetxController {
   //fire store
   var queueEntryModelObs = Rxn<QueueEntryModel?>();
   var questionsObs = [].obs;
@@ -68,7 +68,7 @@ class VersusRandomQuizController extends GetxController {
     FirebaseFirestore.instance.runTransaction((transaction) async {
       // Get the document
       DocumentSnapshot snapshot = await transaction
-          .get(runningCollection.doc(queueEntryModelObs.value?.queueEntryId));
+          .get(invitesCollection.doc(queueEntryModelObs.value?.queueEntryId));
 
       if (!snapshot.exists) {
         throw Exception("Queue entry does not exist!");
@@ -83,7 +83,7 @@ class VersusRandomQuizController extends GetxController {
         }
       });
       transaction.update(
-          runningCollection.doc(queueEntryModelObs.value?.queueEntryId),
+          invitesCollection.doc(queueEntryModelObs.value?.queueEntryId),
           queueEntryModelToJson(_queueEntryModel));
     }).then((value) {
       print("added answer to player $value");
@@ -95,7 +95,7 @@ class VersusRandomQuizController extends GetxController {
     FirebaseFirestore.instance.runTransaction((transaction) async {
       // Get the document
       DocumentSnapshot snapshot = await transaction
-          .get(runningCollection.doc(queueEntryModel.queueEntryId));
+          .get(invitesCollection.doc(queueEntryModel.queueEntryId));
 
       if (!snapshot.exists) {
         throw Exception("Queue entry does not exist!");
@@ -108,7 +108,7 @@ class VersusRandomQuizController extends GetxController {
           player?.isReady = true;
         }
       });
-      transaction.update(runningCollection.doc(queueEntryModel.queueEntryId),
+      transaction.update(invitesCollection.doc(queueEntryModel.queueEntryId),
           queueEntryModelToJson(_queueEntryModel));
     }).then((value) {
       observeGame(queueEntryModel.queueEntryId);
@@ -119,7 +119,7 @@ class VersusRandomQuizController extends GetxController {
 
   void observeGame(String? queueEntryId) {
     observeGameListener =
-        runningCollection.doc(queueEntryId).snapshots().listen((event) {
+        invitesCollection.doc(queueEntryId).snapshots().listen((event) {
       QueueEntryModel _queueEntryModel = QueueEntryModel.fromJson(event.data());
 
       //do nothing if not all players ready
@@ -170,7 +170,7 @@ class VersusRandomQuizController extends GetxController {
     FirebaseFirestore.instance.runTransaction((transaction) async {
       // Get the document
       DocumentSnapshot snapshot = await transaction
-          .get(runningCollection.doc(queueEntryModelObs.value?.queueEntryId));
+          .get(invitesCollection.doc(queueEntryModelObs.value?.queueEntryId));
 
       if (!snapshot.exists) {
         throw Exception("Queue entry does not exist!");
@@ -189,7 +189,7 @@ class VersusRandomQuizController extends GetxController {
         }
       });
       transaction.update(
-          runningCollection.doc(queueEntryModelObs.value?.queueEntryId),
+          invitesCollection.doc(queueEntryModelObs.value?.queueEntryId),
           queueEntryModelToJson(_queueEntryModel));
     }).then((value) {
       print("updated player scores $value");
@@ -256,7 +256,7 @@ class VersusRandomQuizController extends GetxController {
 
     //no more question show result
     if (currentQuestionIndexObs
-        .value /*>*/ == /*questionsObs.value.length -*/ 0) {
+        .value /*>*/ >= /*questionsObs.value.length -*/ 1) {
       Future.delayed(const Duration(seconds: 5), () {
         showResultScreen();
       });
@@ -313,21 +313,13 @@ class VersusRandomQuizController extends GetxController {
     return isQuestionAnsweredObs.value && text == selectedAnswerLocalObs.value;
   }
 
-  //this method moves game to running collection in firebase (only unstarted games should be in queue)
-  moveToRunning(QueueEntryModel queueEntry) {
-    runningCollection
-        .doc(queueEntry.queueEntryId)
-        .set(queueEntryModelToJson(queueEntry))
-        .then((value) {
-      debugPrint('added to running collection');
-      queueCollection.doc(queueEntry.queueEntryId).delete().then((value) {
-        debugPrint('removed from queue collection');
-        setPlayerReady(queueEntry);
-      }).onError((error, stackTrace) {
-        printError(info: 'error remove from queue collection');
-      });
+  loadQuestions(queueEntryId) {
+    invitesCollection.doc(queueEntryId).get().then((value) {
+      var invite = QueueEntryModel.fromJson(value.data());
+      setPlayerReady(invite);
+      updateValues(invite);
     }).onError((error, stackTrace) {
-      printError(info: 'error add to running collection');
+      printError(info: 'error load questions' + error.toString());
     });
   }
 }

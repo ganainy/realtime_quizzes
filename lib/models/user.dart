@@ -10,6 +10,7 @@ class UserModel {
   var results = []; // list of ResultModel
   var friends = []; //list of String
   List<dynamic> receivedFriendRequests = [];
+  List<dynamic> sentFriendRequests = [];
 
   UserModel(this.name, this.email, this.imageUrl);
 
@@ -19,6 +20,7 @@ class UserModel {
     imageUrl = json['imageUrl'];
     friends = json['friends'];
     receivedFriendRequests = json['receivedFriendRequests'];
+    sentFriendRequests = json['sentFriendRequests'];
     isOnline = json['isOnline'];
     if (json['results'] != null) {
       json['results'].forEach((result) {
@@ -42,5 +44,6 @@ userModelToJson(UserModel userModel) {
     'results': resultsJson,
     'friends': userModel.friends,
     'receivedFriendRequests': userModel.receivedFriendRequests,
+    'sentFriendRequests': userModel.sentFriendRequests,
   };
 }

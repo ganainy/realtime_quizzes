@@ -1,5 +1,3 @@
-import 'package:realtime_quizzes/models/question.dart';
-
 /*class InviteModel {
   late QuizModelFireStore quiz;
   List<dynamic> players = []; //list of user emails participating in quiz
@@ -17,27 +15,27 @@ import 'package:realtime_quizzes/models/question.dart';
 class PlayerModel {
   late bool isReady; //this flag will be true if player ready to begin quiz
   String? playerEmail;
-  int score=0;
-  List<dynamic> answers =[] ;
-
+  String? playerName;
+  int score = 0;
+  List<dynamic> answers = [];
 
   PlayerModel({required this.playerEmail, this.isReady = false});
 
   PlayerModel.fromJson(json) {
-    isReady = json['isReady']??false;
+    isReady = json['isReady'] ?? false;
     playerEmail = json['playerEmail'];
+    playerName = json['playerName'];
     answers = json['answers'];
     score = json['score'];
   }
-
 }
 
-playerModelToJson(PlayerModel? playerModel){
-  return{
-    'isReady':playerModel?.isReady,
-    'playerEmail':playerModel?.playerEmail,
-    'answers':playerModel?.answers,
-    'score':playerModel?.score,
-  }
-  ;
+playerModelToJson(PlayerModel? playerModel) {
+  return {
+    'isReady': playerModel?.isReady,
+    'playerEmail': playerModel?.playerEmail,
+    'playerName': playerModel?.playerName,
+    'answers': playerModel?.answers,
+    'score': playerModel?.score,
+  };
 }
