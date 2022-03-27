@@ -10,8 +10,8 @@ class QueueEntryModel {
   int? numberOfQuestions;
   String?
       queueEntryId; //this will be also the email of the player to prevent multiple entry to queue by same user
-  List<PlayerModel?> players = [];
-  List<QuestionModel?> questions = [];
+  List<PlayerModel?>? players = [];
+  List<QuestionModel?>? questions = [];
   int? createdAt; //milliseconssinceepoch
   String?
       invitedFriend; //this field used when sending invite to friends not with random queue
@@ -32,12 +32,13 @@ class QueueEntryModel {
     invitedFriend = (json['invitedFriend']);
     hasFriendDeclinedInvite = (json['hasFriendDeclinedInvite']);
     hasFriendAcceptedInvite = (json['hasFriendAcceptedInvite']);
-    json['players'].forEach((playerJson) {
-      players.add(PlayerModel.fromJson(playerJson));
+
+    json['players']?.forEach((playerJson) {
+      players?.add(PlayerModel.fromJson(playerJson));
     });
 
     json['questions']?.forEach((questionJson) {
-      questions.add(QuestionModel.fromJson(questionJson));
+      questions?.add(QuestionModel.fromJson(questionJson));
     });
   }
 }
@@ -45,11 +46,11 @@ class QueueEntryModel {
 queueEntryModelToJson(QueueEntryModel? queueEntryModel) {
   var playersList = [];
   var questionsList = [];
-  queueEntryModel?.players.forEach((player) {
+  queueEntryModel?.players?.forEach((player) {
     playersList.add(playerModelToJson(player));
   });
 
-  queueEntryModel?.questions.forEach((question) {
+  queueEntryModel?.questions?.forEach((question) {
     questionsList.add(questionModelToJson(question));
   });
 

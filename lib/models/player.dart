@@ -12,23 +12,25 @@
   }
 }*/
 
+import 'package:realtime_quizzes/models/user.dart';
+
 import 'answer.dart';
 
 class PlayerModel {
   late bool isReady; //this flag will be true if player ready to begin quiz
-  String? playerEmail;
-  String? playerName;
   int score = 0;
-  List<AnswerModel> answers = [];
+  List<AnswerModel?>? answers = [];
+  UserModel? player;
+  String? playerEmail;
 
   PlayerModel({required this.playerEmail, this.isReady = false});
 
   PlayerModel.fromJson(json) {
     isReady = json['isReady'] ?? false;
     playerEmail = json['playerEmail'];
-    playerName = json['playerName'];
+    player = UserModel.fromJson(json['player']);
     json['answers'].forEach((answerJson) {
-      answers.add(AnswerModel.fromJson(answerJson));
+      answers?.add(AnswerModel.fromJson(answerJson));
     });
     score = json['score'];
   }
@@ -36,14 +38,14 @@ class PlayerModel {
 
 playerModelToJson(PlayerModel? playerModel) {
   var answersJson = [];
-  playerModel?.answers.forEach((answer) {
+  playerModel?.answers?.forEach((answer) {
     answersJson.add(answerModelToJson(answer));
   });
 
   return {
     'isReady': playerModel?.isReady,
     'playerEmail': playerModel?.playerEmail,
-    'playerName': playerModel?.playerName,
+    'player': userModelToJson(playerModel?.player),
     'answers': answersJson,
     'score': playerModel?.score,
   };

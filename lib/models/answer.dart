@@ -10,9 +10,9 @@ class AnswerModel {
   }
 }
 
-answerModelToJson(AnswerModel answerModel) {
+answerModelToJson(AnswerModel? answerModel) {
   return {
-    'answer': answerModel.answer,
-    'isCorrectAnswer': answerModel.isCorrectAnswer,
+    'answer': answerModel?.answer,
+    'isCorrectAnswer': answerModel?.isCorrectAnswer,
   };
 }

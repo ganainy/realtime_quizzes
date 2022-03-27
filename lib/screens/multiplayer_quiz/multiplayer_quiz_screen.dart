@@ -1,9 +1,12 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/scheduler/ticker.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/customization/theme.dart';
 import 'package:realtime_quizzes/screens/multiplayer_quiz/multiplayer_quiz_controller.dart';
+
+import '../../shared/constants.dart';
 
 class MultiPlayerQuizScreen extends StatelessWidget {
   MultiPlayerQuizScreen({Key? key}) : super(key: key);
@@ -35,12 +38,12 @@ class MultiPlayerQuizScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-                'Your score: ${multiPlayerQuizController.loggedPlayer.value?.score}'),
+                '${multiPlayerQuizController.loggedPlayer.value?.player?.name} score: ${multiPlayerQuizController.loggedPlayer.value?.score}'),
             const SizedBox(
               height: MyTheme.largePadding,
             ),
             Text(
-                'Other player score: ${multiPlayerQuizController.otherPlayer.value?.score}'),
+                '${multiPlayerQuizController.otherPlayer.value?.player?.name} score: ${multiPlayerQuizController.otherPlayer.value?.score}'),
             const SizedBox(
               height: MyTheme.largePadding,
             ),
@@ -81,10 +84,6 @@ class MultiPlayerQuizScreen extends StatelessWidget {
             }),
             Text(
                 'temporary text right answer: ${currentQuestion?.correctAnswer}'),
-            Text(
-                'your answer: ${multiPlayerQuizController.loggedPlayer.value!.answers.length > multiPlayerQuizController.currentQuestionIndexObs.value ? multiPlayerQuizController.loggedPlayer.value?.answers.elementAt(multiPlayerQuizController.currentQuestionIndexObs.value) : 'asbr'}'),
-            Text(
-                'other player answer: ${multiPlayerQuizController.otherPlayer.value!.answers.length > multiPlayerQuizController.currentQuestionIndexObs.value ? multiPlayerQuizController.otherPlayer.value?.answers.elementAt(multiPlayerQuizController.currentQuestionIndexObs.value) : 'asbr b2a'}'),
           ],
         ),
       ),
@@ -101,12 +100,30 @@ class MultiPlayerQuizScreen extends StatelessWidget {
         Wrap(
           children: [
             multiPlayerQuizController.getIsSelectedLoggedPlayer(text)
-                ? Text(
-                    '${multiPlayerQuizController.loggedPlayer.value?.playerEmail}')
+                ? CachedNetworkImage(
+                    width: 20,
+                    height: 20,
+                    placeholder: (context, url) =>
+                        const CircularProgressIndicator(),
+                    imageUrl: multiPlayerQuizController
+                            .loggedPlayer.value?.player?.imageUrl ??
+                        Constants.YOU_IMAGE,
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.account_circle),
+                  )
                 : SizedBox(),
             multiPlayerQuizController.getIsSelectedOtherPlayer(text)
-                ? Text(
-                    '${multiPlayerQuizController.otherPlayer.value?.playerEmail}')
+                ? CachedNetworkImage(
+                    width: 20,
+                    height: 20,
+                    placeholder: (context, url) =>
+                        const CircularProgressIndicator(),
+                    imageUrl: multiPlayerQuizController
+                            .otherPlayer.value?.player?.imageUrl ??
+                        '',
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.account_circle),
+                  )
                 : SizedBox(),
             Obx(() {
               return TextButton(

@@ -18,9 +18,9 @@ class UserModel {
     name = json['name'];
     email = json['email'];
     imageUrl = json['imageUrl'];
-    friends = json['friends'];
-    receivedFriendRequests = json['receivedFriendRequests'];
-    sentFriendRequests = json['sentFriendRequests'];
+    friends = json['friends'] ?? [];
+    receivedFriendRequests = json['receivedFriendRequests'] ?? [];
+    sentFriendRequests = json['sentFriendRequests'] ?? [];
     isOnline = json['isOnline'];
     if (json['results'] != null) {
       json['results'].forEach((result) {
@@ -30,20 +30,20 @@ class UserModel {
   }
 }
 
-userModelToJson(UserModel userModel) {
+userModelToJson(UserModel? userModel) {
   var resultsJson = [];
-  userModel.results.forEach((result) {
+  userModel?.results.forEach((result) {
     resultsJson.add(resultModelToJson(result));
   });
 
   return {
-    'name': userModel.name,
-    'email': userModel.email,
-    'imageUrl': userModel.imageUrl,
-    'isOnline': userModel.isOnline,
+    'name': userModel?.name,
+    'email': userModel?.email,
+    'imageUrl': userModel?.imageUrl,
+    'isOnline': userModel?.isOnline,
     'results': resultsJson,
-    'friends': userModel.friends,
-    'receivedFriendRequests': userModel.receivedFriendRequests,
-    'sentFriendRequests': userModel.sentFriendRequests,
+    'friends': userModel?.friends,
+    'receivedFriendRequests': userModel?.receivedFriendRequests,
+    'sentFriendRequests': userModel?.sentFriendRequests,
   };
 }

@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:realtime_quizzes/models/game_type.dart';
 import 'package:realtime_quizzes/models/player.dart';
+import 'package:realtime_quizzes/models/queue_entry.dart';
 import 'package:realtime_quizzes/models/result.dart';
+import 'package:realtime_quizzes/models/single_player_quiz_result.dart';
 import 'package:realtime_quizzes/models/user.dart';
 import 'package:realtime_quizzes/shared/shared.dart';
 
@@ -13,13 +15,15 @@ class ResultController extends GetxController {
 
   ResultController(this.arguments);
 
-  var queueEntryModel = null;
-  var singlePlayerResult = null;
+  var queueEntryModelObs = Rxn<QueueEntryModel?>();
+
+  SinglePlayerQuizResult? singlePlayerResult;
 
   @override
   void onInit() {
     if (arguments['gameType'] == GameType.MULTI) {
-      queueEntryModel = arguments['queueEntry'];
+      queueEntryModelObs.value = arguments['queueEntry'];
+      loadUsers(queueEntryModelObs.value?.players);
       updateUsers();
     } else if (arguments['gameType'] == GameType.SINGLE) {
       singlePlayerResult = arguments['result'];
@@ -33,7 +37,7 @@ class ResultController extends GetxController {
     PlayerModel? _loggedPlayer;
     PlayerModel? _otherPlayer;
 
-    queueEntryModel.players.forEach((player) {
+    queueEntryModelObs.value?.players?.forEach((player) {
       if (player?.playerEmail == auth.currentUser?.email) {
         _loggedPlayer = player;
       } else {
@@ -55,11 +59,11 @@ class ResultController extends GetxController {
     ResultModel _resultModel = ResultModel(
         type: _type,
         score: _loggedPlayer?.score,
-        maxScore: queueEntryModel.numberOfQuestions,
-        difficulty: queueEntryModel.difficulty,
-        category: queueEntryModel.category,
+        maxScore: queueEntryModelObs.value?.numberOfQuestions,
+        difficulty: queueEntryModelObs.value?.difficulty,
+        category: queueEntryModelObs.value?.category,
         otherPlayerEmail: _otherPlayer?.playerEmail,
-        createdAt: queueEntryModel.createdAt,
+        createdAt: queueEntryModelObs.value?.createdAt,
         isMultiPlayer: true);
     //update user profile
 
@@ -87,11 +91,11 @@ class ResultController extends GetxController {
   updateUser() {
     //create result model
     ResultModel _resultModel = ResultModel(
-      score: singlePlayerResult.score,
-      maxScore: singlePlayerResult.numQuestions,
-      difficulty: singlePlayerResult.difficulty,
-      category: singlePlayerResult.category,
-      createdAt: singlePlayerResult.createdAt,
+      score: singlePlayerResult?.score,
+      maxScore: singlePlayerResult?.numQuestions,
+      difficulty: singlePlayerResult?.difficulty,
+      category: singlePlayerResult?.category,
+      createdAt: singlePlayerResult?.createdAt,
       isMultiPlayer: false,
     );
 
@@ -118,16 +122,40 @@ class ResultController extends GetxController {
 
   //delete game from runningCollection if random & invitesCollection if friends
   deleteGame() {
-    runningCollection.doc(queueEntryModel.queueEntryId).delete().then((value) {
+    runningCollection
+        .doc(queueEntryModelObs.value?.queueEntryId)
+        .delete()
+        .then((value) {
       debugPrint('removed from runningCollection');
     }).onError((error, stackTrace) {
       printError(info: 'error remove from runningCollection');
     });
 
-    invitesCollection.doc(queueEntryModel.queueEntryId).delete().then((value) {
+    invitesCollection
+        .doc(queueEntryModelObs.value?.queueEntryId)
+        .delete()
+        .then((value) {
       debugPrint('removed from invitesCollection');
     }).onError((error, stackTrace) {
       printError(info: 'error remove from invitesCollection');
+    });
+  }
+
+  void loadUsers(List<PlayerModel?>? players) {
+    players?.forEach((player) {
+      usersCollection.doc(player?.playerEmail).get().then((value) {
+        queueEntryModelObs.value?.players?.firstWhere((element) {
+          return element?.playerEmail == player?.playerEmail;
+        })?.player = UserModel.fromJson(value.data());
+
+        debugPrint('3awz akol  ' +
+            userModelToJson(
+                queueEntryModelObs.value?.players?.firstWhere((element) {
+              return element?.playerEmail == player?.playerEmail;
+            })?.player = UserModel.fromJson(value.data())));
+      }).onError((error, stackTrace) {
+        printError(info: 'loadUsers error' + error.toString());
+      });
     });
   }
 }

@@ -1,13 +1,14 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/layouts/home/home.dart';
-import 'package:realtime_quizzes/models/queue_entry.dart';
 import 'package:realtime_quizzes/models/single_player_quiz_result.dart';
 import 'package:realtime_quizzes/screens/result/result_controller.dart';
 import 'package:realtime_quizzes/shared/components.dart';
 
 import '../../models/game_type.dart';
+import '../../shared/constants.dart';
 
 class ResultScreen extends StatelessWidget {
   ResultScreen({Key? key}) : super(key: key);
@@ -21,6 +22,7 @@ class ResultScreen extends StatelessWidget {
           SinglePlayerQuizResult(currentScore.value, questions.value.length),
       'gameType':GameType.SINGLE
     }*/
+
   ///multi
   /*  {
       'queueEntry': queueEntryModelObs.value,
@@ -32,13 +34,15 @@ class ResultScreen extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: Get.arguments['gameType'] == GameType.MULTI
-            ? MultiPlayerResult(Get.arguments['queueEntry'])
+            ? MultiPlayerResult()
             : SinglePlayerResult(Get.arguments['result']),
       ),
     );
   }
 
-  Center MultiPlayerResult(QueueEntryModel queueEntryModel) {
+  Center MultiPlayerResult() {
+    var queueEntryModel = resultController.queueEntryModelObs.value;
+
     return Center(
       child: Column(
         children: [
@@ -47,24 +51,54 @@ class ResultScreen extends StatelessWidget {
             children: [
               Column(
                 children: [
-                  Text('${queueEntryModel.players.elementAt(0)?.playerEmail}'),
-                  Text('${queueEntryModel.players.elementAt(0)?.score}'),
-                  (queueEntryModel.players.elementAt(0)!.score >
-                          queueEntryModel.players.elementAt(1)!.score)
+                  CachedNetworkImage(
+                    width: 100,
+                    height: 100,
+                    placeholder: (context, url) =>
+                        const CircularProgressIndicator(),
+                    imageUrl: queueEntryModel?.players!
+                            .elementAt(0)
+                            ?.player
+                            ?.imageUrl ??
+                        Constants.YOU_IMAGE,
+                    errorWidget: (context, url, error) =>
+                        Icon(Icons.error, size: 100),
+                  ),
+                  Text(
+                      '${queueEntryModel?.players!.elementAt(0)?.player?.name}'),
+                  Text('${queueEntryModel?.players!.elementAt(0)?.score}'),
+                  (queueEntryModel!.players!.elementAt(0)!.score >
+                          queueEntryModel.players!.elementAt(1)!.score)
                       ? const Text('Winner')
                       : SizedBox(),
                 ],
               ),
-              (queueEntryModel.players.elementAt(0)!.score ==
-                      queueEntryModel.players.elementAt(1)!.score)
+              (queueEntryModel.players!.elementAt(0)!.score ==
+                      queueEntryModel.players!.elementAt(1)!.score)
                   ? const Text('Draw')
                   : SizedBox(),
               Column(
                 children: [
-                  Text('${queueEntryModel.players.elementAt(1)?.playerEmail}'),
-                  Text('${queueEntryModel.players.elementAt(1)?.score}'),
-                  (queueEntryModel.players.elementAt(1)!.score >
-                          queueEntryModel.players.elementAt(0)!.score)
+                  CachedNetworkImage(
+                    width: 100,
+                    height: 100,
+                    placeholder: (context, url) =>
+                        const CircularProgressIndicator(),
+                    imageUrl: queueEntryModel.players!
+                            .elementAt(1)
+                            ?.player
+                            ?.imageUrl ??
+                        '',
+                    errorWidget: (context, url, error) => Icon(
+                      Icons.error,
+                      size: 100,
+                    ),
+                  ),
+                  Text(
+                      '${queueEntryModel.players!.elementAt(1)?.player?.name}'),
+                  Text('${queueEntryModel.players!.elementAt(1)?.score}'),
+                  (queueEntryModel.players!.elementAt(1)!.score >
+                          queueEntryModel.players!.elementAt(0)!.score)
                       ? const Text('Winner')
                       : SizedBox(),
                 ],
@@ -83,7 +117,6 @@ class ResultScreen extends StatelessWidget {
   }
 
   SinglePlayerResult(SinglePlayerQuizResult result) {
-    //todo wtf is result
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,

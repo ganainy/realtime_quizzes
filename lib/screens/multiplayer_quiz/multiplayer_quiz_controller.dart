@@ -11,6 +11,7 @@ import 'package:realtime_quizzes/models/question.dart';
 import 'package:realtime_quizzes/models/queue_entry.dart';
 import 'package:realtime_quizzes/shared/shared.dart';
 
+import '../../models/user.dart';
 import '../result/result_screen.dart';
 
 class MultiPlayerQuizController extends GetxController {
@@ -74,14 +75,14 @@ class MultiPlayerQuizController extends GetxController {
   //with every read to queue entry we update all values
   void updateValues(QueueEntryModel queueEntryModel) {
     queueEntryModelObs.value = queueEntryModel;
-    questionsObs.value = queueEntryModel.questions;
+    questionsObs.value = queueEntryModel.questions!;
     currentQuestionObs.value =
         questionsObs.value.elementAt(currentQuestionIndexObs.value);
-    correctAnswerObs.value = queueEntryModel.questions
+    correctAnswerObs.value = queueEntryModel.questions!
         .elementAt(currentQuestionIndexObs.value)
         ?.correctAnswer;
     players.value = queueEntryModel.players;
-    queueEntryModel.players.forEach((player) {
+    queueEntryModel.players?.forEach((player) {
       if (player?.playerEmail == auth.currentUser?.email) {
         loggedPlayer.value = player;
       } else {
@@ -101,12 +102,12 @@ class MultiPlayerQuizController extends GetxController {
     selectedAnswerLocalObs.value = answer;
     isQuestionAnswered = true;
 
-    var _isCorrectAnswer = queueEntryModelObs.value?.questions
+    var _isCorrectAnswer = queueEntryModelObs.value?.questions!
             .elementAt(currentQuestionIndexObs.value)
             ?.correctAnswer ==
         answer;
 
-    queueEntryModelObs.value?.players.forEach((player) {
+    queueEntryModelObs.value?.players?.forEach((player) {
       if (player?.playerEmail == auth.currentUser?.email) {
         var answers = addUniqueAnswer(
             answer:
@@ -126,7 +127,7 @@ class MultiPlayerQuizController extends GetxController {
     });
   }
 
-  List<AnswerModel> addUniqueAnswer(
+  List<AnswerModel?> addUniqueAnswer(
       {answers: List<AnswerModel>, answer: AnswerModel}) {
     bool isUnique = true;
     answers.forEach((listItem) {
@@ -153,7 +154,7 @@ class MultiPlayerQuizController extends GetxController {
 
       var _queueEntryModel = QueueEntryModel.fromJson(snapshot.data());
 
-      _queueEntryModel.players.forEach((player) {
+      _queueEntryModel.players?.forEach((player) {
         if (player?.playerEmail == auth.currentUser?.email) {
           player?.isReady = true;
         }
@@ -172,25 +173,25 @@ class MultiPlayerQuizController extends GetxController {
       updateValues(_queueEntryModel);
 
       //if game didn't already start, check if all players ready then
-      // start game otherwise do nothing
+      // start game && load players profiles otherwise do nothing
       if (!isGameAlreadyStarted && areAllPlayersReady(_queueEntryModel)) {
         isGameAlreadyStarted = true;
         startQuestionTimer();
+        loadUsers();
       }
 
       //calculate player score
       var _score = 0;
-      _queueEntryModel.players.forEach((player) {
+      _queueEntryModel.players?.forEach((player) {
         if (player?.playerEmail == auth.currentUser?.email) {
-          player?.answers.forEach((answer) {
-            if (answer.isCorrectAnswer) {
+          player?.answers?.forEach((answer) {
+            if (answer!.isCorrectAnswer) {
               _score++;
             }
           });
         }
       });
       _loggedUserScore = _score;
-      updateScore(_loggedUserScore);
     });
 
     observeGameListener?.onError((error) {
@@ -201,7 +202,7 @@ class MultiPlayerQuizController extends GetxController {
   //this method checks if each player isReady
   bool areAllPlayersReady(QueueEntryModel _queueEntryModel) {
     bool someoneNotReady = false;
-    _queueEntryModel.players.forEach((player) {
+    _queueEntryModel.players?.forEach((player) {
       if (player != null && !player.isReady) {
         someoneNotReady = true;
       }
@@ -231,24 +232,30 @@ class MultiPlayerQuizController extends GetxController {
 
   //this method is called when time runs out and user doesn't select an answer
   void updateScore(int newScore) {
-    queueEntryModelObs.value?.players.forEach((player) {
-      //increase player score if right answer
-      if (player?.playerEmail == auth.currentUser?.email) {
-        player?.score = newScore;
-      }
-    });
+    FirebaseFirestore.instance.runTransaction((transaction) async {
+      // Get the document
+      DocumentSnapshot snapshot = await transaction
+          .get(runningCollection.doc(queueEntryModelObs.value?.queueEntryId));
 
-    runningCollection
-        .doc(queueEntryModelObs.value?.queueEntryId)
-        .set(queueEntryModelToJson(queueEntryModelObs.value))
-        .then((value) {
-      debugPrint(
-          "updated player scores ${auth.currentUser!.email}  ${queueEntryModelObs.value?.players.firstWhere((element) {
-        return element!.playerEmail == auth.currentUser!.email;
-      })?.score}");
-    }).catchError((error) {
-      printError(info: "Failed to update player scores: $error");
-    });
+      if (!snapshot.exists) {
+        throw Exception("Queue entry does not exist!");
+      }
+
+      var _queueEntry = QueueEntryModel.fromJson(snapshot.data());
+
+      _queueEntry.players?.forEach((player) {
+        if (player?.playerEmail == auth.currentUser?.email) {
+          player?.score = newScore;
+        }
+      });
+
+      transaction.update(
+          runningCollection.doc(queueEntryModelObs.value?.queueEntryId),
+          queueEntryModelToJson(_queueEntry));
+    }).then((value) {
+      debugPrint("updated player scores");
+    }).catchError(
+        (error) => printError(info: "Failed to upload player score: $error"));
   }
 
   void showResultScreen() {
@@ -289,7 +296,7 @@ class MultiPlayerQuizController extends GetxController {
   void startNextQuestionTimer() {
     debugPrint('startNextQuestionTimer()');
     //reset next question timer to begin again from 5
-    nextQuestionTimerValueObs.value = 10; //todo 5
+    nextQuestionTimerValueObs.value = 5;
 
     _nextQuestionTimer = Timer.periodic(
       const Duration(seconds: 1),
@@ -306,6 +313,8 @@ class MultiPlayerQuizController extends GetxController {
   }
 
   void waitThenUpdateQuestionIndex() {
+    updateScore(_loggedUserScore);
+
     isQuestionTimeEndedObs.value = true;
 
     //no more question show result
@@ -332,41 +341,39 @@ class MultiPlayerQuizController extends GetxController {
 
   //return true if answer is right
   bool getIsCorrectAnswer(String text) {
-    debugPrint(
-        'anta atbdnt${isQuestionTimeEndedObs.value && currentQuestionObs.value?.correctAnswer == text}');
     return (isQuestionTimeEndedObs.value &&
         currentQuestionObs.value?.correctAnswer == text);
   }
 
   //return true if answer is wrong and user selected it
   bool getIsSelectedWrongAnswer(String text) {
-    return (loggedPlayer.value!.answers.length >
+    return (loggedPlayer.value!.answers!.length >
             currentQuestionIndexObs.value &&
         isQuestionTimeEndedObs.value &&
-        loggedPlayer.value?.answers
+        loggedPlayer.value?.answers!
                 .elementAt(currentQuestionIndexObs.value)
-                .answer ==
+                ?.answer ==
             text);
   }
 
   //this flag used to show logged player avatar beside the selected answer
   bool getIsSelectedLoggedPlayer(String text) {
     return isQuestionTimeEndedObs.value &&
-        loggedPlayer.value!.answers.length > currentQuestionIndexObs.value &&
+        loggedPlayer.value!.answers!.length > currentQuestionIndexObs.value &&
         text ==
-            loggedPlayer.value?.answers
+            loggedPlayer.value?.answers!
                 .elementAt(currentQuestionIndexObs.value)
-                .answer;
+                ?.answer;
   }
 
   //this flag used to show other player avatar beside the selected answer
   bool getIsSelectedOtherPlayer(String text) {
     return isQuestionTimeEndedObs.value &&
-        otherPlayer.value!.answers.length > currentQuestionIndexObs.value &&
+        otherPlayer.value!.answers!.length > currentQuestionIndexObs.value &&
         text ==
-            otherPlayer.value?.answers
+            otherPlayer.value?.answers!
                 .elementAt(currentQuestionIndexObs.value)
-                .answer;
+                ?.answer;
   }
 
   //this flag used to show orange background to indicate that player selected this answer
@@ -389,5 +396,29 @@ class MultiPlayerQuizController extends GetxController {
   //delete from queue collection (randoms game)
   Future<void> deleteFromQueue(String? queueEntryId) async {
     return await queueCollection.doc(queueEntryId).delete();
+  }
+
+  void loadUsers() {
+    debugPrint('loadUsers()');
+
+    queueEntryModelObs.value?.players?.forEach((player) {
+      usersCollection.doc(player?.playerEmail).get().then((value) {
+        var user = UserModel.fromJson(value.data());
+
+        queueEntryModelObs.value?.players?.firstWhere((element) {
+          return element?.playerEmail == player?.playerEmail;
+        })?.player = user;
+
+        runningCollection
+            .doc(queueEntryModelObs.value?.queueEntryId)
+            .set(queueEntryModelToJson(queueEntryModelObs.value))
+            .then((value) {})
+            .onError((error, stackTrace) {
+          printError(info: 'loadUsers1 error' + error.toString());
+        });
+      }).onError((error, stackTrace) {
+        printError(info: 'loadUsers2 error' + error.toString());
+      });
+    });
   }
 }

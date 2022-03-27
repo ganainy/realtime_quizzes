@@ -222,14 +222,13 @@ class FindGameController extends GetxController {
         .snapshots()
         .listen((queueEntryJson) {
       var queueEntry = QueueEntryModel.fromJson(queueEntryJson.data());
-      if (queueEntry.players.length > 1) {
+      if (queueEntry.players!.length > 1) {
         dialogTypeObs.value = DialogType.FOUND_MATCH;
         startGame();
         debugPrint(
             'scenario 2: another play is add to my entry, match should start');
       } else {
-        debugPrint('scenario 2: still one player: ' +
-            queueEntry.players.length.toString());
+        debugPrint('scenario 2: still one player: ');
       }
     });
 
@@ -289,12 +288,12 @@ class FindGameController extends GetxController {
       var _queueEntryModel = QueueEntryModel.fromJson(snapshot.data());
 
       //this should never happen
-      if (_queueEntryModel.players.length >= 2) {
+      if (_queueEntryModel.players!.length >= 2) {
         print("Scenario 1: game is already full");
         return;
       }
 
-      _queueEntryModel.players.add(
+      _queueEntryModel.players?.add(
         PlayerModel(playerEmail: auth.currentUser?.email),
       );
       queueEntryModelObs.value = _queueEntryModel;
@@ -420,7 +419,7 @@ class FindGameController extends GetxController {
       }
       debugPrint('observeQueueQuestionChanges success :');
       var queueEntry = QueueEntryModel.fromJson(queueEntryJson.data());
-      if (queueEntry.questions.isNotEmpty) {
+      if (queueEntry.questions!.isNotEmpty) {
         debugPrint('queueEntry.questions.isNotEmpty');
         observeQueueQuestionChangesStreamSubscription?.cancel();
         Get.to(() => MultiPlayerQuizScreen(), arguments: queueEntry);
