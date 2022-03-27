@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:realtime_quizzes/screens/login/login.dart';
 
 import '../../layouts/home/home_controller.dart';
 import '../../screens/find_game/find_game.dart';
@@ -29,6 +31,15 @@ class HomeScreen extends StatelessWidget {
               child: Icon(
                 Icons.account_circle,
               )),
+          InkWell(
+              onTap: () {
+                FirebaseAuth.instance.signOut();
+                Get.offAll(() => LoginScreen());
+              },
+              child: Icon(
+                Icons.exit_to_app,
+              )),
+
           /* InkWell(
             onTap: () {
               //show invites

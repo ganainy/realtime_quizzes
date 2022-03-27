@@ -12,7 +12,7 @@ class UserModel {
   List<dynamic> receivedFriendRequests = [];
   List<dynamic> sentFriendRequests = [];
 
-  UserModel(this.name, this.email, this.imageUrl);
+  UserModel({required this.name, required this.email, this.imageUrl});
 
   UserModel.fromJson(var json) {
     name = json['name'];

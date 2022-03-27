@@ -1,17 +1,28 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../layouts/home/home.dart';
 import '../../models/user.dart';
 import '../../shared/shared.dart';
 
 class RegisterController extends GetxController {
-  // var timerCounter = Rxn<int>();
-
+  var pickedImageObs = Rxn<File?>();
   var isPasswordVisible = false.obs;
   var downloadState = DownloadState.INITIAL.obs;
+  var errorObs = Rxn<String?>();
+
+  @override
+  void onInit() {
+    errorObs.listen((p0) {
+      errorDialog();
+    });
+  }
 
   changePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
@@ -29,30 +40,105 @@ class RegisterController extends GetxController {
           .createUserWithEmailAndPassword(email: email, password: password)
           .then((value) {
         //user created successfully, save user to info to db
-        UserModel user = UserModel(name, email, imageUrl);
-        usersCollection.doc(user.email).set(user).then((value) {
-          debugPrint('firestore success : ');
-          downloadState.value = DownloadState.SUCCESS;
-
-          Get.to(() => HomeScreen());
+        saveUserToFirestore(name, email).then((value) {
+          if (pickedImageObs.value == null) {
+            downloadState.value = DownloadState.SUCCESS;
+            Get.to(() => HomeScreen());
+          } else {
+            uploadImage(email).then((value) {
+              getImageDownloadURL(value).then((value) {
+                updateUserImageUrl(email, value).then((value) {
+                  downloadState.value = DownloadState.SUCCESS;
+                  Get.to(() => HomeScreen());
+                }).onError((error, stackTrace) {
+                  debugPrint('updateUserImageUrl error : ' + error.toString());
+                  errorObs.value = error.toString();
+                });
+              }).onError((error, stackTrace) {
+                debugPrint('getImageDownloadURL error : ' + error.toString());
+                errorObs.value = error.toString();
+              });
+            }).onError((error, stackTrace) {
+              debugPrint('uploadImage error : ' + error.toString());
+              errorObs.value = error.toString();
+            });
+          }
         }).onError((error, stackTrace) {
-          debugPrint('firestore error : ' + error.toString());
-          downloadState.value = DownloadState.ERROR;
+          debugPrint('saveUserToFirestore error : ' + error.toString());
+          errorObs.value = error.toString();
         });
       }).onError((error, stackTrace) {
-        debugPrint('Register error : ' + error.toString());
-        downloadState.value = DownloadState.ERROR;
+        debugPrint(
+            'createUserWithEmailAndPassword error : ' + error.toString());
+        errorObs.value = error.toString();
       });
     } on FirebaseAuthException catch (e) {
-      downloadState.value = DownloadState.ERROR;
       if (e.code == 'weak-password') {
         debugPrint('The password provided is too weak.');
+        errorObs.value = 'The password provided is too weak.';
       } else if (e.code == 'email-already-in-use') {
         debugPrint('The account already exists for that email.');
+        errorObs.value = 'The account already exists for that email.';
       }
-    } catch (e) {
-      downloadState.value = DownloadState.ERROR;
-      debugPrint(e.toString());
+    } catch (error) {
+      errorObs.value = error.toString();
+      debugPrint(error.toString());
     }
+  }
+
+  getImageFromGallery() async {
+    PickedFile? pickedFile = await ImagePicker().getImage(
+      source: ImageSource.gallery,
+      maxWidth: 1800,
+      maxHeight: 1800,
+    );
+
+    if (pickedFile != null) {
+      pickedImageObs.value = File(pickedFile.path);
+    }
+  }
+
+  Future<TaskSnapshot> uploadImage(String? email) async {
+    //upload image to firebase storage
+    return await storage
+        .ref()
+        .child(
+            'users/${Uri.file(pickedImageObs.value!.path).pathSegments.last}')
+        .putFile(pickedImageObs.value!);
+  }
+
+  Future<String> getImageDownloadURL(TaskSnapshot imageSnapshot) async {
+    return await imageSnapshot.ref.getDownloadURL();
+  }
+
+  Future<void> updateUserImageUrl(String? userEmail, String? imageUrl) async {
+    return await usersCollection.doc(userEmail).update({'imageUrl': imageUrl});
+  }
+
+  Future<void> saveUserToFirestore(
+    String name,
+    String email,
+  ) async {
+    UserModel user = UserModel(name: name, email: email);
+    await usersCollection.doc(user.email).set(userModelToJson(user));
+  }
+
+  void errorDialog() {
+    downloadState.value = DownloadState.ERROR;
+    Get.back();
+    // set up the buttons
+    Widget cancelButton = TextButton(
+      child: Text("Ok"),
+      onPressed: () {
+        Get.back();
+      },
+    );
+
+    Get.defaultDialog(
+      actions: [cancelButton],
+      title: 'Error',
+      barrierDismissible: false,
+      content: Text("${errorObs.value ?? ''}"),
+    );
   }
 }

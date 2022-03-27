@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -30,10 +32,11 @@ class RegisterScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
                         'REGISTER ',
+                        textAlign: TextAlign.start,
                         style: Theme.of(context)
                             .textTheme
                             .headline6
@@ -48,6 +51,25 @@ class RegisterScreen extends StatelessWidget {
                       ),
                       const SizedBox(
                         height: 16,
+                      ),
+                      InkWell(
+                        onTap: () {
+                          registerController.getImageFromGallery();
+                        },
+                        child: registerController.pickedImageObs.value == null
+                            ? CircleAvatar(
+                                radius: 60,
+                                child: Image.asset('assets/images/user.png'),
+                              )
+                            : ClipOval(
+                                child: Image.file(
+                                  registerController.pickedImageObs.value ??
+                                      File(''),
+                                  width: 120,
+                                  height: 120,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
                       ),
                       DefaultFormField(
                         labelText: 'Name',
@@ -132,7 +154,7 @@ class RegisterScreen extends StatelessWidget {
                           TextButton(
                             onPressed: () {
                               Get.off(
-                                    () => LoginScreen(),
+                                () => LoginScreen(),
                               );
                             },
                             child: const Text('Login'),
