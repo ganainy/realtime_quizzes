@@ -8,14 +8,13 @@ import 'package:realtime_quizzes/models/player.dart';
 import 'package:realtime_quizzes/screens/single_player_quiz/single_player_quiz_screen.dart';
 
 import '../../models/api.dart';
+import '../../models/dialog_type.dart';
 import '../../models/question.dart';
 import '../../models/queue_entry.dart';
 import '../../network/dio_helper.dart';
 import '../../shared/constants.dart';
 import '../../shared/shared.dart';
 import '../multiplayer_quiz/multiplayer_quiz_screen.dart';
-
-enum DialogType { IN_QUEUE, FOUND_MATCH, LOADING, HIDE }
 
 class FindGameController extends GetxController {
   var numOfQuestionsObs = 10.00.obs;

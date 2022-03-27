@@ -8,14 +8,16 @@ class ResultModel {
   String? category;
   String? otherPlayerEmail;
   int? createdAt;
+  bool? isMultiPlayer;
 
   ResultModel(
-      {required this.type,
+      {this.type,
       required this.score,
       required this.maxScore,
       required this.difficulty,
       required this.category,
-      required this.otherPlayerEmail,
+      required this.isMultiPlayer,
+      this.otherPlayerEmail,
       this.createdAt});
 
   ResultModel.fromJson(var json) {
@@ -24,6 +26,7 @@ class ResultModel {
     maxScore = json['maxScore'];
     difficulty = json['difficulty'];
     category = json['category'];
+    isMultiPlayer = json['isMultiPlayer'];
     otherPlayerEmail = json['otherPlayerEmail'];
     createdAt = json['createdAt'];
   }
@@ -36,6 +39,7 @@ resultModelToJson(ResultModel resultModel) {
     'maxScore': resultModel.maxScore,
     'difficulty': resultModel.difficulty,
     'category': resultModel.category,
+    'isMultiPlayer': resultModel.isMultiPlayer,
     'otherPlayerEmail': resultModel.otherPlayerEmail,
     'createdAt': resultModel.createdAt,
   };

@@ -3,12 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
+import 'package:realtime_quizzes/models/game_type.dart';
 
 import '../../models/api.dart';
 import '../../models/single_player_quiz_result.dart';
 import '../../network/dio_helper.dart';
 import '../../shared/constants.dart';
-import '../single_player_quiz_result/single_player_quiz_result.dart';
+import '../result/result_screen.dart';
 
 class SinglePlayerQuizController extends GetxController {
   var questions = [].obs;
@@ -26,6 +27,8 @@ class SinglePlayerQuizController extends GetxController {
   var selectedCategoryObs = Rxn<String?>();
   var selectedDifficultyObs = Rxn<String?>();
   var errorObs = Rxn<String?>();
+
+  var createdAt;
 
   void fetchQuiz() {
     debugPrint('fetchQuiz');
@@ -102,9 +105,11 @@ class SinglePlayerQuizController extends GetxController {
     //this flag used to show green background for right answer
     isQuestionAnswered.value = true;
 
-    //wait two seconds and show next answer or show quiz result if no more questions
+    //wait two seconds and show next question or show quiz result if no more questions
     Future.delayed(const Duration(milliseconds: 2000), () {
-      if (currentQuestionIndex.value >= questions.value.length - 1) {
+      //todo remove comment
+      if (currentQuestionIndex.value /* >*/ ==
+          0 /* questions.value.length - 1*/) {
         endQuiz();
       } else {
         currentQuestionIndex++;
@@ -127,7 +132,9 @@ class SinglePlayerQuizController extends GetxController {
 
     //wait two seconds and show next answer or show quiz result if no more questions
     Future.delayed(const Duration(milliseconds: 2000), () {
-      if (currentQuestionIndex.value >= questions.value.length - 1) {
+      //todo remove comment
+      if (currentQuestionIndex.value /*>*/ ==
+          0 /*questions.value.length - 1*/) {
         endQuiz();
       } else {
         currentQuestionIndex++;
@@ -142,9 +149,15 @@ class SinglePlayerQuizController extends GetxController {
   void endQuiz() {
     cancelTimer();
 
-    Get.off(() => SinglePlayerQuizResultScreen(),
-        arguments:
-            SinglePlayerQuizResult(currentScore.value, questions.value.length));
+    Get.off(() => ResultScreen(), arguments: {
+      'result': SinglePlayerQuizResult(
+          currentScore.value,
+          questions.value.length,
+          selectedCategoryObs.value,
+          selectedDifficultyObs.value,
+          createdAt),
+      'gameType': GameType.SINGLE
+    });
   }
 
   Timer? _timer;
@@ -152,10 +165,11 @@ class SinglePlayerQuizController extends GetxController {
 
   // start 10 sec timer as time limit for question
   void startTimer() {
+    createdAt = DateTime.now().millisecondsSinceEpoch;
     debugPrint('startTimer()');
     //reset timer if it was running to begin again from 10
     cancelTimer();
-    timerCounter.value = 4; //todo 10sec
+    timerCounter.value = 5; //todo 10sec
 
     _timer = Timer.periodic(
       oneSec,

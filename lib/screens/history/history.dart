@@ -33,36 +33,9 @@ class HistoryScreen extends StatelessWidget {
                                 itemCount:
                                     historyController.resultsObs.value!.length,
                                 shrinkWrap: true,
+                                physics: const BouncingScrollPhysics(),
                                 itemBuilder: (context, index) {
-                                  return Card(
-                                    color: Colors.grey[200],
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(
-                                          MyTheme.mediumPadding),
-                                      child: Wrap(
-                                        spacing:
-                                            20, // to apply margin in the main axis of the wrap
-                                        runSpacing:
-                                            20, // to apply margin in the cross axis of the wrap
-                                        alignment: WrapAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                              'status: ${historyController.resultsObs.value!.elementAt(index).type}'),
-                                          Text(
-                                              'category: ${historyController.resultsObs.value!.elementAt(index).category}'),
-                                          Text(
-                                              'difficulty: ${historyController.resultsObs.value!.elementAt(index).difficulty}'),
-                                          Text(
-                                              'score: ${historyController.resultsObs.value!.elementAt(index).score}/'
-                                              '${historyController.resultsObs.value!.elementAt(index).maxScore}'),
-                                          Text(
-                                              'opponent: ${historyController.resultsObs.value!.elementAt(index).otherPlayerEmail}'),
-                                          Text(
-                                              'date: ${DateTime.fromMillisecondsSinceEpoch(historyController.resultsObs.value!.elementAt(index).createdAt)}'),
-                                        ],
-                                      ),
-                                    ),
-                                  );
+                                  return GameCard(index);
                                 }),
                           );
                         })
@@ -74,6 +47,35 @@ class HistoryScreen extends StatelessWidget {
           ),
         );
       })),
+    );
+  }
+
+  Card GameCard(int index) {
+    return Card(
+      color: Colors.grey[200],
+      child: Padding(
+        padding: const EdgeInsets.all(MyTheme.mediumPadding),
+        child: Wrap(
+          spacing: 20, // to apply margin in the main axis of the wrap
+          runSpacing: 20, // to apply margin in the cross axis of the wrap
+          alignment: WrapAlignment.spaceBetween,
+          children: [
+            Text(
+                'status: ${historyController.resultsObs.value!.elementAt(index).type}'),
+            Text(
+                'category: ${historyController.resultsObs.value!.elementAt(index).category}'),
+            Text(
+                'difficulty: ${historyController.resultsObs.value!.elementAt(index).difficulty}'),
+            Text(
+                'score: ${historyController.resultsObs.value!.elementAt(index).score}/'
+                '${historyController.resultsObs.value!.elementAt(index).maxScore}'),
+            Text(
+                'opponent: ${historyController.resultsObs.value!.elementAt(index).otherPlayerEmail}'),
+            Text(
+                'date: ${DateTime.fromMillisecondsSinceEpoch(historyController.resultsObs.value!.elementAt(index).createdAt)}'),
+          ],
+        ),
+      ),
     );
   }
 }

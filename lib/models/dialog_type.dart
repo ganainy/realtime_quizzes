@@ -1,0 +1,1 @@
+enum DialogType { IN_QUEUE, FOUND_MATCH, LOADING, HIDE }

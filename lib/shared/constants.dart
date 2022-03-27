@@ -91,10 +91,3 @@ class Constants {
     {'category': 'animals'.tr, 'api': 27}
   ];
 }
-
-class GameType {
-  static const SINGLE = 'single';
-  static const VS_FRIEND = 'vs_friend';
-  static const VS_RANDOM = 'vs_random';
-  static const VS_RANDOMS = 'vs_randoms';
-}

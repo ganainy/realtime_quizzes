@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:realtime_quizzes/models/answer.dart';
+import 'package:realtime_quizzes/models/game_type.dart';
 import 'package:realtime_quizzes/models/player.dart';
 import 'package:realtime_quizzes/models/question.dart';
 import 'package:realtime_quizzes/models/queue_entry.dart';
@@ -251,7 +252,10 @@ class MultiPlayerQuizController extends GetxController {
   }
 
   void showResultScreen() {
-    Get.off(() => ResultScreen(), arguments: queueEntryModelObs.value);
+    Get.off(() => ResultScreen(), arguments: {
+      'queueEntry': queueEntryModelObs.value,
+      'gameType': GameType.MULTI,
+    });
   }
 
   // start 10 sec timer as time limit for question && increase index to show
