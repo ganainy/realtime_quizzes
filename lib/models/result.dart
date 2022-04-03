@@ -1,4 +1,4 @@
-//used to show match history of each user
+//used to show match profile of each user
 
 class ResultModel {
   String? type; //win-lose-draw

@@ -17,102 +17,155 @@ class FindGameScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     findGameController.observe();
     return SafeArea(
-      child: SingleChildScrollView(
-        child: Center(
-            child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              'Select game settings',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headline3,
-            ),
-            SizedBox(
-              height: 100,
-            ),
-            Categories(findGameController),
-            QuestionNumberSlider(findGameController),
-            DifficultyRow(findGameController),
-            DefaultButton(
-                text: ' Find Game',
-                onPressed: () {
-                  findGameController.searchAvailableQueues(context);
-                }),
-          ],
-        )),
+      child: Center(
+        child: SingleChildScrollView(
+          child: Container(
+            margin: const EdgeInsets.all(smallPadding),
+            child: Obx(() {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Welcome, ${findGameController.userObs.value?.name ?? ''}',
+                          textAlign: TextAlign.start,
+                          style: Theme.of(context).textTheme.headline1,
+                        ),
+                        Text(
+                          'Select game settings then press find game to start.',
+                          textAlign: TextAlign.start,
+                        )
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    height: 24,
+                  ),
+                  Categories(findGameController, context),
+                  QuestionNumberSlider(findGameController, context),
+                  DifficultyRow(findGameController, context),
+                  SizedBox(
+                    height: 8,
+                  ),
+                  Container(
+                    margin: EdgeInsets.all(2),
+                    child: DefaultButton(
+                        text: ' Find Game',
+                        onPressed: () {
+                          findGameController.searchAvailableQueues(context);
+                        }),
+                  ),
+                ],
+              );
+            }),
+          ),
+        ),
       ),
     );
   }
 
-  QuestionNumberSlider(FindGameController findGameController) {
+  Categories(FindGameController findGameController, BuildContext context) {
+    return Card(
+      color: cardColor,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Category',
+              style: Theme.of(context).textTheme.subtitle1,
+            ),
+            SizedBox(
+              height: smallPadding,
+            ),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ...Constants.categoryList.map((category) => Obx(() {
+                        return Card(
+                          child: TextButton(
+                            child: Text('${category['category']}'),
+                            onPressed: () {
+                              findGameController.selectedCategoryObs.value =
+                                  category['category'];
+                            },
+                          ),
+                          color: findGameController
+                              .getCategoryColor(category['category']),
+                        );
+                      }))
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  QuestionNumberSlider(
+      FindGameController findGameController, BuildContext context) {
     return Obx(() {
-      return Column(
-        children: [
-          Text(
-              'Number of questions: ${findGameController.numOfQuestionsObs.value.toInt()}'),
-          Slider(
-            value: findGameController.numOfQuestionsObs.value,
-            max: 20,
-            min: 5,
-            divisions: 15,
-            label: findGameController.numOfQuestionsObs.round().toString(),
-            onChanged: (double value) {
-              findGameController.numOfQuestionsObs.value = value;
-            },
+      return Card(
+        color: cardColor,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Question amount ',
+                  style: Theme.of(context).textTheme.subtitle1),
+              Slider(
+                value: findGameController.numOfQuestionsObs.value,
+                max: 20,
+                min: 5,
+                divisions: 15,
+                thumbColor: Color(0xff90e0ef),
+                activeColor: Color(0xff90e0ef),
+                label: findGameController.numOfQuestionsObs.round().toString(),
+                onChanged: (double value) {
+                  findGameController.numOfQuestionsObs.value = value;
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       );
     });
   }
 
-  Categories(FindGameController findGameController) {
-    return Column(
-      children: [
-        Text('Select category'),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
+  DifficultyRow(FindGameController findGameController, BuildContext context) {
+    return Obx(() {
+      return Card(
+        color: cardColor,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ...Constants.categoryList.map((category) => Obx(() {
-                    return Card(
-                      child: TextButton(
-                        child: Text('${category['category']}'),
-                        onPressed: () {
-                          findGameController.selectedCategoryObs.value =
-                              category['category'];
-                        },
-                      ),
-                      color: findGameController
-                          .getCategoryColor(category['category']),
-                    );
-                  }))
+              Text('Difficulty', style: Theme.of(context).textTheme.subtitle1),
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                DifficultySelector('easy'.tr, findGameController),
+                DifficultySelector('medium'.tr, findGameController),
+                DifficultySelector('hard'.tr, findGameController),
+              ]),
             ],
           ),
         ),
-      ],
-    );
-  }
-
-  DifficultyRow(FindGameController findGameController) {
-    return Obx(() {
-      return Column(
-        children: [
-          Text(
-              'Difficulty: ${findGameController.selectedDifficultyObs.value ?? ''}'),
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            DifficultySelector('easy'.tr, findGameController),
-            DifficultySelector('medium'.tr, findGameController),
-            DifficultySelector('hard'.tr, findGameController),
-          ]),
-        ],
       );
     });
   }
 
   DifficultySelector(String difficulty, FindGameController findGameController) {
     return Container(
-      margin: EdgeInsets.all(MyTheme.smallPadding),
+      margin: EdgeInsets.all(smallPadding),
       child: InkWell(
         onTap: () {
           findGameController.selectedDifficultyObs.value = difficulty;
@@ -121,7 +174,7 @@ class FindGameScreen extends StatelessWidget {
           radius: 25.0,
           backgroundColor:
               difficulty == findGameController.selectedDifficultyObs.value
-                  ? Colors.grey[400]
+                  ? Color(0xff00b4d8)
                   : Colors.white,
           child: CircleAvatar(
             backgroundColor: difficulty == 'easy'.tr

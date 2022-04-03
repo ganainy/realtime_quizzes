@@ -11,6 +11,7 @@ import '../../models/api.dart';
 import '../../models/dialog_type.dart';
 import '../../models/question.dart';
 import '../../models/queue_entry.dart';
+import '../../models/user.dart';
 import '../../network/dio_helper.dart';
 import '../../shared/constants.dart';
 import '../../shared/shared.dart';
@@ -20,6 +21,7 @@ class FindGameController extends GetxController {
   var numOfQuestionsObs = 10.00.obs;
   var selectedCategoryObs = ('Random'.tr).obs;
   var selectedDifficultyObs = Rxn<String?>();
+  var userObs = Rxn<UserModel?>();
 
   var errorObs = Rxn<String?>();
   var queueEntryIdObs = Rxn<String>();
@@ -65,6 +67,12 @@ class FindGameController extends GetxController {
     });
   }
 
+  @override
+  void onInit() {
+    loadProfile();
+    super.onInit();
+  }
+
   void inQueueDialog() {
     // set up the buttons
     Widget cancelButton = TextButton(
@@ -98,7 +106,9 @@ class FindGameController extends GetxController {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-              "Game will start once we find another player with same search paramaters as you"),
+            "Game will start once we find another player with same search paramaters as you",
+            style: TextStyle(fontSize: 14),
+          ),
           SizedBox(
             height: 10,
           ),
@@ -126,7 +136,7 @@ class FindGameController extends GetxController {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text("Game will start shortly"),
+          Text("Game will start shortly", style: TextStyle(fontSize: 14)),
           SizedBox(
             height: 10,
           ),
@@ -174,7 +184,7 @@ class FindGameController extends GetxController {
       actions: [cancelButton],
       title: 'Error',
       barrierDismissible: false,
-      content: Text("${errorObs.value ?? ''}"),
+      content: Text("${errorObs.value ?? ''}", style: TextStyle(fontSize: 14)),
     );
   }
 
@@ -437,9 +447,18 @@ class FindGameController extends GetxController {
 
   getCategoryColor(String? category) {
     if (category == selectedCategoryObs.value) {
-      return Colors.blue[100];
+      return Color(0xff90e0ef);
     } else {
       return null;
     }
+  }
+
+  loadProfile() {
+    usersCollection.doc(auth.currentUser?.email).get().then((json) {
+      var user = UserModel.fromJson(json.data());
+      userObs.value = user;
+    }).onError((error, stackTrace) {
+      printError(info: 'error loading match profile' + error.toString());
+    });
   }
 }

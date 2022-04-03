@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 
+import '../../customization/theme.dart';
+import '../../shared/components.dart';
 import '../../shared/constants.dart';
 import 'friends_controller.dart';
 
@@ -19,15 +21,15 @@ class FriendsScreen extends StatelessWidget {
           children: [
             GameInvites(context),
             const SizedBox(
-              height: 100,
+              height: largePadding,
             ),
             Friends(context),
             const SizedBox(
-              height: 100,
+              height: largePadding,
             ),
             FriendSuggestions(context),
             const SizedBox(
-              height: 100,
+              height: largePadding,
             ),
             IncomingFriendRequests(context),
           ],
@@ -95,7 +97,7 @@ class FriendsScreen extends StatelessWidget {
       return Column(
         children: [
           Text('Friend suggestions',
-              style: Theme.of(context).textTheme.headline4),
+              style: Theme.of(context).textTheme.headline1),
           SizedBox(
             height: 20,
           ),
@@ -110,22 +112,26 @@ class FriendsScreen extends StatelessWidget {
                             children: [
                               ...friendsController.friendSuggestionsObs.value
                                   .map((friendSuggestion) => Card(
+                                        color: cardColor,
                                         child: Column(
                                           children: [
-                                            Text(
-                                                'name: ${friendSuggestion.name}'),
-                                            Text(
-                                                'email: ${friendSuggestion.email}'),
-                                            Text(
-                                                'isOnline: ${friendSuggestion.isOnline}'),
-                                            TextButton(
-                                              child:
-                                                  Text('Send friend request'),
+                                            DefaultStatusImage(
+                                                isOnline:
+                                                    friendSuggestion.isOnline,
+                                                imageUrl:
+                                                    friendSuggestion.imageUrl),
+                                            Text('${friendSuggestion.name}',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .subtitle1),
+                                            DefaultIconButton(
+                                              text: 'Add friend',
                                               onPressed: () {
                                                 friendsController
                                                     .sendFriendRequest(
                                                         friendSuggestion);
                                               },
+                                              icon: Icons.group_add,
                                             ),
                                           ],
                                         ),
@@ -146,7 +152,7 @@ class FriendsScreen extends StatelessWidget {
         children: [
           Text(
             'Friends',
-            style: Theme.of(context).textTheme.headline4,
+            style: Theme.of(context).textTheme.headline1,
           ),
           SizedBox(
             height: 20,
@@ -159,36 +165,37 @@ class FriendsScreen extends StatelessWidget {
                     return Row(
                       children: [
                         ...friendsController.friendsObs.value
-                            .map((friend) => Card(
-                                  child: Column(
-                                    children: [
-                                      Text('name: ${friend.name}'),
-                                      Text('email: ${friend.email}'),
-                                      friend.isOnline
-                                          ? const CircleAvatar(
-                                              backgroundColor: Colors.green,
-                                              radius: 8,
-                                            )
-                                          : const CircleAvatar(
-                                              backgroundColor: Colors.red,
-                                              radius: 8,
-                                            ),
-                                      friend.isOnline
-                                          ? TextButton(
-                                              child: Text('send game invite'),
-                                              onPressed: () {
-                                                showQuizSpecDialog(friend);
-                                              },
-                                            )
-                                          : const SizedBox(),
-                                      TextButton(
-                                        child: Text('delete from friends'),
-                                        onPressed: () {
-                                          friendsController
-                                              .deleteFriend(friend);
-                                        },
-                                      ),
-                                    ],
+                            .map((friend) => SizedBox(
+                                  width: cardWidth,
+                                  child: Card(
+                                    color: cardColor,
+                                    child: Column(
+                                      children: [
+                                        DefaultStatusImage(
+                                            imageUrl: friend.imageUrl,
+                                            isOnline: friend.isOnline),
+                                        Text(
+                                          '${friend.name}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .subtitle1,
+                                        ),
+                                        DefaultIconButton(
+                                            text: 'challenge',
+                                            onPressed: () {
+                                              friendsController
+                                                  .sendGameInvite(friend);
+                                            },
+                                            icon: Icons.wine_bar),
+                                        DefaultIconButton(
+                                            text: 'remove',
+                                            onPressed: () {
+                                              friendsController
+                                                  .deleteFriend(friend);
+                                            },
+                                            icon: Icons.delete),
+                                      ],
+                                    ),
                                   ),
                                 ))
                       ],
@@ -205,7 +212,7 @@ class FriendsScreen extends StatelessWidget {
       return Column(
         children: [
           Text('Incoming friend requests',
-              style: Theme.of(context).textTheme.headline4),
+              style: Theme.of(context).textTheme.headline1),
           SizedBox(
             height: 20,
           ),
@@ -221,23 +228,28 @@ class FriendsScreen extends StatelessWidget {
                               ...friendsController
                                   .receivedFriendRequestsObs.value
                                   .map((incomingFriendRequest) => Card(
+                                        color: cardColor,
                                         child: Column(
                                           children: [
+                                            DefaultStatusImage(
+                                                imageUrl: incomingFriendRequest
+                                                    .imageUrl,
+                                                isOnline: incomingFriendRequest
+                                                    .isOnline),
                                             Text(
-                                                'name: ${incomingFriendRequest.name}'),
-                                            Text(
-                                                'email: ${incomingFriendRequest.email}'),
-                                            Text(
-                                                'isOnline: ${incomingFriendRequest.isOnline}'),
-                                            TextButton(
-                                              child:
-                                                  Text('accept friend request'),
-                                              onPressed: () {
-                                                friendsController
-                                                    .acceptFriendRequest(
-                                                        incomingFriendRequest);
-                                              },
+                                              ' ${incomingFriendRequest.name}',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .subtitle1,
                                             ),
+                                            DefaultIconButton(
+                                                text: 'accept',
+                                                onPressed: () {
+                                                  friendsController
+                                                      .acceptFriendRequest(
+                                                          incomingFriendRequest);
+                                                },
+                                                icon: Icons.add),
                                           ],
                                         ),
                                       ))

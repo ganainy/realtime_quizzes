@@ -1,13 +1,11 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
-import 'package:realtime_quizzes/screens/login/login.dart';
 
 import '../../layouts/home/home_controller.dart';
 import '../../screens/find_game/find_game.dart';
 import '../../screens/friends/friends.dart';
-import '../../screens/history/history.dart';
+import '../../screens/profile/profile.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({Key? key}) : super(key: key);
@@ -23,46 +21,6 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Quizzes'),
-        actions: [
-          InkWell(
-              onTap: () {
-                Get.to(HistoryScreen());
-              },
-              child: Icon(
-                Icons.account_circle,
-              )),
-          InkWell(
-              onTap: () {
-                FirebaseAuth.instance.signOut();
-                Get.offAll(() => LoginScreen());
-              },
-              child: Icon(
-                Icons.exit_to_app,
-              )),
-
-          /* InkWell(
-            onTap: () {
-              //show invites
-
-              Get.to(() => ReceivedInviteScreen(),
-                  arguments: homeController.invites.value);
-            },
-            child: Obx(() {
-              return Badge(
-                position: BadgePosition.topStart(),
-                badgeContent: Text(
-                  homeController.invites.value.length.toString(),
-                  style: TextStyle(color: Colors.white),
-                ),
-                child: Icon(
-                  Icons.email,
-                  size: 30,
-                ),
-                showBadge: homeController.invites.value.isNotEmpty,
-              );
-            }),
-          )*/
-        ],
       ),
       body: buildPageView(),
       bottomNavigationBar: Obx(() {
@@ -89,6 +47,10 @@ class HomeScreen extends StatelessWidget {
         icon: new Icon(Icons.supervised_user_circle_outlined),
         label: 'Friends',
       ),
+      BottomNavigationBarItem(
+        icon: new Icon(Icons.account_circle),
+        label: 'Profile',
+      ),
     ];
   }
 
@@ -101,6 +63,7 @@ class HomeScreen extends StatelessWidget {
       children: <Widget>[
         FindGameScreen(),
         FriendsScreen(),
+        ProfileScreen(),
       ],
     );
   }

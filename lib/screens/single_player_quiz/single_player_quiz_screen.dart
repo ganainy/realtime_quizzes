@@ -44,13 +44,13 @@ class SinglePlayerQuizScreen extends StatelessWidget {
             Text('Your score: ' +
                 singlePlayerQuizController.currentScore.value.toString()),
             const SizedBox(
-              height: MyTheme.largePadding,
+              height: largePadding,
             ),
             //add one to index because index starts with 0
             Text(
                 'Question: ${(singlePlayerQuizController.currentQuestionIndex.value + 1)}/${(singlePlayerQuizController.questions.value.length)}'),
             const SizedBox(
-              height: MyTheme.largePadding,
+              height: largePadding,
             ),
             Obx(() {
               return Text('Timer: ' +
@@ -58,11 +58,11 @@ class SinglePlayerQuizScreen extends StatelessWidget {
             }),
 
             const SizedBox(
-              height: MyTheme.largePadding,
+              height: largePadding,
             ),
             Text(currentQuestion.question),
             const SizedBox(
-              height: MyTheme.largePadding,
+              height: largePadding,
             ),
             ...currentQuestion.allAnswers.map((answer) {
               return Answer(
@@ -115,7 +115,7 @@ class SinglePlayerQuizScreen extends StatelessWidget {
           },
         ),
         const SizedBox(
-          height: MyTheme.mediumPadding,
+          height: mediumPadding,
         ),
       ],
     );

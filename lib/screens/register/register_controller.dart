@@ -138,7 +138,7 @@ class RegisterController extends GetxController {
       actions: [cancelButton],
       title: 'Error',
       barrierDismissible: false,
-      content: Text("${errorObs.value ?? ''}"),
+      content: Text("${errorObs.value ?? ''}", style: TextStyle(fontSize: 14)),
     );
   }
 }

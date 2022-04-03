@@ -504,7 +504,7 @@ class FriendsController extends GetxController {
       actions: [cancelButton],
       title: 'Error',
       barrierDismissible: false,
-      content: Text("${errorObs.value ?? ''}"),
+      content: Text("${errorObs.value ?? ''}", style: TextStyle(fontSize: 14)),
     );
   }
 
@@ -522,7 +522,7 @@ class FriendsController extends GetxController {
       actions: [cancelButton],
       title: title ?? '',
       barrierDismissible: false,
-      content: Text(message),
+      content: Text(message, style: TextStyle(fontSize: 14)),
     );
   }
 
@@ -545,7 +545,8 @@ class FriendsController extends GetxController {
         children: [
           Text(
               "${sentInviteQueueEntryModelObs.value?.difficulty}-${sentInviteQueueEntryModelObs.value?.category ?? 'Random'}-"
-              "${sentInviteQueueEntryModelObs.value?.numberOfQuestions} ${'questions'.tr} "),
+              "${sentInviteQueueEntryModelObs.value?.numberOfQuestions} ${'questions'.tr} ",
+              style: TextStyle(fontSize: 14)),
           SizedBox(
             height: 10,
           ),

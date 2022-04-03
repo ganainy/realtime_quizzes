@@ -40,18 +40,18 @@ class MultiPlayerQuizScreen extends StatelessWidget {
             Text(
                 '${multiPlayerQuizController.loggedPlayer.value?.player?.name} score: ${multiPlayerQuizController.loggedPlayer.value?.score}'),
             const SizedBox(
-              height: MyTheme.largePadding,
+              height: largePadding,
             ),
             Text(
                 '${multiPlayerQuizController.otherPlayer.value?.player?.name} score: ${multiPlayerQuizController.otherPlayer.value?.score}'),
             const SizedBox(
-              height: MyTheme.largePadding,
+              height: largePadding,
             ),
             //add one to index because index starts with 0
             Text(
                 'Question: ${(multiPlayerQuizController.currentQuestionIndexObs.value + 1)}/${(multiPlayerQuizController.questionsObs.value.length)}'),
             const SizedBox(
-              height: MyTheme.largePadding,
+              height: largePadding,
             ),
             multiPlayerQuizController.timerValueObs.value > 0
                 ? Obx(() {
@@ -70,11 +70,11 @@ class MultiPlayerQuizScreen extends StatelessWidget {
                 : const SizedBox(),
 
             const SizedBox(
-              height: MyTheme.largePadding,
+              height: largePadding,
             ),
             Text('${currentQuestion?.question}'),
             const SizedBox(
-              height: MyTheme.largePadding,
+              height: largePadding,
             ),
             ...?currentQuestion?.allAnswers.map((answer) {
               return Answer(
@@ -152,7 +152,7 @@ class MultiPlayerQuizScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(
-          height: MyTheme.mediumPadding,
+          height: mediumPadding,
         ),
       ],
     );

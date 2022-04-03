@@ -24,8 +24,8 @@ class QueueEntryModel {
       this.queueEntryId, this.players, this.createdAt);
 
   QueueEntryModel.fromJson(var json) {
-    difficulty = json['difficulty'];
-    category = json['category'];
+    difficulty = json['difficulty'] ?? 'Random';
+    category = json['category'] ?? 'Random';
     createdAt = json['createdAt'];
     numberOfQuestions = (json['numberOfQuestions']);
     queueEntryId = (json['queueEntryId']);
