@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -7,6 +6,7 @@ import 'package:realtime_quizzes/models/single_player_quiz_result.dart';
 import 'package:realtime_quizzes/screens/result/result_controller.dart';
 import 'package:realtime_quizzes/shared/components.dart';
 
+import '../../customization/theme.dart';
 import '../../models/game_type.dart';
 import '../../shared/constants.dart';
 
@@ -33,76 +33,123 @@ class ResultScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
+          child: Center(
         child: Get.arguments['gameType'] == GameType.MULTI
-            ? MultiPlayerResult()
-            : SinglePlayerResult(Get.arguments['result']),
-      ),
+            ? MultiPlayerResult(context)
+            : SinglePlayerResult(Get.arguments['result'], context),
+      )),
     );
   }
 
-  Center MultiPlayerResult() {
+  SingleChildScrollView MultiPlayerResult(BuildContext context) {
     var queueEntryModel = resultController.queueEntryModelObs.value;
 
-    return Center(
+    return SingleChildScrollView(
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          Stack(
             children: [
-              Column(
-                children: [
-                  CachedNetworkImage(
-                    width: 100,
-                    height: 100,
-                    placeholder: (context, url) =>
-                        const CircularProgressIndicator(),
-                    imageUrl: queueEntryModel?.players!
-                            .elementAt(0)
-                            ?.player
-                            ?.imageUrl ??
-                        Constants.YOU_IMAGE,
-                    errorWidget: (context, url, error) =>
-                        Icon(Icons.error, size: 100),
-                  ),
-                  Text(
-                      '${queueEntryModel?.players!.elementAt(0)?.player?.name}'),
-                  Text('${queueEntryModel?.players!.elementAt(0)?.score}'),
-                  (queueEntryModel!.players!.elementAt(0)!.score >
-                          queueEntryModel.players!.elementAt(1)!.score)
-                      ? const Text('Winner')
-                      : SizedBox(),
-                ],
+              Padding(
+                padding: const EdgeInsets.all(smallPadding),
+                child: Card(
+                  color: lightCardColor,
+                  child: Container(
+                      width: double.infinity,
+                      margin: EdgeInsets.all(largePadding),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Column(
+                            children: [
+                              Column(
+                                children: [
+                                  Text(
+                                      '${queueEntryModel?.players!.elementAt(0)?.user?.name}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .subtitle1),
+                                  DefaultResultImage(
+                                    imageUrl: queueEntryModel?.players!
+                                            .elementAt(0)
+                                            ?.user
+                                            ?.imageUrl ??
+                                        Constants.YOU_IMAGE,
+                                    isWinner: queueEntryModel!.players!
+                                            .elementAt(0)!
+                                            .score >
+                                        queueEntryModel.players!
+                                            .elementAt(1)!
+                                            .score,
+                                  ),
+                                ],
+                              ),
+                              Card(
+                                color: cardColor,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: largePadding,
+                                      vertical: smallPadding),
+                                  child: Text(
+                                      '${queueEntryModel.players!.elementAt(0)?.score}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .subtitle1),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Text(
+                            ':',
+                            style: TextStyle(color: cardColor, fontSize: 30),
+                          ),
+                          Column(
+                            children: [
+                              Text(
+                                '${queueEntryModel.players!.elementAt(1)?.user?.name}',
+                                style: Theme.of(context).textTheme.subtitle1,
+                              ),
+                              DefaultResultImage(
+                                imageUrl: queueEntryModel.players!
+                                        .elementAt(1)
+                                        ?.user
+                                        ?.imageUrl ??
+                                    '',
+                                isWinner: queueEntryModel.players!
+                                        .elementAt(1)!
+                                        .score >
+                                    queueEntryModel.players!
+                                        .elementAt(0)!
+                                        .score,
+                              ),
+                              Card(
+                                color: cardColor,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: largePadding,
+                                      vertical: smallPadding),
+                                  child: Text(
+                                      '${queueEntryModel.players!.elementAt(1)?.score}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .subtitle1),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      )),
+                ),
               ),
-              (queueEntryModel.players!.elementAt(0)!.score ==
-                      queueEntryModel.players!.elementAt(1)!.score)
-                  ? const Text('Draw')
-                  : SizedBox(),
-              Column(
-                children: [
-                  CachedNetworkImage(
-                    width: 100,
-                    height: 100,
-                    placeholder: (context, url) =>
-                        const CircularProgressIndicator(),
-                    imageUrl: queueEntryModel.players!
-                            .elementAt(1)
-                            ?.player
-                            ?.imageUrl ??
-                        '',
-                    errorWidget: (context, url, error) => Icon(
-                      Icons.error,
-                      size: 100,
-                    ),
+              Align(
+                alignment: Alignment.topCenter,
+                child: Card(
+                  color: cardColor,
+                  child: Container(
+                    padding: EdgeInsets.all(smallPadding),
+                    child: Text('Final Result'),
                   ),
-                  Text(
-                      '${queueEntryModel.players!.elementAt(1)?.player?.name}'),
-                  Text('${queueEntryModel.players!.elementAt(1)?.score}'),
-                  (queueEntryModel.players!.elementAt(1)!.score >
-                          queueEntryModel.players!.elementAt(0)!.score)
-                      ? const Text('Winner')
-                      : SizedBox(),
-                ],
-              )
+                ),
+              ),
             ],
           ),
           DefaultButton(
@@ -116,24 +163,75 @@ class ResultScreen extends StatelessWidget {
     );
   }
 
-  SinglePlayerResult(SinglePlayerQuizResult result) {
-    return Center(
+  SinglePlayerResult(SinglePlayerQuizResult result, BuildContext context) {
+    return SingleChildScrollView(
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Text('score:' +
-              result.score.toString() +
-              '/' +
-              result.numQuestions.toString()),
-          Text('difficulty: ${result.difficulty}'),
-          Text('category: ${result.category ?? 'Random'}'),
-          Text(
-              'created at: ${DateTime.fromMillisecondsSinceEpoch(result.createdAt!)}'),
+          Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(smallPadding),
+                child: Card(
+                  color: lightCardColor,
+                  child: Container(
+                      width: double.infinity,
+                      margin: EdgeInsets.all(largePadding),
+                      child: Column(children: [
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Card(
+                              color: cardColor,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: largePadding,
+                                    vertical: smallPadding),
+                                child: Text('${result.score}',
+                                    style:
+                                        Theme.of(context).textTheme.subtitle1),
+                              ),
+                            ),
+                            const Text(
+                              '/',
+                              style: TextStyle(color: cardColor, fontSize: 30),
+                            ),
+                            Card(
+                              color: cardColor,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: largePadding,
+                                    vertical: smallPadding),
+                                child: Text('${result.numQuestions}',
+                                    style:
+                                        Theme.of(context).textTheme.subtitle1),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ])),
+                ),
+              ),
+              Align(
+                alignment: Alignment.topCenter,
+                child: Card(
+                  color: cardColor,
+                  child: Container(
+                    padding: EdgeInsets.all(smallPadding),
+                    child: Text('Final Result'),
+                  ),
+                ),
+              ),
+            ],
+          ),
           DefaultButton(
               text: 'back home',
               onPressed: () {
+                resultController.deleteGame();
                 Get.offAll(() => HomeScreen());
-              }),
+              })
         ],
       ),
     );

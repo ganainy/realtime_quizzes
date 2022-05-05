@@ -36,26 +36,6 @@ class ReceivedInviteController extends GetxController {
   Timer? _timer;
   final oneSec = const Duration(seconds: 1);
 
-  /*void startTimer() {
-    debugPrint('startTimer()');
-    //reset timer if it was running to begin again from 10
-    cancelTimer();
-    timerCounter.value = 10; //todo 30sec
-
-    _timer = Timer.periodic(
-      oneSec,
-      (Timer timer) {
-        if (timerCounter.value == 0) {
-          deleteInvite();
-          debugPrint('timer ended');
-        } else {
-          timerCounter.value = timerCounter.value! - 1;
-          debugPrint('counter:' + timerCounter.toString());
-        }
-      },
-    );
-  }*/
-
   void cancelTimer() {
     if (_timer != null) {
       _timer!.cancel();

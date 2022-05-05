@@ -5,9 +5,9 @@ import 'player.dart';
 class QueueEntryModel {
   //difficultyType to show user , api_param for API call
 
-  String? difficulty;
-  String? category;
-  int? numberOfQuestions;
+  String? difficulty = 'Random';
+  String? category = 'Random';
+  int? numberOfQuestions = 10;
   String?
       queueEntryId; //this will be also the email of the player to prevent multiple entry to queue by same user
   List<PlayerModel?>? players = [];
@@ -20,12 +20,17 @@ class QueueEntryModel {
   bool hasFriendAcceptedInvite =
       false; //this field used when sending invite to friends not with random queue
 
-  QueueEntryModel(this.difficulty, this.category, this.numberOfQuestions,
-      this.queueEntryId, this.players, this.createdAt);
+  QueueEntryModel(
+      {this.difficulty,
+      this.category,
+      this.numberOfQuestions,
+      this.queueEntryId,
+      this.players,
+      this.createdAt});
 
   QueueEntryModel.fromJson(var json) {
-    difficulty = json['difficulty'] ?? 'Random';
-    category = json['category'] ?? 'Random';
+    difficulty = json['difficulty'];
+    category = json['category'];
     createdAt = json['createdAt'];
     numberOfQuestions = (json['numberOfQuestions']);
     queueEntryId = (json['queueEntryId']);

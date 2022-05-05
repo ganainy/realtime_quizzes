@@ -48,7 +48,6 @@ class LoginScreen extends StatelessWidget {
                       const SizedBox(
                         height: 16,
                       ),
-
                       const SizedBox(
                         height: 16,
                       ),
@@ -80,8 +79,7 @@ class LoginScreen extends StatelessWidget {
                               ? const Icon(Icons.visibility_off)
                               : const Icon(Icons.visibility),
                         ),
-                        obscureText:
-                            !loginController.isPasswordVisible.value,
+                        obscureText: !loginController.isPasswordVisible.value,
                         validator: (value) {
                           if (value.toString().isEmpty) {
                             return 'Please enter password';
@@ -119,10 +117,13 @@ class LoginScreen extends StatelessWidget {
                           TextButton(
                             onPressed: () {
                               Get.off(
-                                    () => RegisterScreen(),
+                                () => RegisterScreen(),
                               );
                             },
-                            child: const Text('Register'),
+                            child: const Text(
+                              'Register',
+                              style: TextStyle(color: Colors.blue),
+                            ),
                           ),
                         ],
                       ),

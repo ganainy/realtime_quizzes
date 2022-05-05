@@ -58,8 +58,12 @@ class RegisterScreen extends StatelessWidget {
                         },
                         child: registerController.pickedImageObs.value == null
                             ? CircleAvatar(
-                                radius: 60,
-                                child: Image.asset('assets/images/user.png'),
+                                radius: 50,
+                                child: Image.asset(
+                                  'assets/images/user.png',
+                                  width: 200,
+                                  height: 200,
+                                ),
                               )
                             : ClipOval(
                                 child: Image.file(
@@ -70,6 +74,9 @@ class RegisterScreen extends StatelessWidget {
                                   fit: BoxFit.cover,
                                 ),
                               ),
+                      ),
+                      const SizedBox(
+                        height: 16,
                       ),
                       DefaultFormField(
                         labelText: 'Name',
@@ -157,7 +164,10 @@ class RegisterScreen extends StatelessWidget {
                                 () => LoginScreen(),
                               );
                             },
-                            child: const Text('Login'),
+                            child: const Text(
+                              'Login',
+                              style: TextStyle(color: Colors.blue),
+                            ),
                           ),
                         ],
                       ),

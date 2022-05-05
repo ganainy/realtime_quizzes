@@ -5,6 +5,7 @@ import 'package:get/get_core/src/get_main.dart';
 import '../../customization/theme.dart';
 import '../../shared/components.dart';
 import '../../shared/constants.dart';
+import '../../shared/shared.dart';
 import 'friends_controller.dart';
 
 class FriendsScreen extends StatelessWidget {
@@ -44,9 +45,9 @@ class FriendsScreen extends StatelessWidget {
           ? const SizedBox()
           : Column(
               children: [
-                Text('You have game invite',
-                    style: Theme.of(context).textTheme.headline4),
-                SizedBox(
+                Text('Game invites',
+                    style: Theme.of(context).textTheme.headline1),
+                const SizedBox(
                   height: 20,
                 ),
                 SingleChildScrollView(
@@ -55,26 +56,46 @@ class FriendsScreen extends StatelessWidget {
                     return Row(
                       children: [
                         ...friendsController.receivedInvitesObs.value
-                            .map((incomingGameInvite) => Card(
-                                  child: Column(
+                            .map((incomingGameInvite) {
+                          var otherPlayer = incomingGameInvite.players
+                              .firstWhere((element) =>
+                                  element?.playerEmail !=
+                                  auth.currentUser?.email)
+                              .player;
+                          return Card(
+                            color: cardColor,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: MediaQuery.of(context).size.width *
+                                      (2 / 3),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                          'sender email: ${incomingGameInvite.queueEntryId}'),
-                                      Text(
-                                          'difficulty: ${incomingGameInvite.difficulty}'),
-                                      Text(
-                                          'category: ${incomingGameInvite.category}'),
-                                      Text(
-                                          'number of question: ${incomingGameInvite.numberOfQuestions}'),
-                                      TextButton(
-                                        child: Text('start game'),
-                                        onPressed: () {
-                                          friendsController.acceptGameInvite(
-                                              incomingGameInvite);
-                                        },
-                                      ),
-                                      TextButton(
-                                        child: Text('decline'),
+                                      DefaultStatusImage(
+                                          imageUrl: otherPlayer.imageUrl,
+                                          isOnline: otherPlayer.isOnline),
+                                      Spacer(),
+                                      IconButton(
+                                          onPressed: () {
+                                            friendsController.acceptGameInvite(
+                                                incomingGameInvite);
+                                          },
+                                          icon: Image.asset(
+                                            'assets/images/accept.png',
+                                            width: 30,
+                                            height: 30,
+                                            color: Colors.green,
+                                          )),
+                                      IconButton(
+                                        icon: Image.asset(
+                                          'assets/images/decline.png',
+                                          width: 20,
+                                          height: 20,
+                                          color: Colors.red,
+                                        ),
                                         onPressed: () {
                                           friendsController.declineGameInvite(
                                               incomingGameInvite);
@@ -82,7 +103,44 @@ class FriendsScreen extends StatelessWidget {
                                       ),
                                     ],
                                   ),
-                                ))
+                                ),
+                                SizedBox(
+                                  width: MediaQuery.of(context).size.width *
+                                      (2 / 3),
+                                  child: ExpansionTile(
+                                    title: const Text('Specs'),
+                                    children: [
+                                      Text(
+                                        'From: ${otherPlayer.name}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle2,
+                                      ),
+                                      Text(
+                                        'Difficulty: ${incomingGameInvite.difficulty}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle2,
+                                      ),
+                                      Text(
+                                        'Category: ${incomingGameInvite.category}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle2,
+                                      ),
+                                      Text(
+                                        'Number of question: ${incomingGameInvite.numberOfQuestions}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle2,
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
+                          );
+                        })
                       ],
                     );
                   }),
@@ -92,6 +150,7 @@ class FriendsScreen extends StatelessWidget {
     });
   }
 
+  /**/
   FriendSuggestions(BuildContext context) {
     return Obx(() {
       return Column(
@@ -112,7 +171,7 @@ class FriendsScreen extends StatelessWidget {
                             children: [
                               ...friendsController.friendSuggestionsObs.value
                                   .map((friendSuggestion) => Card(
-                                        color: cardColor,
+                                        color: lightCardColor,
                                         child: Column(
                                           children: [
                                             DefaultStatusImage(
@@ -168,7 +227,7 @@ class FriendsScreen extends StatelessWidget {
                             .map((friend) => SizedBox(
                                   width: cardWidth,
                                   child: Card(
-                                    color: cardColor,
+                                    color: lightCardColor,
                                     child: Column(
                                       children: [
                                         DefaultStatusImage(
@@ -183,8 +242,7 @@ class FriendsScreen extends StatelessWidget {
                                         DefaultIconButton(
                                             text: 'challenge',
                                             onPressed: () {
-                                              friendsController
-                                                  .sendGameInvite(friend);
+                                              showQuizSpecDialog(friend);
                                             },
                                             icon: Icons.wine_bar),
                                         DefaultIconButton(
@@ -228,7 +286,7 @@ class FriendsScreen extends StatelessWidget {
                               ...friendsController
                                   .receivedFriendRequestsObs.value
                                   .map((incomingFriendRequest) => Card(
-                                        color: cardColor,
+                                        color: lightCardColor,
                                         child: Column(
                                           children: [
                                             DefaultStatusImage(
@@ -346,6 +404,9 @@ class FriendsScreen extends StatelessWidget {
           ),
           DropdownButton<String>(
             items: [
+              '2',
+              '3',
+              '4',
               '5',
               '6',
               '7',

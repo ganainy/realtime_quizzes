@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
+import 'package:realtime_quizzes/layouts/home/home_controller.dart';
 
 import '../../models/api.dart';
 import '../../models/player.dart';
@@ -29,11 +30,10 @@ class FriendsController extends GetxController {
   var receivedInvitesObs = [].obs; //list of QueueEntryModel
 
   StreamSubscription? queueEntryListener;
-  var errorObs = Rxn<String?>();
-
+  late HomeController homeController;
   @override
   void onInit() {
-    debugPrint(' onInit()');
+    homeController = Get.find<HomeController>();
     addListeners();
     observeUserChanges();
     observeGameInvites();
@@ -65,12 +65,6 @@ class FriendsController extends GetxController {
         receivedFriendRequestsIdsObs.value = loggedUser?.receivedFriendRequests;
       }
     });
-
-    //show error dialog
-    errorObs.listen((_) {
-      Get.back();
-      errorDialog();
-    });
   }
 
   //observe changes of logged user to update the profile
@@ -79,7 +73,7 @@ class FriendsController extends GetxController {
       loggedUserObs.value = UserModel.fromJson(event.data());
       debugPrint('logged user changed');
     }).onError((error, stackTrace) {
-      errorObs.value = error.toString();
+      homeController.errorDialog(error.toString());
       printError(info: 'error observe logged user' + error.toString());
     });
   }
@@ -111,7 +105,7 @@ class FriendsController extends GetxController {
         debugPrint('success single loadFriend profile');
       }).onError((error, stackTrace) {
         printError(info: 'error single loadFriend profile' + error.toString());
-        errorObs.value = error.toString();
+        homeController.errorDialog(error.toString());
       });
     });
   }
@@ -147,7 +141,7 @@ class FriendsController extends GetxController {
       });
     }).onError((error, stackTrace) {
       printError(info: 'error loadFriendSuggestions' + error.toString());
-      errorObs.value = error.toString();
+      homeController.errorDialog(error.toString());
     });
   }
 
@@ -167,39 +161,33 @@ class FriendsController extends GetxController {
             userModel: friendRequest);
         debugPrint('success single loadFriendRequest profile');
       }).onError((error, stackTrace) {
-        errorObs.value = error.toString();
+        homeController.errorDialog(error.toString());
         printError(
             info: 'error single loadFriendRequest profile' + error.toString());
       });
     });
   }
 
-  void sendFriendRequest(UserModel friendSuggestion) {
-    usersCollection.doc(auth.currentUser?.email).get().then((value) {
-      var loggedUser = UserModel.fromJson(value.data());
-
-      //add other user to logged user sent friends requests
-      usersCollection.doc(loggedUser.email).update({
-        'sentFriendRequests': FieldValue.arrayUnion([friendSuggestion.email])
-      }).then((value) {
-        debugPrint("1 sentFriendRequests ");
-      }).onError((error, stackTrace) {
-        errorObs.value = error.toString();
-        printError(info: "1 Failed sentFriendRequests: $error");
-      });
-
-      //add logged user to other user received friends requests
-      usersCollection.doc(friendSuggestion.email).update({
-        'receivedFriendRequests': FieldValue.arrayUnion([loggedUser.email])
-      }).then((value) {
-        debugPrint("1 sentFriendRequests ");
-      }).onError((error, stackTrace) {
-        errorObs.value = error.toString();
-        printError(info: "1 Failed sentFriendRequests: $error");
-      });
+  void sendFriendRequest(UserModel? friendSuggestion) {
+    //add other user to logged user sent friends requests
+    usersCollection.doc(Shared.loggedUser?.email).update({
+      'sentFriendRequests': FieldValue.arrayUnion([friendSuggestion?.email])
+    }).then((value) {
+      debugPrint("1 sentFriendRequests ");
     }).onError((error, stackTrace) {
-      errorObs.value = error.toString();
-      printError(info: "0 Failed to load own profile: $error");
+      homeController.errorDialog(error.toString());
+      printError(info: "1 Failed sentFriendRequests: $error");
+    });
+
+    //add logged user to other user received friends requests
+    usersCollection.doc(friendSuggestion?.email).update({
+      'receivedFriendRequests':
+          FieldValue.arrayUnion([Shared.loggedUser?.email])
+    }).then((value) {
+      debugPrint("1 sentFriendRequests ");
+    }).onError((error, stackTrace) {
+      homeController.errorDialog(error.toString());
+      printError(info: "1 Failed sentFriendRequests: $error");
     });
   }
 
@@ -213,7 +201,7 @@ class FriendsController extends GetxController {
     }).then((value) {
       debugPrint("acceptFriendRequest ");
     }).onError((error, stackTrace) {
-      errorObs.value = error.toString();
+      homeController.errorDialog(error.toString());
       printError(info: "Failed to acceptFriendRequest: $error");
     });
 
@@ -223,7 +211,7 @@ class FriendsController extends GetxController {
     }).then((value) {
       debugPrint("2 acceptFriendRequest ");
     }).onError((error, stackTrace) {
-      errorObs.value = error.toString();
+      homeController.errorDialog(error.toString());
       printError(info: "2 Failed to acceptFriendRequest: $error");
     });
 
@@ -234,7 +222,7 @@ class FriendsController extends GetxController {
     }).then((value) {
       debugPrint("3 acceptFriendRequest ");
     }).onError((error, stackTrace) {
-      errorObs.value = error.toString();
+      homeController.errorDialog(error.toString());
       printError(info: "3 Failed to acceptFriendRequest: $error");
     });
 
@@ -244,7 +232,7 @@ class FriendsController extends GetxController {
     }).then((value) {
       debugPrint("4 acceptFriendRequest ");
     }).onError((error, stackTrace) {
-      errorObs.value = error.toString();
+      homeController.errorDialog(error.toString());
       printError(info: "4 Failed to acceptFriendRequest: $error");
     });
   }
@@ -259,7 +247,7 @@ class FriendsController extends GetxController {
     }).then((value) {
       debugPrint("1 deleteFriend ");
     }).onError((error, stackTrace) {
-      errorObs.value = error.toString();
+      homeController.errorDialog(error.toString());
       printError(info: "1 Failed to deleteFriend: $error");
     });
 
@@ -269,7 +257,7 @@ class FriendsController extends GetxController {
     }).then((value) {
       debugPrint("2 deleteFriend ");
     }).onError((error, stackTrace) {
-      errorObs.value = error.toString();
+      homeController.errorDialog(error.toString());
       printError(info: "2 Failed to deleteFriend: $error");
     });
   }
@@ -288,7 +276,7 @@ class FriendsController extends GetxController {
             .isOnline = friend.isOnline;
         friendsObs.refresh();
       }).onError((error) {
-        errorObs.value = error.toString();
+        homeController.errorDialog(error.toString());
         debugPrint('error listening to friends');
       });
     });
@@ -297,20 +285,23 @@ class FriendsController extends GetxController {
   //send game invite to a friend
 
   void declineGameInvite(QueueEntryModel incomingGameInvite) {
+    //game invite observer won't be automatically activated, so we have to
+    //remove invite on decline manually
+    Future.delayed(const Duration(milliseconds: 100), () {
+      receivedInvitesObs.value.removeWhere((invite) {
+        return incomingGameInvite.queueEntryId == invite.queueEntryId;
+      });
+      receivedInvitesObs.refresh();
+    });
+
     incomingGameInvite.hasFriendDeclinedInvite = true;
     invitesCollection
         .doc(incomingGameInvite.queueEntryId)
         .update(queueEntryModelToJson(incomingGameInvite))
         .then((value) {
-      //game invite observer won't be automatically activated, so we have to
-      //remove invite on decline manually
-      receivedInvitesObs.value.removeWhere((invite) {
-        return incomingGameInvite.queueEntryId == invite.queueEntryId;
-      });
-      receivedInvitesObs.refresh();
       debugPrint('invite declined ');
     }).onError((error, stackTrace) {
-      errorObs.value = error.toString();
+      homeController.errorDialog(error.toString());
       printError(info: 'declineGameInvite error :' + error.toString());
     });
   }
@@ -328,7 +319,7 @@ class FriendsController extends GetxController {
         receivedInvitesObs.refresh();
       });
     }).onError((error) {
-      errorObs.value = error.toString();
+      homeController.errorDialog(error.toString());
       printError(info: 'observeGameInvites error :' + error.toString());
     });
   }
@@ -342,12 +333,13 @@ class FriendsController extends GetxController {
         .then((value) {
       debugPrint('delete game successful');
     }).onError((error, stackTrace) {
-      errorObs.value = error.toString();
+      homeController.errorDialog(error.toString());
       printError(info: 'delete game error' + error.toString());
     });
   }
 
   void sendGameInvite(UserModel friend) {
+    debugPrint('sendGameInvite');
     var queueEntryModelJson =
         queueEntryModelToJson(sentInviteQueueEntryModelObs.value);
 
@@ -360,7 +352,7 @@ class FriendsController extends GetxController {
       showWaitingDialog(friend);
       observeSentInviteChanges();
     }).onError((error, stackTrace) {
-      errorObs.value = error.toString();
+      homeController.errorDialog(error.toString());
       printError(info: 'create invite error :' + error.toString());
     });
   }
@@ -378,14 +370,14 @@ class FriendsController extends GetxController {
         startGame();
         debugPrint('invite accepted , match should start');
       } else if (queueEntry.hasFriendDeclinedInvite) {
-        showInfoDialog(
+        homeController.showInfoDialog(
             message: 'your game invite was declined.',
             title: 'invite declined');
         removeGameInvite();
       }
 
       queueEntryListener?.onError((error, stackTrace) {
-        errorObs.value = error.toString();
+        homeController.errorDialog(error.toString());
         printError(info: 'observeQueueChanges error :' + error.toString());
       });
     });
@@ -394,8 +386,8 @@ class FriendsController extends GetxController {
   void fetchQuiz(UserModel friend) {
     //scenario 1
     var players = [
-      PlayerModel(playerEmail: auth.currentUser?.email),
-      PlayerModel(playerEmail: friend.email)
+      PlayerModel(user: Shared.loggedUser),
+      PlayerModel(user: UserModel(email: friend.email))
     ];
 
     var _difficulty;
@@ -407,12 +399,13 @@ class FriendsController extends GetxController {
         (element) => element['category'] == categorySelectionsObs.value)['api'];
 
     var queueEntryModel = QueueEntryModel(
-        _difficulty,
-        _category,
-        int.parse(numQuestionsSelectionsObs.value ?? '10'),
-        auth.currentUser?.email,
-        players,
-        DateTime.now().millisecondsSinceEpoch);
+        difficulty: _difficulty,
+        category: _category,
+        //when no number of questions selected use default=10
+        numberOfQuestions: int.parse(numQuestionsSelectionsObs.value ?? '10'),
+        queueEntryId: auth.currentUser?.email,
+        players: players,
+        createdAt: DateTime.now().millisecondsSinceEpoch);
     queueEntryModel.invitedFriend = friend.email;
 
     sentInviteQueueEntryModelObs.value = queueEntryModel;
@@ -432,21 +425,23 @@ class FriendsController extends GetxController {
     DioHelper.getQuestions(queryParams: params).then((jsonResponse) {
       ApiModel apiModel = ApiModel.fromJson(jsonResponse.data);
       if (apiModel.responseCode == null || apiModel.responseCode != 0) {
-        errorObs.value = 'error_loading_quiz'.tr;
+        homeController.errorDialog('error_loading_quiz'.tr);
 
         printError(info: 'error loading questions from API');
       } else {
-        uploadQuiz(apiModel.questions, friend);
+        uploadQuiz(apiModel.questions, friend, players);
       }
     }).onError((error, stackTrace) {
-      errorObs.value = error.toString();
+      homeController.errorDialog(error.toString());
       printError(info: 'error loading questions from API' + error.toString());
-      errorObs.value =
-          'this_error_occurred_while_loading_quiz'.tr + error.toString();
+
+      homeController.errorDialog(
+          'this_error_occurred_while_loading_quiz'.tr + error.toString());
     });
   }
 
-  void uploadQuiz(List<QuestionModel> questions, UserModel friend) {
+  void uploadQuiz(List<QuestionModel> questions, UserModel friend,
+      List<PlayerModel> players) {
     //scenario 1
     sentInviteQueueEntryModelObs.value?.questions = questions;
     sentInviteQueueEntryModelObs.value?.createdAt =
@@ -456,9 +451,11 @@ class FriendsController extends GetxController {
         .doc(sentInviteQueueEntryModelObs.value?.queueEntryId)
         .set(queueEntryModelToJson(sentInviteQueueEntryModelObs.value))
         .then((value) {
-      sendGameInvite(friend);
+      loadOtherPlayerProfile(players, friend).then((value) {
+        sendGameInvite(friend);
+      });
     }).onError((error, stackTrace) {
-      errorObs.value = (error.toString());
+      homeController.errorDialog(error.toString());
       printError(info: 'firestore add questions error : ' + error.toString());
     });
   }
@@ -484,46 +481,31 @@ class FriendsController extends GetxController {
       startGame();
       debugPrint('invite accepted ');
     }).onError((error, stackTrace) {
-      errorObs.value = error.toString();
+      homeController.errorDialog(error.toString());
       printError(info: 'acceptGameInvite error :' + error.toString());
     });
   }
 
-  ///-----------alert dialogs-------------
+  Future<void> loadOtherPlayerProfile(
+      List<PlayerModel> players, UserModel friend) async {
+    //add the logged player info (like name and image etc...)to the sentInviteQueueEntryModel
+    sentInviteQueueEntryModelObs.value?.players
+        ?.firstWhere(
+            (element) => element?.user?.email == Shared.loggedUser?.email)
+        ?.user = Shared.loggedUser;
 
-  void errorDialog() {
-    // set up the buttons
-    Widget cancelButton = TextButton(
-      child: Text("Ok"),
-      onPressed: () {
-        Get.back();
-      },
-    );
-
-    Get.defaultDialog(
-      actions: [cancelButton],
-      title: 'Error',
-      barrierDismissible: false,
-      content: Text("${errorObs.value ?? ''}", style: TextStyle(fontSize: 14)),
-    );
-  }
-
-  void showInfoDialog({String? title, required String message}) {
-    Get.back();
-    // set up the buttons
-    Widget cancelButton = TextButton(
-      child: Text("Ok"),
-      onPressed: () {
-        Get.back();
-      },
-    );
-
-    Get.defaultDialog(
-      actions: [cancelButton],
-      title: title ?? '',
-      barrierDismissible: false,
-      content: Text(message, style: TextStyle(fontSize: 14)),
-    );
+    //add the other player info (like name and image etc...)to the sentInviteQueueEntryModel
+    await Future.wait([
+      usersCollection.doc(friend.email).get().then((json) {
+        debugPrint('other player loaded');
+        var otherUser = UserModel.fromJson(json.data());
+        sentInviteQueueEntryModelObs.value?.players
+            ?.firstWhere((element) => element?.user?.email == otherUser.email)
+            ?.user = otherUser;
+      }).onError((error, stackTrace) {
+        printError(info: 'error loading other player' + error.toString());
+      })
+    ]);
   }
 
   void showWaitingDialog(UserModel friend) {
@@ -544,7 +526,7 @@ class FriendsController extends GetxController {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-              "${sentInviteQueueEntryModelObs.value?.difficulty}-${sentInviteQueueEntryModelObs.value?.category ?? 'Random'}-"
+              "${sentInviteQueueEntryModelObs.value?.difficulty ?? 'Mixed'}-${sentInviteQueueEntryModelObs.value?.category ?? 'Random'}-"
               "${sentInviteQueueEntryModelObs.value?.numberOfQuestions} ${'questions'.tr} ",
               style: TextStyle(fontSize: 14)),
           SizedBox(

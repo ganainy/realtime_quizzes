@@ -11,7 +11,6 @@ import 'package:realtime_quizzes/models/question.dart';
 import 'package:realtime_quizzes/models/queue_entry.dart';
 import 'package:realtime_quizzes/shared/shared.dart';
 
-import '../../models/user.dart';
 import '../result/result_screen.dart';
 
 class MultiPlayerQuizController extends GetxController {
@@ -38,29 +37,15 @@ class MultiPlayerQuizController extends GetxController {
   Timer? _nextQuestionTimer;
   StreamSubscription? observeGameListener;
 
-  QueueEntryModel game;
-  MultiPlayerQuizController(this.game);
-
   //to calculate player score and only update it when different as old score
   var _loggedUserScore = 0;
 
   @override
   void onInit() {
-    moveToRunning(game).then((value) {
-      setPlayerReady(game).then((value) {
-        print("Player set to ready $value");
-      }).catchError((error) {
-        printError(info: "error setPlayerReady" + error.toString());
-      });
-      observeGame(game.queueEntryId);
-      deleteFromInvites(game.queueEntryId).onError((error, stackTrace) {
-        printError(info: 'error deleteFromInvites' + error.toString());
-      });
-      deleteFromQueue(game.queueEntryId).onError((error, stackTrace) {
-        printError(info: 'error deleteFromQueue' + error.toString());
-      });
-    }).onError((error, stackTrace) {
-      printError(info: 'error moveToRunning' + error.toString());
+    observeGame();
+    //delete game from invites coming to user since game will begin
+    deleteFromInvites().onError((error, stackTrace) {
+      printError(info: 'error deleteFromInvites' + error.toString());
     });
 
     super.onInit();
@@ -69,6 +54,7 @@ class MultiPlayerQuizController extends GetxController {
   @override
   void onClose() {
     observeGameListener?.cancel();
+    cancelTimer(_timer);
     super.onClose();
   }
 
@@ -83,7 +69,7 @@ class MultiPlayerQuizController extends GetxController {
         ?.correctAnswer;
     players.value = queueEntryModel.players;
     queueEntryModel.players?.forEach((player) {
-      if (player?.playerEmail == auth.currentUser?.email) {
+      if (player?.user?.email == auth.currentUser?.email) {
         loggedPlayer.value = player;
       } else {
         otherPlayer.value = player;
@@ -108,7 +94,7 @@ class MultiPlayerQuizController extends GetxController {
         answer;
 
     queueEntryModelObs.value?.players?.forEach((player) {
-      if (player?.playerEmail == auth.currentUser?.email) {
+      if (player?.user?.email == auth.currentUser?.email) {
         var answers = addUniqueAnswer(
             answer:
                 AnswerModel(answer: answer, isCorrectAnswer: _isCorrectAnswer),
@@ -117,7 +103,7 @@ class MultiPlayerQuizController extends GetxController {
       }
     });
 
-    runningCollection
+    queueCollection
         .doc(queueEntryModelObs.value?.queueEntryId)
         .set(queueEntryModelToJson(queueEntryModelObs.value))
         .then((value) {
@@ -141,49 +127,25 @@ class MultiPlayerQuizController extends GetxController {
     return answers;
   }
 
-  //marks player state as ready- match begins when all players ready
-  Future<dynamic> setPlayerReady(QueueEntryModel queueEntryModel) async {
-    return await FirebaseFirestore.instance.runTransaction((transaction) async {
-      // Get the document
-      DocumentSnapshot snapshot = await transaction
-          .get(runningCollection.doc(queueEntryModel.queueEntryId));
-
-      if (!snapshot.exists) {
-        throw Exception("Queue entry does not exist!");
-      }
-
-      var _queueEntryModel = QueueEntryModel.fromJson(snapshot.data());
-
-      _queueEntryModel.players?.forEach((player) {
-        if (player?.playerEmail == auth.currentUser?.email) {
-          player?.isReady = true;
-        }
-      });
-      transaction.update(runningCollection.doc(queueEntryModel.queueEntryId),
-          queueEntryModelToJson(_queueEntryModel));
-    });
-  }
-
   //this method will listen to any change in game and update UI accordingly
-  void observeGame(String? queueEntryId) {
+  void observeGame() {
     observeGameListener =
-        runningCollection.doc(queueEntryId).snapshots().listen((event) {
+        queueCollection.doc(Shared.queueEntryId).snapshots().listen((event) {
       QueueEntryModel _queueEntryModel = QueueEntryModel.fromJson(event.data());
 
       updateValues(_queueEntryModel);
 
       //if game didn't already start, check if all players ready then
       // start game && load players profiles otherwise do nothing
-      if (!isGameAlreadyStarted && areAllPlayersReady(_queueEntryModel)) {
+      if (!isGameAlreadyStarted) {
         isGameAlreadyStarted = true;
         startQuestionTimer();
-        loadUsers();
       }
 
       //calculate player score
       var _score = 0;
       _queueEntryModel.players?.forEach((player) {
-        if (player?.playerEmail == auth.currentUser?.email) {
+        if (player?.user?.email == auth.currentUser?.email) {
           player?.answers?.forEach((answer) {
             if (answer!.isCorrectAnswer) {
               _score++;
@@ -197,22 +159,6 @@ class MultiPlayerQuizController extends GetxController {
     observeGameListener?.onError((error) {
       printError(info: 'listen to ready state error ' + error.toString());
     });
-  }
-
-  //this method checks if each player isReady
-  bool areAllPlayersReady(QueueEntryModel _queueEntryModel) {
-    bool someoneNotReady = false;
-    _queueEntryModel.players?.forEach((player) {
-      if (player != null && !player.isReady) {
-        someoneNotReady = true;
-      }
-    });
-
-    if (someoneNotReady) {
-      debugPrint('not all players ready yet');
-    }
-
-    return someoneNotReady;
   }
 
   //update current question index in firestore so game goes to next question
@@ -235,7 +181,7 @@ class MultiPlayerQuizController extends GetxController {
     FirebaseFirestore.instance.runTransaction((transaction) async {
       // Get the document
       DocumentSnapshot snapshot = await transaction
-          .get(runningCollection.doc(queueEntryModelObs.value?.queueEntryId));
+          .get(queueCollection.doc(queueEntryModelObs.value?.queueEntryId));
 
       if (!snapshot.exists) {
         throw Exception("Queue entry does not exist!");
@@ -244,13 +190,13 @@ class MultiPlayerQuizController extends GetxController {
       var _queueEntry = QueueEntryModel.fromJson(snapshot.data());
 
       _queueEntry.players?.forEach((player) {
-        if (player?.playerEmail == auth.currentUser?.email) {
+        if (player?.user?.email == auth.currentUser?.email) {
           player?.score = newScore;
         }
       });
 
       transaction.update(
-          runningCollection.doc(queueEntryModelObs.value?.queueEntryId),
+          queueCollection.doc(queueEntryModelObs.value?.queueEntryId),
           queueEntryModelToJson(_queueEntry));
     }).then((value) {
       debugPrint("updated player scores");
@@ -316,10 +262,10 @@ class MultiPlayerQuizController extends GetxController {
     updateScore(_loggedUserScore);
 
     isQuestionTimeEndedObs.value = true;
-
     //no more question show result
-    if (currentQuestionIndexObs
-        .value /*>*/ == /*questionsObs.value.length -*/ 0) {
+    debugPrint(
+        'currentQuestionIndex ${currentQuestionIndexObs.value}, questions length ${questionsObs.value.length}');
+    if (currentQuestionIndexObs.value >= questionsObs.value.length - 1) {
       Future.delayed(const Duration(seconds: 5), () {
         showResultScreen();
       });
@@ -381,44 +327,8 @@ class MultiPlayerQuizController extends GetxController {
     return isQuestionAnswered && text == selectedAnswerLocalObs.value;
   }
 
-  //this method moves game to running collection in firebase (only unstarted games should be in queue)
-  Future<void> moveToRunning(QueueEntryModel queueEntry) async {
-    return await runningCollection
-        .doc(queueEntry.queueEntryId)
-        .set(queueEntryModelToJson(queueEntry));
-  }
-
   //delete from invites collection (friends game)
-  Future<void> deleteFromInvites(String? queueEntryId) async {
-    return await invitesCollection.doc(queueEntryId).delete();
-  }
-
-  //delete from queue collection (randoms game)
-  Future<void> deleteFromQueue(String? queueEntryId) async {
-    return await queueCollection.doc(queueEntryId).delete();
-  }
-
-  void loadUsers() {
-    debugPrint('loadUsers()');
-
-    queueEntryModelObs.value?.players?.forEach((player) {
-      usersCollection.doc(player?.playerEmail).get().then((value) {
-        var user = UserModel.fromJson(value.data());
-
-        queueEntryModelObs.value?.players?.firstWhere((element) {
-          return element?.playerEmail == player?.playerEmail;
-        })?.player = user;
-
-        runningCollection
-            .doc(queueEntryModelObs.value?.queueEntryId)
-            .set(queueEntryModelToJson(queueEntryModelObs.value))
-            .then((value) {})
-            .onError((error, stackTrace) {
-          printError(info: 'loadUsers1 error' + error.toString());
-        });
-      }).onError((error, stackTrace) {
-        printError(info: 'loadUsers2 error' + error.toString());
-      });
-    });
+  Future<void> deleteFromInvites() async {
+    return await invitesCollection.doc(Shared.queueEntryId).delete();
   }
 }

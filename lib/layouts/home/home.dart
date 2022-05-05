@@ -1,40 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:realtime_quizzes/customization/theme.dart';
 
 import '../../layouts/home/home_controller.dart';
 import '../../screens/find_game/find_game.dart';
 import '../../screens/friends/friends.dart';
 import '../../screens/profile/profile.dart';
+import '../../screens/search/search.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({Key? key}) : super(key: key);
 
   final HomeController homeController = Get.put(HomeController());
-  /*..getQuizzes()
-    ..observeInvites();*/
 
   final PageController pageController = PageController();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Quizzes'),
-      ),
-      body: buildPageView(),
-      bottomNavigationBar: Obx(() {
-        return BottomNavigationBar(
-          currentIndex: homeController.bottomSelectedIndex.value,
-          items: buildBottomNavBarItems(),
-          onTap: ((index) {
-            homeController.bottomSelectedIndex.value = index;
-            pageController.animateToPage(index,
-                duration: Duration(milliseconds: 500), curve: Curves.ease);
-          }),
-        );
-      }),
-    );
+    return Obx(() {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Quizzes'),
+          actions: [
+            homeController.bottomSelectedIndex.value == 1
+                ? InkWell(
+                    onTap: () {
+                      Get.to(() => SearchScreen());
+                    },
+                    child: Container(
+                        margin: EdgeInsets.all(smallPadding),
+                        child: Icon(Icons.group_add)),
+                  )
+                : const SizedBox()
+          ],
+        ),
+        body: buildPageView(),
+        bottomNavigationBar: Obx(() {
+          return BottomNavigationBar(
+            currentIndex: homeController.bottomSelectedIndex.value,
+            items: buildBottomNavBarItems(),
+            onTap: ((index) {
+              homeController.bottomSelectedIndex.value = index;
+              pageController.animateToPage(index,
+                  duration: Duration(milliseconds: 500), curve: Curves.ease);
+            }),
+          );
+        }),
+      );
+    });
   }
 
   List<BottomNavigationBarItem> buildBottomNavBarItems() {

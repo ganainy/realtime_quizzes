@@ -1,18 +1,16 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/scheduler/ticker.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/customization/theme.dart';
 import 'package:realtime_quizzes/screens/multiplayer_quiz/multiplayer_quiz_controller.dart';
-
-import '../../shared/constants.dart';
+import 'package:realtime_quizzes/shared/components.dart';
 
 class MultiPlayerQuizScreen extends StatelessWidget {
   MultiPlayerQuizScreen({Key? key}) : super(key: key);
 
   final MultiPlayerQuizController multiPlayerQuizController =
-      Get.put(MultiPlayerQuizController(Get.arguments));
+      Get.put(MultiPlayerQuizController());
 
   @override
   Widget build(BuildContext context) {
@@ -37,53 +35,84 @@ class MultiPlayerQuizScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-                '${multiPlayerQuizController.loggedPlayer.value?.player?.name} score: ${multiPlayerQuizController.loggedPlayer.value?.score}'),
-            const SizedBox(
-              height: largePadding,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Column(
+                  children: [
+                    DefaultCircularNetworkImage(
+                        imageUrl: multiPlayerQuizController
+                            .loggedPlayer.value?.user?.imageUrl),
+                    Text(
+                        '${multiPlayerQuizController.loggedPlayer.value?.user?.name} '),
+                    Text(
+                        '${multiPlayerQuizController.loggedPlayer.value?.score} '),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Icon(
+                      Icons.access_alarm,
+                      size: 40,
+                      color: primaryTextColor,
+                    ),
+                    Text(
+                      multiPlayerQuizController.timerValueObs.value.toString(),
+                      style: Theme.of(context).textTheme.subtitle1?.copyWith(
+                          color:
+                              multiPlayerQuizController.timerValueObs.value <= 3
+                                  ? Colors.red
+                                  : primaryTextColor),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    DefaultCircularNetworkImage(
+                        imageUrl: multiPlayerQuizController
+                            .otherPlayer.value?.user?.imageUrl),
+                    Text(
+                        '${multiPlayerQuizController.otherPlayer.value?.user?.name} '),
+                    Text(
+                        '${multiPlayerQuizController.otherPlayer.value?.score} '),
+                  ],
+                ),
+              ],
             ),
-            Text(
-                '${multiPlayerQuizController.otherPlayer.value?.player?.name} score: ${multiPlayerQuizController.otherPlayer.value?.score}'),
-            const SizedBox(
-              height: largePadding,
-            ),
-            //add one to index because index starts with 0
-            Text(
-                'Question: ${(multiPlayerQuizController.currentQuestionIndexObs.value + 1)}/${(multiPlayerQuizController.questionsObs.value.length)}'),
-            const SizedBox(
-              height: largePadding,
-            ),
-            multiPlayerQuizController.timerValueObs.value > 0
-                ? Obx(() {
-                    return Text('Timer: ' +
-                        multiPlayerQuizController.timerValueObs.value
-                            .toString());
-                  })
-                : const SizedBox(),
-            multiPlayerQuizController.nextQuestionTimerValueObs.value > 0
-                ? Obx(() {
-                    return Text('Next question in: ' +
-                        multiPlayerQuizController
-                            .nextQuestionTimerValueObs.value
-                            .toString());
-                  })
-                : const SizedBox(),
-
-            const SizedBox(
-              height: largePadding,
-            ),
-            Text('${currentQuestion?.question}'),
-            const SizedBox(
-              height: largePadding,
+            Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(smallPadding),
+                  child: Card(
+                    color: Colors.yellow[200],
+                    child: Container(
+                        width: double.infinity,
+                        margin: EdgeInsets.all(largePadding),
+                        child: Text(
+                          '${currentQuestion?.question}',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.subtitle1,
+                        )),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: Card(
+                    child: Container(
+                      margin: EdgeInsets.all(4),
+                      child: Text(
+                          'Question: ${(multiPlayerQuizController.currentQuestionIndexObs.value + 1)}/${(multiPlayerQuizController.questionsObs.value.length)}'),
+                    ),
+                  ),
+                ),
+              ],
             ),
             ...?currentQuestion?.allAnswers.map((answer) {
-              return Answer(
-                answer,
-                multiPlayerQuizController,
-              );
+              return Answer(answer, multiPlayerQuizController, context);
             }),
-            Text(
+            /*   Text(
                 'temporary text right answer: ${currentQuestion?.correctAnswer}'),
+       */
           ],
         ),
       ),
@@ -93,13 +122,32 @@ class MultiPlayerQuizScreen extends StatelessWidget {
   Answer(
     String text /*answer*/,
     MultiPlayerQuizController multiPlayerQuizController,
+    BuildContext context,
   ) {
+    return MultiPlayerAnswerButton(
+        text: text,
+        context: context,
+        loggedPlayerImageUrl:
+            multiPlayerQuizController.loggedPlayer.value?.user?.imageUrl,
+        otherPlayerImageUrl:
+            multiPlayerQuizController.otherPlayer.value?.user?.imageUrl,
+        onPressed: () {
+          //if question is already answered do nothing
+          if (!multiPlayerQuizController.isQuestionAnswered) {
+            multiPlayerQuizController.registerAnswer(
+              text,
+            );
+          }
+        },
+        multiPlayerQuizController: multiPlayerQuizController);
+
+    /*
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Wrap(
           children: [
-            multiPlayerQuizController.getIsSelectedLoggedPlayer(text)
+
                 ? CachedNetworkImage(
                     width: 20,
                     height: 20,
@@ -112,7 +160,7 @@ class MultiPlayerQuizScreen extends StatelessWidget {
                         const Icon(Icons.account_circle),
                   )
                 : SizedBox(),
-            multiPlayerQuizController.getIsSelectedOtherPlayer(text)
+
                 ? CachedNetworkImage(
                     width: 20,
                     height: 20,
@@ -127,25 +175,10 @@ class MultiPlayerQuizScreen extends StatelessWidget {
                 : SizedBox(),
             Obx(() {
               return TextButton(
-                style: ButtonStyle(
-                    backgroundColor: multiPlayerQuizController
-                            .getIsCorrectAnswer(text)
-                        ? MaterialStateProperty.all(Colors.green[200])
-                        : multiPlayerQuizController
-                                .getIsSelectedWrongAnswer(text)
-                            ? MaterialStateProperty.all(Colors.red[200])
-                            : multiPlayerQuizController
-                                    .getIsSelectedLocalAnswer(text)
-                                ? MaterialStateProperty.all(Colors.orange[200])
-                                : null),
+               ,
                 child: Text(text),
                 onPressed: () {
-                  //if question is already answered do nothing
-                  if (!multiPlayerQuizController.isQuestionAnswered) {
-                    multiPlayerQuizController.registerAnswer(
-                      text,
-                    );
-                  }
+
                 },
               );
             }),
@@ -155,7 +188,7 @@ class MultiPlayerQuizScreen extends StatelessWidget {
           height: mediumPadding,
         ),
       ],
-    );
+    );*/
   }
 
   @override

@@ -3,16 +3,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
-import 'package:realtime_quizzes/models/game_type.dart';
 
+import '../../layouts/home/home_controller.dart';
 import '../../models/api.dart';
+import '../../models/game_type.dart';
 import '../../models/single_player_quiz_result.dart';
-import '../../network/dio_helper.dart';
-import '../../shared/constants.dart';
+import '../../shared/shared.dart';
 import '../result/result_screen.dart';
 
 class SinglePlayerQuizController extends GetxController {
   var questions = [].obs;
+  var userAnswers = [].obs;
   var currentQuestionIndex = 0.obs;
   var currentScore = 0.obs;
   var isQuestionAnswered = false.obs;
@@ -23,65 +24,26 @@ class SinglePlayerQuizController extends GetxController {
   var selectedAnswer = Rxn<String>();
   var timerCounter = Rxn<int>();
 
-  var numOfQuestionsObs = 10.00.obs;
-  var selectedCategoryObs = Rxn<String?>();
-  var selectedDifficultyObs = Rxn<String?>();
-  var errorObs = Rxn<String?>();
-
   var createdAt;
 
-  void fetchQuiz() {
-    debugPrint('fetchQuiz');
+  late HomeController homeController;
 
-    var categoryApi;
-    var difficultyApi;
+  @override
+  void onInit() {
+    homeController = Get.find<HomeController>();
 
-    Constants.categoryList.forEach((categoryMap) {
-      if (categoryMap['category'] == selectedCategoryObs.value) {
-        categoryApi = categoryMap['api'];
-      }
-    });
-
-    Constants.difficultyList.forEach((difficultyMap) {
-      if (difficultyMap['difficulty'] == selectedDifficultyObs.value) {
-        difficultyApi = difficultyMap['api'];
-      }
-    });
-
-    var params = {
-      'difficulty': difficultyApi,
-      'amount': numOfQuestionsObs.value.toInt(),
-      'category': categoryApi,
-      'type': 'multiple',
-    };
-
-    //remove null parameters from queryParams so API call won't fail
-    if (params['difficulty'] == null) {
-      params.remove('difficulty');
-    }
-    if (params['category'] == null) {
-      params.remove('category');
-    }
-    if (params['category'] == 'Random'.tr) {
-      params.remove('category');
-    } //this is not real category its just for UI
-    debugPrint('params' + params.length.toString());
-
-    DioHelper.getQuestions(queryParams: params).then((jsonResponse) {
+    homeController.fetchQuiz().then((jsonResponse) {
       ApiModel apiModel = ApiModel.fromJson(jsonResponse.data);
 
       if (apiModel.responseCode == null || apiModel.responseCode != 0) {
-        errorObs.value = 'error_loading_quiz'.tr;
-
-        printError(info: 'error loading questions from API');
+        homeController.errorDialog('error_loading_quiz'.tr);
       } else {
         questions.value = apiModel.questions;
         startTimer();
       }
     }).onError((error, stackTrace) {
       printError(info: 'error loading questions from API' + error.toString());
-      errorObs.value =
-          'this_error_occurred_while_loading_quiz'.tr + error.toString();
+      homeController.errorDialog(error.toString());
     });
   }
 
@@ -89,6 +51,8 @@ class SinglePlayerQuizController extends GetxController {
     //answer that user selected or null if timer runs out without any answer selected
     required String answer,
   }) {
+    userAnswers.value.add(answer);
+
     //user already selected an answer or time runs out -> stop timer
     cancelTimer();
 
@@ -107,9 +71,7 @@ class SinglePlayerQuizController extends GetxController {
 
     //wait two seconds and show next question or show quiz result if no more questions
     Future.delayed(const Duration(milliseconds: 2000), () {
-      //todo remove comment
-      if (currentQuestionIndex.value /* >*/ ==
-          0 /* questions.value.length - 1*/) {
+      if (currentQuestionIndex.value >= questions.value.length - 1) {
         endQuiz();
       } else {
         currentQuestionIndex++;
@@ -132,9 +94,7 @@ class SinglePlayerQuizController extends GetxController {
 
     //wait two seconds and show next answer or show quiz result if no more questions
     Future.delayed(const Duration(milliseconds: 2000), () {
-      //todo remove comment
-      if (currentQuestionIndex.value /*>*/ ==
-          0 /*questions.value.length - 1*/) {
+      if (currentQuestionIndex.value >= questions.value.length - 1) {
         endQuiz();
       } else {
         currentQuestionIndex++;
@@ -150,12 +110,8 @@ class SinglePlayerQuizController extends GetxController {
     cancelTimer();
 
     Get.off(() => ResultScreen(), arguments: {
-      'result': SinglePlayerQuizResult(
-          currentScore.value,
-          questions.value.length,
-          selectedCategoryObs.value,
-          selectedDifficultyObs.value,
-          createdAt),
+      'result': SinglePlayerQuizResult(currentScore.value, Shared.numQuestions,
+          Shared.category, Shared.difficulty, createdAt),
       'gameType': GameType.SINGLE
     });
   }
@@ -169,7 +125,7 @@ class SinglePlayerQuizController extends GetxController {
     debugPrint('startTimer()');
     //reset timer if it was running to begin again from 10
     cancelTimer();
-    timerCounter.value = 5; //todo 10sec
+    timerCounter.value = 10;
 
     _timer = Timer.periodic(
       oneSec,
@@ -190,12 +146,5 @@ class SinglePlayerQuizController extends GetxController {
     if (_timer != null) {
       _timer!.cancel();
     }
-  }
-
-  //get arguments of find game screen(difficulty-category-numOfQuestions
-  setInitialData(arguments) {
-    selectedCategoryObs.value = arguments['category'];
-    selectedDifficultyObs.value = arguments['difficulty'];
-    numOfQuestionsObs.value = arguments['numOfQuestions'];
   }
 }

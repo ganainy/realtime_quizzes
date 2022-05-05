@@ -1,27 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+const smallPadding = 8.00;
+const mediumPadding = 16.00;
+const largePadding = 32.00;
+const cardColor = Color(0xff52b788);
+const lightCardColor = Color(0xff95d5b2);
+const lighterCardColor = Color(0xffd8f3dc);
+const primaryTextColor = Color(0xff081c15);
+const secondaryTextColor = Color(0xff2d6a4f);
+const cardWidth = 160.00;
+const bgColor = (Color(0xfff8f9fa));
+var bgMaterialColor = MyTheme.generateMaterialColorFromColor(bgColor);
+
 class MyTheme {
   static var darkTheme = ThemeData();
 
   static var lighTheme = ThemeData(
-    scaffoldBackgroundColor: Colors.white,
-    primarySwatch: generateMaterialColorFromColor(Color(0xff023e8a)),
+    scaffoldBackgroundColor: bgColor,
+    primarySwatch: generateMaterialColorFromColor(primaryTextColor),
     appBarTheme: const AppBarTheme(
 //change  color of any icon in appbar
-      iconTheme: IconThemeData(color: Color(0xff023e8a)),
-      backgroundColor: Colors.white,
+      iconTheme: IconThemeData(color: primaryTextColor),
+      backgroundColor: bgColor,
       elevation: 0,
       titleTextStyle:
-          TextStyle(color: Color(0xff023e8a), fontSize: 40, fontFamily: 'Plex'),
+          TextStyle(color: primaryTextColor, fontSize: 40, fontFamily: 'Plex'),
       systemOverlayStyle: SystemUiOverlayStyle(
-        statusBarColor: Colors.white,
+        statusBarColor: bgColor,
       ),
     ),
     fontFamily: 'IBM',
     textTheme: const TextTheme(
-        headline1: TextStyle(color: Color(0xff023e8a), fontSize: 32),
-        subtitle1: TextStyle(color: Color(0xff023e8a), fontSize: 18)),
+        headline1: TextStyle(color: primaryTextColor, fontSize: 32),
+        headline2: TextStyle(color: primaryTextColor, fontSize: 24),
+        subtitle1: TextStyle(color: primaryTextColor, fontSize: 18),
+        subtitle2: TextStyle(color: secondaryTextColor, fontSize: 14)),
   );
 
   static MaterialColor generateMaterialColorFromColor(Color color) {
@@ -39,12 +53,6 @@ class MyTheme {
     });
   }
 }
-
-const smallPadding = 8.00;
-const mediumPadding = 16.00;
-const largePadding = 32.00;
-var cardColor = const Color(0xffcaf0f8);
-const cardWidth = 160.00;
 
 /*
 class MyTheme {

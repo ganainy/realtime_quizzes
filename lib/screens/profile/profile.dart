@@ -21,75 +21,158 @@ class ProfileScreen extends StatelessWidget {
         return Center(
           child: SingleChildScrollView(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                DefaultStatusImage(
-                    imageUrl: profileController.userObs.value?.imageUrl,
-                    isOnline: profileController.userObs.value?.isOnline,
-                    width: 140.0,
-                    height: 140.0),
-                Text(
-                  '${profileController.userObs.value?.name}',
-                  style: Theme.of(context).textTheme.subtitle1,
+                SizedBox(
+                  width: double.infinity,
+                  child: Card(
+                    margin: EdgeInsets.all(smallPadding),
+                    color: lightCardColor,
+                    child: Column(
+                      children: [
+                        DefaultStatusImage(
+                            imageUrl: profileController.userObs.value?.imageUrl,
+                            isOnline: profileController.userObs.value?.isOnline,
+                            width: 140.0,
+                            height: 140.0),
+                        Text(
+                          '${profileController.userObs.value?.name?.toUpperCase()}',
+                          style: Theme.of(context).textTheme.headline1,
+                        ),
+                        Obx(() {
+                          return Container(
+                            margin: EdgeInsets.all(mediumPadding),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Card(
+                                  color: cardColor,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: largePadding,
+                                        vertical: smallPadding),
+                                    child: Column(
+                                      children: [
+                                        Image.asset(
+                                          'assets/images/multiplayer.png',
+                                          width: 40,
+                                          height: 40,
+                                        ),
+                                        Text(
+                                          '${profileController.multiPlayerWonGamesCount.value} won of ${profileController.multiPlayerResultsObs.value?.length} ',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .subtitle1,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                Card(
+                                  color: cardColor,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: largePadding,
+                                        vertical: smallPadding),
+                                    child: Column(
+                                      children: [
+                                        Image.asset(
+                                          'assets/images/offline.png',
+                                          width: 40,
+                                          height: 40,
+                                        ),
+                                        Text(
+                                          '${profileController.singlePlayerResultsObs.value?.length} games',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .subtitle1,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
                 ),
-                profileController.multiPlayerResultsObs.value == null &&
-                        profileController.singlePlayerResultsObs.value == null
-                    ? const Center(child: CircularProgressIndicator())
-                    : Obx(() {
-                        return Column(
-                          children: [
-                            ExpansionTile(
-                                title: const Text('My online games'),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    profileController.multiPlayerResultsObs.value == null &&
+                            profileController.singlePlayerResultsObs.value ==
+                                null
+                        ? const Center(child: CircularProgressIndicator())
+                        : Obx(() {
+                            return Card(
+                              margin: EdgeInsets.all(smallPadding),
+                              color: lightCardColor,
+                              child: Column(
                                 children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(smallPadding),
-                                    child: ListView.builder(
-                                        itemCount: profileController
-                                            .multiPlayerResultsObs
-                                            .value!
-                                            .length,
-                                        shrinkWrap: true,
-                                        physics: const BouncingScrollPhysics(),
-                                        itemBuilder: (context, index) {
-                                          return GameCard(
-                                              profileController
-                                                  .multiPlayerResultsObs.value!
-                                                  .elementAt(index),
-                                              context);
-                                        }),
-                                  ),
-                                ]),
-                            ExpansionTile(
-                                title: const Text('my offline games'),
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(smallPadding),
-                                    child: ListView.builder(
-                                        itemCount: profileController
-                                            .singlePlayerResultsObs
-                                            .value!
-                                            .length,
-                                        shrinkWrap: true,
-                                        physics: const BouncingScrollPhysics(),
-                                        itemBuilder: (context, index) {
-                                          return GameCard(
-                                              profileController
-                                                  .singlePlayerResultsObs.value!
-                                                  .elementAt(index),
-                                              context);
-                                        }),
-                                  ),
-                                ]),
-                          ],
-                        );
-                      }),
-                DefaultIconButton(
-                    text: 'sign out',
-                    onPressed: () {
-                      FirebaseAuth.instance.signOut();
-                      Get.offAll(() => LoginScreen());
-                    },
-                    icon: Icons.exit_to_app),
+                                  ExpansionTile(
+                                      title: const Text('My online games'),
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(
+                                              smallPadding),
+                                          child: ListView.builder(
+                                              itemCount: profileController
+                                                  .multiPlayerResultsObs
+                                                  .value!
+                                                  .length,
+                                              shrinkWrap: true,
+                                              physics:
+                                                  const BouncingScrollPhysics(),
+                                              itemBuilder: (context, index) {
+                                                return GameCard(
+                                                    profileController
+                                                        .multiPlayerResultsObs
+                                                        .value!
+                                                        .elementAt(index),
+                                                    context);
+                                              }),
+                                        ),
+                                      ]),
+                                  ExpansionTile(
+                                      title: const Text('my offline games'),
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(
+                                              smallPadding),
+                                          child: ListView.builder(
+                                              itemCount: profileController
+                                                  .singlePlayerResultsObs
+                                                  .value
+                                                  ?.length,
+                                              shrinkWrap: true,
+                                              physics:
+                                                  const BouncingScrollPhysics(),
+                                              itemBuilder: (context, index) {
+                                                return GameCard(
+                                                    profileController
+                                                        .singlePlayerResultsObs
+                                                        .value!
+                                                        .elementAt(index),
+                                                    context);
+                                              }),
+                                        ),
+                                      ]),
+                                ],
+                              ),
+                            );
+                          }),
+                    DefaultIconButton(
+                        height: 60,
+                        text: 'sign out',
+                        onPressed: () {
+                          FirebaseAuth.instance.signOut();
+                          Get.offAll(() => LoginScreen());
+                        },
+                        icon: Icons.exit_to_app),
+                  ],
+                )
               ],
             ),
           ),

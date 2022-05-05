@@ -37,7 +37,7 @@ class LoginController extends GetxController {
         Get.off(() => HomeScreen());
       }).onError((error, stackTrace) {
         debugPrint('Login error : ' + error.toString());
-        errorObs.value = error.toString();
+        homeController.errorDialog(error.toString());
       });
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {

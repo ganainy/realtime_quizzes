@@ -23,7 +23,6 @@ class ResultController extends GetxController {
   void onInit() {
     if (arguments['gameType'] == GameType.MULTI) {
       queueEntryModelObs.value = arguments['queueEntry'];
-      loadUsers(queueEntryModelObs.value?.players);
       updateUsers();
     } else if (arguments['gameType'] == GameType.SINGLE) {
       singlePlayerResult = arguments['result'];
@@ -38,7 +37,7 @@ class ResultController extends GetxController {
     PlayerModel? _otherPlayer;
 
     queueEntryModelObs.value?.players?.forEach((player) {
-      if (player?.playerEmail == auth.currentUser?.email) {
+      if (player?.user?.email == auth.currentUser?.email) {
         _loggedPlayer = player;
       } else {
         _otherPlayer = player;
@@ -62,7 +61,7 @@ class ResultController extends GetxController {
         maxScore: queueEntryModelObs.value?.numberOfQuestions,
         difficulty: queueEntryModelObs.value?.difficulty,
         category: queueEntryModelObs.value?.category,
-        otherPlayerEmail: _otherPlayer?.playerEmail,
+        otherPlayerEmail: _otherPlayer?.user?.email,
         createdAt: queueEntryModelObs.value?.createdAt,
         isMultiPlayer: true);
     //update user profile
@@ -70,7 +69,7 @@ class ResultController extends GetxController {
     FirebaseFirestore.instance.runTransaction((transaction) async {
       // Get the document
       DocumentSnapshot snapshot = await transaction
-          .get(usersCollection.doc(_loggedPlayer?.playerEmail));
+          .get(usersCollection.doc(_loggedPlayer?.user?.email));
 
       if (!snapshot.exists) {
         throw Exception("Queue entry does not exist!");
@@ -79,7 +78,7 @@ class ResultController extends GetxController {
       var _userModel = UserModel.fromJson(snapshot.data());
       _userModel.results.add(_resultModel);
 
-      transaction.update(usersCollection.doc(_loggedPlayer?.playerEmail),
+      transaction.update(usersCollection.doc(_loggedPlayer?.user?.email),
           userModelToJson(_userModel));
     }).then((value) {
       debugPrint("user result saved successfully $value");
@@ -120,42 +119,36 @@ class ResultController extends GetxController {
         (error) => printError(info: "Failed to upload player result: $error"));
   }
 
-  //delete game from runningCollection if random & invitesCollection if friends
+  //delete game from queueCollection if random & invitesCollection if friends
   deleteGame() {
-    runningCollection
-        .doc(queueEntryModelObs.value?.queueEntryId)
-        .delete()
-        .then((value) {
-      debugPrint('removed from runningCollection');
+    queueCollection.doc(Shared.queueEntryId).delete().then((value) {
+      debugPrint('removed from queueCollection');
     }).onError((error, stackTrace) {
-      printError(info: 'error remove from runningCollection');
+      printError(info: 'error remove from queueCollection');
     });
 
-    invitesCollection
-        .doc(queueEntryModelObs.value?.queueEntryId)
-        .delete()
-        .then((value) {
+    invitesCollection.doc(Shared.queueEntryId).delete().then((value) {
       debugPrint('removed from invitesCollection');
     }).onError((error, stackTrace) {
       printError(info: 'error remove from invitesCollection');
     });
   }
 
-  void loadUsers(List<PlayerModel?>? players) {
+  /*void loadUsers(List<PlayerModel?>? players) {
     players?.forEach((player) {
-      usersCollection.doc(player?.playerEmail).get().then((value) {
+      usersCollection.doc(player?.user?.email).get().then((value) {
         queueEntryModelObs.value?.players?.firstWhere((element) {
-          return element?.playerEmail == player?.playerEmail;
-        })?.player = UserModel.fromJson(value.data());
+          return element?.user?.email == player?.user?.email;
+        })?.user = UserModel.fromJson(value.data());
 
         debugPrint('3awz akol  ' +
             userModelToJson(
                 queueEntryModelObs.value?.players?.firstWhere((element) {
-              return element?.playerEmail == player?.playerEmail;
-            })?.player = UserModel.fromJson(value.data())));
+              return element?.user?.email == player?.user?.email;
+            })?.user = UserModel.fromJson(value.data())));
       }).onError((error, stackTrace) {
         printError(info: 'loadUsers error' + error.toString());
       });
     });
-  }
+  }*/
 }

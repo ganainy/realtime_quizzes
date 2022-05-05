@@ -1,6 +1,3 @@
-
-
-
 class QuizSpecs {
   int? numberOfQuestions;
   String? category;
@@ -8,8 +5,7 @@ class QuizSpecs {
   //currently app only supports MCQ questions so this param is fixed
   String quizType = 'multiple';
 
-  QuizSpecs(
-      this.numberOfQuestions, this.category, this.difficulty);
+  QuizSpecs(this.numberOfQuestions, this.category, this.difficulty);
 
   QuizSpecs.fromJson(json) {
     numberOfQuestions = json['numberOfQuestions'];
@@ -17,7 +13,7 @@ class QuizSpecs {
     difficulty = json['difficulty'];
   }
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'difficulty': difficulty,
       'amount': numberOfQuestions,
