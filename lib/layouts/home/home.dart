@@ -3,18 +3,17 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/customization/theme.dart';
 
-import '../../layouts/home/home_controller.dart';
 import '../../screens/find_game/find_game.dart';
 import '../../screens/friends/friends.dart';
 import '../../screens/profile/profile.dart';
 import '../../screens/search/search.dart';
+import 'home_controller.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({Key? key}) : super(key: key);
 
-  final HomeController homeController = Get.put(HomeController());
-
   final PageController pageController = PageController();
+  HomeController homeController = Get.put(HomeController());
 
   @override
   Widget build(BuildContext context) {

@@ -37,7 +37,7 @@ class ResultController extends GetxController {
     PlayerModel? _otherPlayer;
 
     queueEntryModelObs.value?.players?.forEach((player) {
-      if (player?.user?.email == auth.currentUser?.email) {
+      if (player?.user?.email == Shared.loggedUser?.email) {
         _loggedPlayer = player;
       } else {
         _otherPlayer = player;
@@ -102,7 +102,7 @@ class ResultController extends GetxController {
     FirebaseFirestore.instance.runTransaction((transaction) async {
       // Get the document
       DocumentSnapshot snapshot =
-          await transaction.get(usersCollection.doc(auth.currentUser?.email));
+          await transaction.get(usersCollection.doc(Shared.loggedUser?.email));
 
       if (!snapshot.exists) {
         throw Exception("Queue entry does not exist!");
@@ -111,7 +111,7 @@ class ResultController extends GetxController {
       var _userModel = UserModel.fromJson(snapshot.data());
       _userModel.results.add(_resultModel);
 
-      transaction.update(usersCollection.doc(auth.currentUser?.email),
+      transaction.update(usersCollection.doc(Shared.loggedUser?.email),
           userModelToJson(_userModel));
     }).then((value) {
       debugPrint("user result saved successfully $value");
@@ -119,36 +119,17 @@ class ResultController extends GetxController {
         (error) => printError(info: "Failed to upload player result: $error"));
   }
 
-  //delete game from queueCollection if random & invitesCollection if friends
+  //delete game from queueCollection since its over and reset queueEntryModel
   deleteGame() {
-    queueCollection.doc(Shared.queueEntryId).delete().then((value) {
+    queueCollection
+        .doc(Shared.queueEntryModel.queueEntryId)
+        .delete()
+        .then((value) {
       debugPrint('removed from queueCollection');
+      Shared.resetQueueEntry();
     }).onError((error, stackTrace) {
       printError(info: 'error remove from queueCollection');
-    });
-
-    invitesCollection.doc(Shared.queueEntryId).delete().then((value) {
-      debugPrint('removed from invitesCollection');
-    }).onError((error, stackTrace) {
-      printError(info: 'error remove from invitesCollection');
+      Shared.resetQueueEntry();
     });
   }
-
-  /*void loadUsers(List<PlayerModel?>? players) {
-    players?.forEach((player) {
-      usersCollection.doc(player?.user?.email).get().then((value) {
-        queueEntryModelObs.value?.players?.firstWhere((element) {
-          return element?.user?.email == player?.user?.email;
-        })?.user = UserModel.fromJson(value.data());
-
-        debugPrint('3awz akol  ' +
-            userModelToJson(
-                queueEntryModelObs.value?.players?.firstWhere((element) {
-              return element?.user?.email == player?.user?.email;
-            })?.user = UserModel.fromJson(value.data())));
-      }).onError((error, stackTrace) {
-        printError(info: 'loadUsers error' + error.toString());
-      });
-    });
-  }*/
 }

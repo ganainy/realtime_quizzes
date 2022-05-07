@@ -16,7 +16,8 @@ class MultiPlayerQuizScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(child: Scaffold(
       body: Obx(() {
-        return multiPlayerQuizController.questionsObs.value.isEmpty
+        return multiPlayerQuizController
+                .queueEntryModelObs.value!.questions!.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : Question(multiPlayerQuizController, context);
       }),
@@ -27,7 +28,9 @@ class MultiPlayerQuizScreen extends StatelessWidget {
     MultiPlayerQuizController multiPlayerQuizController,
     BuildContext context,
   ) {
-    var currentQuestion = multiPlayerQuizController.currentQuestionObs.value;
+    var currentQuestion = multiPlayerQuizController
+        .queueEntryModelObs.value!.questions!
+        .elementAt(multiPlayerQuizController.currentQuestionIndexObs.value);
 
     return SingleChildScrollView(
       child: Container(
@@ -42,11 +45,10 @@ class MultiPlayerQuizScreen extends StatelessWidget {
                   children: [
                     DefaultCircularNetworkImage(
                         imageUrl: multiPlayerQuizController
-                            .loggedPlayer.value?.user?.imageUrl),
+                            .loggedPlayer?.user?.imageUrl),
                     Text(
-                        '${multiPlayerQuizController.loggedPlayer.value?.user?.name} '),
-                    Text(
-                        '${multiPlayerQuizController.loggedPlayer.value?.score} '),
+                        '${multiPlayerQuizController.loggedPlayer?.user?.name} '),
+                    Text('${multiPlayerQuizController.loggedPlayer?.score} '),
                   ],
                 ),
                 Column(
@@ -69,12 +71,10 @@ class MultiPlayerQuizScreen extends StatelessWidget {
                 Column(
                   children: [
                     DefaultCircularNetworkImage(
-                        imageUrl: multiPlayerQuizController
-                            .otherPlayer.value?.user?.imageUrl),
-                    Text(
-                        '${multiPlayerQuizController.otherPlayer.value?.user?.name} '),
-                    Text(
-                        '${multiPlayerQuizController.otherPlayer.value?.score} '),
+                        imageUrl:
+                            multiPlayerQuizController.opponent?.user?.imageUrl),
+                    Text('${multiPlayerQuizController.opponent?.user?.name} '),
+                    Text('${multiPlayerQuizController.opponent?.score} '),
                   ],
                 ),
               ],
@@ -101,7 +101,8 @@ class MultiPlayerQuizScreen extends StatelessWidget {
                     child: Container(
                       margin: EdgeInsets.all(4),
                       child: Text(
-                          'Question: ${(multiPlayerQuizController.currentQuestionIndexObs.value + 1)}/${(multiPlayerQuizController.questionsObs.value.length)}'),
+                          'Question: ${(multiPlayerQuizController.currentQuestionIndexObs.value + 1)}'
+                          '/${(multiPlayerQuizController.queueEntryModelObs.value?.questions?.length)}'),
                     ),
                   ),
                 ),
@@ -110,9 +111,9 @@ class MultiPlayerQuizScreen extends StatelessWidget {
             ...?currentQuestion?.allAnswers.map((answer) {
               return Answer(answer, multiPlayerQuizController, context);
             }),
-            /*   Text(
+            //todo remove
+            Text(
                 'temporary text right answer: ${currentQuestion?.correctAnswer}'),
-       */
           ],
         ),
       ),
@@ -128,9 +129,8 @@ class MultiPlayerQuizScreen extends StatelessWidget {
         text: text,
         context: context,
         loggedPlayerImageUrl:
-            multiPlayerQuizController.loggedPlayer.value?.user?.imageUrl,
-        otherPlayerImageUrl:
-            multiPlayerQuizController.otherPlayer.value?.user?.imageUrl,
+            multiPlayerQuizController.loggedPlayer?.user?.imageUrl,
+        otherPlayerImageUrl: multiPlayerQuizController.opponent?.user?.imageUrl,
         onPressed: () {
           //if question is already answered do nothing
           if (!multiPlayerQuizController.isQuestionAnswered) {
@@ -140,55 +140,6 @@ class MultiPlayerQuizScreen extends StatelessWidget {
           }
         },
         multiPlayerQuizController: multiPlayerQuizController);
-
-    /*
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Wrap(
-          children: [
-
-                ? CachedNetworkImage(
-                    width: 20,
-                    height: 20,
-                    placeholder: (context, url) =>
-                        const CircularProgressIndicator(),
-                    imageUrl: multiPlayerQuizController
-                            .loggedPlayer.value?.player?.imageUrl ??
-                        Constants.YOU_IMAGE,
-                    errorWidget: (context, url, error) =>
-                        const Icon(Icons.account_circle),
-                  )
-                : SizedBox(),
-
-                ? CachedNetworkImage(
-                    width: 20,
-                    height: 20,
-                    placeholder: (context, url) =>
-                        const CircularProgressIndicator(),
-                    imageUrl: multiPlayerQuizController
-                            .otherPlayer.value?.player?.imageUrl ??
-                        '',
-                    errorWidget: (context, url, error) =>
-                        const Icon(Icons.account_circle),
-                  )
-                : SizedBox(),
-            Obx(() {
-              return TextButton(
-               ,
-                child: Text(text),
-                onPressed: () {
-
-                },
-              );
-            }),
-          ],
-        ),
-        const SizedBox(
-          height: mediumPadding,
-        ),
-      ],
-    );*/
   }
 
   @override

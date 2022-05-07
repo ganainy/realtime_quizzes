@@ -57,13 +57,13 @@ class SearchController extends GetxController {
         userObs.value = UserModel.fromJson(value.data());
         downloadState.value = DownloadState.SUCCESS;
 
-        if (userObs.value!.friends.contains(auth.currentUser?.email)) {
+        if (userObs.value!.friends.contains(Shared.loggedUser?.email)) {
           errorObs.value = 'User is already a friend';
         } else if (userObs.value!.receivedFriendRequests
-            .contains(auth.currentUser?.email)) {
+            .contains(Shared.loggedUser?.email)) {
           sentFriendRequestObs.value = true;
         } else if (userObs.value!.sentFriendRequests
-            .contains(auth.currentUser?.email)) {
+            .contains(Shared.loggedUser?.email)) {
           errorObs.value =
               'This user already sent you a friend request, see Friends page';
         }

@@ -4,17 +4,16 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 
 import '../../customization/theme.dart';
-import '../../layouts/home/home_controller.dart';
+import '../../main_controller.dart';
 import '../../shared/components.dart';
 import '../../shared/constants.dart';
-import '../../shared/shared.dart';
 import 'find_game_controller.dart';
 
 class FindGameScreen extends StatelessWidget {
   FindGameScreen({Key? key}) : super(key: key);
 
   final FindGameController findGameController = Get.put(FindGameController());
-  final HomeController homeController = Get.find<HomeController>();
+  final MainController mainController = Get.find<MainController>();
 
   @override
   Widget build(BuildContext context) {
@@ -32,11 +31,13 @@ class FindGameScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Welcome, ${Shared.loggedUser?.name}',
-                          textAlign: TextAlign.start,
-                          style: Theme.of(context).textTheme.headline1,
-                        ),
+                        Obx(() {
+                          return Text(
+                            'Welcome, ${mainController.userObs.value?.name ?? ''}',
+                            textAlign: TextAlign.start,
+                            style: Theme.of(context).textTheme.headline1,
+                          );
+                        }),
                         Text(
                           'Select game settings then press find game to start.',
                           textAlign: TextAlign.start,
@@ -92,7 +93,7 @@ class FindGameScreen extends StatelessWidget {
                           child: TextButton(
                             child: Text('${category['category']}'),
                             onPressed: () {
-                              homeController.selectedCategoryObs.value =
+                              mainController.selectedCategoryObs.value =
                                   category['category'];
                             },
                           ),
@@ -122,15 +123,15 @@ class FindGameScreen extends StatelessWidget {
               Text('Question amount ',
                   style: Theme.of(context).textTheme.subtitle1),
               Slider(
-                value: homeController.numOfQuestionsObs.value,
+                value: mainController.numOfQuestionsObs.value,
                 max: 20,
                 min: 2,
                 divisions: 9,
                 thumbColor: lightCardColor,
                 activeColor: lightCardColor,
-                label: homeController.numOfQuestionsObs.round().toString(),
+                label: mainController.numOfQuestionsObs.round().toString(),
                 onChanged: (double value) {
-                  homeController.numOfQuestionsObs.value = value;
+                  mainController.numOfQuestionsObs.value = value;
                 },
               ),
             ],
@@ -167,12 +168,12 @@ class FindGameScreen extends StatelessWidget {
       margin: EdgeInsets.all(smallPadding),
       child: InkWell(
         onTap: () {
-          homeController.selectedDifficultyObs.value = difficulty;
+          mainController.selectedDifficultyObs.value = difficulty;
         },
         child: CircleAvatar(
           radius: 25.0,
           backgroundColor:
-              difficulty == homeController.selectedDifficultyObs.value
+              difficulty == mainController.selectedDifficultyObs.value
                   ? secondaryTextColor
                   : lightCardColor,
           child: CircleAvatar(

@@ -7,7 +7,7 @@ import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:realtime_quizzes/customization/theme.dart';
 import 'package:realtime_quizzes/models/player.dart';
 
-import '../../layouts/home/home_controller.dart';
+import '../../main_controller.dart';
 import '../../models/api.dart';
 import '../../models/queue_entry.dart';
 import '../../shared/shared.dart';
@@ -16,22 +16,22 @@ class FindGameController extends GetxController {
   var queueEntryModelObs = Rxn<QueueEntryModel>();
   StreamSubscription? observeQueueQuestionChangesStreamSubscription;
 
-  late HomeController homeController;
+  late MainController mainController;
 
   @override
   void onInit() {
     super.onInit();
-    homeController = Get.find<HomeController>();
+    mainController = Get.find<MainController>();
   }
 
   void enterQueue(BuildContext context) {
-    Shared.queueEntryId = auth.currentUser?.email;
+    Shared.queueEntryModel.queueEntryId = Shared.loggedUser?.email;
     var players = [PlayerModel(user: Shared.loggedUser)];
     var queueEntryModel = QueueEntryModel(
-        difficulty: homeController.selectedDifficultyObs.value,
-        category: homeController.selectedCategoryObs.value,
-        numberOfQuestions: homeController.numOfQuestionsObs.value.toInt(),
-        queueEntryId: auth.currentUser?.email,
+        difficulty: mainController.selectedDifficultyObs.value,
+        category: mainController.selectedCategoryObs.value,
+        numberOfQuestions: mainController.numOfQuestionsObs.value.toInt(),
+        queueEntryId: Shared.loggedUser?.email,
         players: players,
         createdAt: DateTime.now().millisecondsSinceEpoch);
 
@@ -42,10 +42,10 @@ class FindGameController extends GetxController {
         .set(queueEntryModelJson)
         .then((value) {
       debugPrint('scenario 2: created queue entry and in queue');
-      homeController.inQueueDialog();
-      homeController.observeQueueChanges(context);
+      mainController.inQueueDialog();
+      mainController.observeQueueChanges(context);
     }).onError((error, stackTrace) {
-      homeController.errorDialog(error.toString());
+      mainController.errorDialog(error.toString());
       printError(
           info: 'scenario 2: create queue entry error :' + error.toString());
     });
@@ -53,12 +53,12 @@ class FindGameController extends GetxController {
 
   //this method will be triggered if this player is matched with another player
   void searchAvailableQueues(BuildContext context) {
-    homeController.loadingDialog();
+    mainController.loadingDialog();
     //todo composite index
     //first try to find alreay existing matching queue entry
     // .where('numberOfQuestions', isEqualTo: numOfQuestions.value.toInt())
     queueCollection
-        .where('queueEntryId', isNotEqualTo: (auth.currentUser?.email))
+        .where('queueEntryId', isNotEqualTo: (Shared.loggedUser?.email))
         // .where('difficulty', isEqualTo: ((selectedDifficulty.value)))
         // .where('category', isEqualTo: ((selectedCategory.value)))
         .limit(1)
@@ -70,53 +70,54 @@ class FindGameController extends GetxController {
         enterQueue(context);
       } else {
         //found suitable match, add to list of players
-        homeController.fetchQuiz().then((jsonResponse) {
+        mainController.fetchQuiz().then((jsonResponse) {
           ApiModel apiModel = ApiModel.fromJson(jsonResponse.data);
           if (apiModel.responseCode == null || apiModel.responseCode != 0) {
-            homeController.errorDialog('error_loading_quiz'.tr);
+            mainController.errorDialog('error_loading_quiz'.tr);
             printError(info: 'error loading questions from API');
           } else {
             //quiz is loaded successfully, now upload it to queue entry
             debugPrint('Scenario 1: match found ');
-            homeController.foundMatchDialog();
-            Shared.queueEntryId = queueEntrysJson.docs.elementAt(0).id;
-            homeController
+            mainController.foundMatchDialog();
+            Shared.queueEntryModel.queueEntryId =
+                queueEntrysJson.docs.elementAt(0).id;
+            mainController
                 .uploadQuiz(
               questions: apiModel.questions,
             )
                 .then((value) {
               getGame().then((value) {
                 addPlayerToGamePlayers(context, value).then((value) {
-                  homeController.startGame();
+                  mainController.startGame();
                   debugPrint(
                       'Scenario 1: add player to game players now start match');
                 }).catchError((error) {
-                  homeController.errorDialog(error.toString());
+                  mainController.errorDialog(error.toString());
                   printError(
                       info: 'Scenario 1: startGame error :' + error.toString());
                 });
               }).catchError((error) {
-                homeController.errorDialog(error.toString());
+                mainController.errorDialog(error.toString());
                 printError(
                     info: 'Scenario 1:getGame error :' + error.toString());
               });
             }).onError((error, stackTrace) {
               printError(
                   info: 'error loading questions from API' + error.toString());
-              homeController.errorDialog(error.toString());
+              mainController.errorDialog(error.toString());
             });
           }
         });
       }
     }).onError((error, stackTrace) {
-      homeController.errorDialog(error.toString());
+      mainController.errorDialog(error.toString());
       printError(
           info: 'Scenario 1: searchAvailableQueues error :' + error.toString());
     });
   }
 
   Future<DocumentSnapshot> getGame() async {
-    return await queueCollection.doc(Shared.queueEntryId).get();
+    return await queueCollection.doc(Shared.queueEntryModel.queueEntryId).get();
   }
 
   //add the player to the list of players of the found queue entry to begin match
@@ -142,7 +143,7 @@ class FindGameController extends GetxController {
     queueEntryModelObs.value = _queueEntryModel;
 
     return await queueCollection
-        .doc(Shared.queueEntryId)
+        .doc(Shared.queueEntryModel.queueEntryId)
         .update(queueEntryModelToJson(_queueEntryModel));
   }
 
@@ -152,7 +153,7 @@ class FindGameController extends GetxController {
         .snapshots()
         .listen((queueEntryJson) {
       if (!queueEntryJson.exists) {
-        homeController.errorDialog('Something went wrong');
+        mainController.errorDialog('Something went wrong');
       }
       debugPrint('observeQueueQuestionChanges success :');
       var queueEntry = QueueEntryModel.fromJson(queueEntryJson.data());
@@ -167,14 +168,14 @@ class FindGameController extends GetxController {
     });
 
     observeQueueQuestionChangesStreamSubscription?.onError((error, stackTrace) {
-      homeController.errorDialog(error.toString());
+      mainController.errorDialog(error.toString());
       printError(
           info: 'observeQueueQuestionChanges error :' + error.toString());
     });
   }*/
 
   getCategoryColor(String? category) {
-    if (category == homeController.selectedCategoryObs.value) {
+    if (category == mainController.selectedCategoryObs.value) {
       return lightCardColor;
     } else {
       return null;

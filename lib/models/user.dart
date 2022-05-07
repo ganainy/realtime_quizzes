@@ -3,7 +3,7 @@ import 'package:realtime_quizzes/models/result.dart';
 class UserModel {
   //difficultyType to show user , api_param for API call
 
-  String? name = 'name';
+  String name = '';
   String? email;
   String? imageUrl;
   bool? isOnline;
@@ -12,10 +12,10 @@ class UserModel {
   List<dynamic> receivedFriendRequests = [];
   List<dynamic> sentFriendRequests = [];
 
-  UserModel({this.name, required this.email, this.imageUrl});
+  UserModel({this.name = '', required this.email, this.imageUrl});
 
   UserModel.fromJson(var json) {
-    name = json['name'];
+    name = json['name'] ?? '';
     email = json['email'];
     imageUrl = json['imageUrl'];
     friends = json['friends'] ?? [];

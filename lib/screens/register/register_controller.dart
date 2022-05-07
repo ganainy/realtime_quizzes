@@ -8,6 +8,7 @@ import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../layouts/home/home.dart';
+import '../../main_controller.dart';
 import '../../models/user.dart';
 import '../../shared/shared.dart';
 
@@ -15,13 +16,11 @@ class RegisterController extends GetxController {
   var pickedImageObs = Rxn<File?>();
   var isPasswordVisible = false.obs;
   var downloadState = DownloadState.INITIAL.obs;
-  var errorObs = Rxn<String?>();
 
+  late MainController mainController;
   @override
   void onInit() {
-    errorObs.listen((p0) {
-      errorDialog();
-    });
+    mainController = Get.find<MainController>();
   }
 
   changePasswordVisibility() {
@@ -52,36 +51,38 @@ class RegisterController extends GetxController {
                   Get.to(() => HomeScreen());
                 }).onError((error, stackTrace) {
                   debugPrint('updateUserImageUrl error : ' + error.toString());
-                  errorObs.value = error.toString();
+                  mainController.errorDialog(error.toString());
                 });
               }).onError((error, stackTrace) {
                 debugPrint('getImageDownloadURL error : ' + error.toString());
-                errorObs.value = error.toString();
+                mainController.errorDialog(error.toString());
               });
             }).onError((error, stackTrace) {
               debugPrint('uploadImage error : ' + error.toString());
-              errorObs.value = error.toString();
+              mainController.errorDialog(error.toString());
             });
           }
         }).onError((error, stackTrace) {
           debugPrint('saveUserToFirestore error : ' + error.toString());
-          errorObs.value = error.toString();
+          mainController.errorDialog(error.toString());
         });
       }).onError((error, stackTrace) {
         debugPrint(
             'createUserWithEmailAndPassword error : ' + error.toString());
-        errorObs.value = error.toString();
+        mainController.errorDialog(error.toString());
       });
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
         debugPrint('The password provided is too weak.');
-        errorObs.value = 'The password provided is too weak.';
+        mainController.errorDialog('The password provided is too weak.');
       } else if (e.code == 'email-already-in-use') {
         debugPrint('The account already exists for that email.');
-        errorObs.value = 'The account already exists for that email.';
+        mainController
+            .errorDialog('The account already exists for that email.');
       }
     } catch (error) {
-      errorObs.value = error.toString();
+      mainController.errorDialog(error.toString());
+
       debugPrint(error.toString());
     }
   }
@@ -121,24 +122,5 @@ class RegisterController extends GetxController {
   ) async {
     UserModel user = UserModel(name: name, email: email);
     await usersCollection.doc(user.email).set(userModelToJson(user));
-  }
-
-  void errorDialog() {
-    downloadState.value = DownloadState.ERROR;
-    Get.back();
-    // set up the buttons
-    Widget cancelButton = TextButton(
-      child: Text("Ok"),
-      onPressed: () {
-        Get.back();
-      },
-    );
-
-    Get.defaultDialog(
-      actions: [cancelButton],
-      title: 'Error',
-      barrierDismissible: false,
-      content: Text("${errorObs.value ?? ''}", style: TextStyle(fontSize: 14)),
-    );
   }
 }

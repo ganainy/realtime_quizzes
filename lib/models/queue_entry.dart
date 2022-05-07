@@ -26,7 +26,9 @@ class QueueEntryModel {
       this.numberOfQuestions,
       this.queueEntryId,
       this.players,
-      this.createdAt});
+      this.createdAt,
+      this.invitedFriend,
+      this.questions});
 
   QueueEntryModel.fromJson(var json) {
     difficulty = json['difficulty'];

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:realtime_quizzes/models/player.dart';
 
 import '../../customization/theme.dart';
+import '../../main_controller.dart';
 import '../../shared/components.dart';
-import '../../shared/constants.dart';
 import '../../shared/shared.dart';
 import 'friends_controller.dart';
 
@@ -12,7 +13,7 @@ class FriendsScreen extends StatelessWidget {
   FriendsScreen({Key? key}) : super(key: key);
 
   FriendsController friendsController = Get.put(FriendsController());
-
+  MainController mainController = Get.find<MainController>();
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -41,7 +42,7 @@ class FriendsScreen extends StatelessWidget {
 
   GameInvites(BuildContext context) {
     return Obx(() {
-      return friendsController.receivedInvitesObs.value.isEmpty
+      return mainController.receivedInvitesObs.value.isEmpty
           ? const SizedBox()
           : Column(
               children: [
@@ -55,13 +56,13 @@ class FriendsScreen extends StatelessWidget {
                   child: Obx(() {
                     return Row(
                       children: [
-                        ...friendsController.receivedInvitesObs.value
+                        ...mainController.receivedInvitesObs.value
                             .map((incomingGameInvite) {
                           var otherPlayer = incomingGameInvite.players
-                              .firstWhere((element) =>
-                                  element?.playerEmail !=
-                                  auth.currentUser?.email)
-                              .player;
+                              .firstWhere((PlayerModel? element) =>
+                                  element?.user?.email !=
+                                  Shared.loggedUser?.email)
+                              .user;
                           return Card(
                             color: cardColor,
                             child: Column(
@@ -80,7 +81,7 @@ class FriendsScreen extends StatelessWidget {
                                       Spacer(),
                                       IconButton(
                                           onPressed: () {
-                                            friendsController.acceptGameInvite(
+                                            mainController.acceptGameInvite(
                                                 incomingGameInvite);
                                           },
                                           icon: Image.asset(
@@ -97,7 +98,7 @@ class FriendsScreen extends StatelessWidget {
                                           color: Colors.red,
                                         ),
                                         onPressed: () {
-                                          friendsController.declineGameInvite(
+                                          mainController.declineGameInvite(
                                               incomingGameInvite);
                                         },
                                       ),
@@ -242,7 +243,8 @@ class FriendsScreen extends StatelessWidget {
                                         DefaultIconButton(
                                             text: 'challenge',
                                             onPressed: () {
-                                              showQuizSpecDialog(friend);
+                                              mainController
+                                                  .showQuizSpecDialog(friend);
                                             },
                                             icon: Icons.wine_bar),
                                         DefaultIconButton(
@@ -319,129 +321,5 @@ class FriendsScreen extends StatelessWidget {
         ],
       );
     });
-  }
-
-  void showQuizSpecDialog(friend) {
-    Widget startButton = TextButton(
-      child: Text("Start"),
-      onPressed: () {
-        friendsController.fetchQuiz(friend);
-        Get.back();
-      },
-    );
-    Widget cancelButton = TextButton(
-      child: Text("Cancel"),
-      onPressed: () {
-        Get.back();
-      },
-    );
-
-    Get.defaultDialog(
-      actions: [startButton, cancelButton],
-      title: 'Select game options',
-      barrierDismissible: false,
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Obx(() {
-            return ToggleButtons(
-              children: <Widget>[
-                Container(
-                  width: 30,
-                  height: 30,
-                  color: Colors.green,
-                ),
-                Container(
-                  width: 30,
-                  height: 30,
-                  color: Colors.orange,
-                ),
-                Container(
-                  width: 30,
-                  height: 30,
-                  color: Colors.red,
-                ),
-              ],
-              isSelected: friendsController.difficultySelectionsObs.value,
-              onPressed: (int index) {
-                switch (index) {
-                  case 0:
-                    friendsController.difficultySelectionsObs.value[0] = true;
-                    friendsController.difficultySelectionsObs.value[1] = false;
-                    friendsController.difficultySelectionsObs.value[2] = false;
-                    break;
-                  case 1:
-                    friendsController.difficultySelectionsObs.value[0] = false;
-                    friendsController.difficultySelectionsObs.value[1] = true;
-                    friendsController.difficultySelectionsObs.value[2] = false;
-                    break;
-                  case 2:
-                    friendsController.difficultySelectionsObs.value[0] = false;
-                    friendsController.difficultySelectionsObs.value[1] = false;
-                    friendsController.difficultySelectionsObs.value[2] = true;
-                    break;
-                }
-                Get.back();
-                showQuizSpecDialog(friend);
-              },
-            );
-          }),
-          DropdownButton<String>(
-            items: Constants.categoryNames.map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-            onChanged: (value) {
-              friendsController.categorySelectionsObs.value = value!;
-              debugPrint('$value');
-              Get.back();
-              showQuizSpecDialog(friend);
-            },
-            value: friendsController.categorySelectionsObs.value,
-          ),
-          DropdownButton<String>(
-            items: [
-              '2',
-              '3',
-              '4',
-              '5',
-              '6',
-              '7',
-              '8',
-              '9',
-              '10',
-              '11',
-              '12',
-              '13',
-              '14',
-              '15',
-              '16',
-              '17',
-              '18',
-              '19',
-              '19',
-              '20',
-            ].map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text('$value'),
-              );
-            }).toList(),
-            onChanged: (value) {
-              friendsController.numQuestionsSelectionsObs.value = value;
-              debugPrint('$value');
-              Get.back();
-              showQuizSpecDialog(friend);
-            },
-            value: friendsController.numQuestionsSelectionsObs.value ?? '10',
-          )
-        ],
-
-        //  Constants.categoryList.map((category) =>
-      ),
-    );
   }
 }

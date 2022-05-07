@@ -17,6 +17,8 @@ Future<void> main() async {
   await DioHelper.init();
   await Firebase.initializeApp();
 
+  Get.put(MainController());
+
   late Widget startWidget;
 
   //navigate to home or register based on auth state

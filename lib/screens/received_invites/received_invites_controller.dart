@@ -18,7 +18,7 @@ class ReceivedInviteController extends GetxController {
 
     var players = [];
     players.add(selectedQuiz.user?.email);
-    players.add(auth.currentUser?.email);
+    players.add(Shared.loggedUser?.email);
     InviteModel invite = InviteModel(selectedQuiz, players);
 
     invitesCollection
@@ -58,7 +58,7 @@ class ReceivedInviteController extends GetxController {
     InviteModel invite = receivedInvites.value?.elementAt(index);
 
     invite.players.forEach((player) {
-      if (player.playerEmail == auth.currentUser?.email) {
+      if (player.playerEmail == Shared.loggedUser?.email) {
         player.isReady = true;
       }
     });
