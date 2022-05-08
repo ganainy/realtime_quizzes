@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:realtime_quizzes/customization/theme.dart';
 import 'package:realtime_quizzes/models/player.dart';
+import 'package:realtime_quizzes/models/quiz_settings.dart';
 
 import '../../main_controller.dart';
 import '../../models/api.dart';
@@ -28,12 +29,17 @@ class FindGameController extends GetxController {
     Shared.queueEntryModel.queueEntryId = Shared.loggedUser?.email;
     var players = [PlayerModel(user: Shared.loggedUser)];
     var queueEntryModel = QueueEntryModel(
-        difficulty: mainController.selectedDifficultyObs.value,
-        category: mainController.selectedCategoryObs.value,
-        numberOfQuestions: mainController.numOfQuestionsObs.value?.toInt(),
-        queueEntryId: Shared.loggedUser?.email,
-        players: players,
-        createdAt: DateTime.now().millisecondsSinceEpoch);
+      inviteStatus: InviteStatus.OPEN_INVITE,
+      quizSettings: QuizSettings(
+          difficulty:
+              mainController.queueEntryObs.value?.quizSettings?.difficulty,
+          category: mainController.queueEntryObs.value?.quizSettings?.category,
+          numberOfQuestions: mainController
+              .queueEntryObs.value?.quizSettings?.numberOfQuestions,
+          createdAt: DateTime.now().millisecondsSinceEpoch),
+      queueEntryId: Shared.loggedUser?.email,
+      players: players,
+    );
 
     var queueEntryModelJson = queueEntryModelToJson(queueEntryModel);
 
@@ -177,7 +183,8 @@ class FindGameController extends GetxController {
   }*/
 
   getCategoryColor(String? category) {
-    if (category == mainController.selectedCategoryObs.value) {
+    if (category ==
+        mainController.queueEntryObs.value?.quizSettings?.category) {
       return lightCardColor;
     } else {
       return null;

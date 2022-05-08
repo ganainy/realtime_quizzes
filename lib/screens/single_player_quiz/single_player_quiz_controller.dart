@@ -7,7 +7,7 @@ import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import '../../main_controller.dart';
 import '../../models/api.dart';
 import '../../models/game_type.dart';
-import '../../models/single_player_quiz_result.dart';
+import '../../models/quiz_settings.dart';
 import '../../shared/shared.dart';
 import '../result/result_screen.dart';
 
@@ -116,12 +116,13 @@ class SinglePlayerQuizController extends GetxController {
     cancelTimer();
 
     Get.off(() => ResultScreen(), arguments: {
-      'result': SinglePlayerQuizResult(
-          currentScore.value,
-          Shared.queueEntryModel.numberOfQuestions,
-          Shared.queueEntryModel.category,
-          Shared.queueEntryModel.difficulty,
-          createdAt),
+      'result': QuizSettings(
+          score: currentScore.value,
+          numberOfQuestions:
+              Shared.queueEntryModel.quizSettings?.numberOfQuestions,
+          category: Shared.queueEntryModel.quizSettings?.category,
+          difficulty: Shared.queueEntryModel.quizSettings?.difficulty,
+          createdAt: createdAt),
       'gameType': GameType.SINGLE
     });
   }

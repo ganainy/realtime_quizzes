@@ -50,7 +50,7 @@ class MultiPlayerQuizScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             multiPlayerQuizController
-                    .queueEntryModelObs.value!.hasOponnentLeftGame
+                    .queueEntryModelObs.value!.hasOpponentLeftGame
                 ? Card(
                     margin: const EdgeInsets.all(smallPadding),
                     color: Colors.yellow[200],

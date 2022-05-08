@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:realtime_quizzes/models/user.dart';
 
 import '../models/queue_entry.dart';
+import '../models/quiz_settings.dart';
 
 FirebaseFirestore firestore = FirebaseFirestore.instance;
 FirebaseAuth auth = FirebaseAuth.instance;
@@ -18,21 +19,20 @@ CollectionReference usersCollection = firestore.collection('users');
 CollectionReference queueCollection = firestore.collection('queue');
 //CollectionReference runningCollection = firestore.collection('running');
 
-enum DownloadState { INITIAL, LOADING, SUCCESS, ERROR }
+enum DownloadState { INITIAL, LOADING, SUCCESS, ERROR, EMPTY }
 
 class Shared {
   static UserModel? loggedUser;
 
   static QueueEntryModel queueEntryModel = QueueEntryModel(
-      difficulty: 'medium'.tr,
-      category: 'Random',
-      numberOfQuestions:
-          10); //the object containing everything related to a game
+    quizSettings: QuizSettings(
+        category: 'Random', difficulty: 'medium'.tr, numberOfQuestions: 10),
+  ); //the object containing everything related to a game
 
   static void resetQueueEntry() {
     queueEntryModel = QueueEntryModel(
-        difficulty: 'medium'.tr,
-        category: 'Random',
-        numberOfQuestions: 10); //initial state of the queue entry
+      quizSettings: QuizSettings(
+          category: 'Random', difficulty: 'medium'.tr, numberOfQuestions: 10),
+    ); //initial state of the queue entry
   }
 }

@@ -5,8 +5,8 @@ import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:realtime_quizzes/models/game_type.dart';
 import 'package:realtime_quizzes/models/player.dart';
 import 'package:realtime_quizzes/models/queue_entry.dart';
+import 'package:realtime_quizzes/models/quiz_settings.dart';
 import 'package:realtime_quizzes/models/result.dart';
-import 'package:realtime_quizzes/models/single_player_quiz_result.dart';
 import 'package:realtime_quizzes/models/user.dart';
 import 'package:realtime_quizzes/shared/shared.dart';
 
@@ -17,7 +17,7 @@ class ResultController extends GetxController {
 
   var queueEntryModelObs = Rxn<QueueEntryModel?>();
 
-  SinglePlayerQuizResult? singlePlayerResult;
+  QuizSettings? singlePlayerResult;
 
   @override
   void onInit() {
@@ -58,11 +58,12 @@ class ResultController extends GetxController {
     ResultModel _resultModel = ResultModel(
         type: _type,
         score: _loggedPlayer?.score,
-        maxScore: queueEntryModelObs.value?.numberOfQuestions,
-        difficulty: queueEntryModelObs.value?.difficulty,
-        category: queueEntryModelObs.value?.category,
+        maxScore:
+            queueEntryModelObs.value?.quizSettings?.numberOfQuestions?.toInt(),
+        difficulty: queueEntryModelObs.value?.quizSettings?.difficulty,
+        category: queueEntryModelObs.value?.quizSettings?.category,
         otherPlayerEmail: _otherPlayer?.user?.email,
-        createdAt: queueEntryModelObs.value?.createdAt,
+        createdAt: queueEntryModelObs.value?.quizSettings?.createdAt,
         isMultiPlayer: true);
     //update user profile
 
@@ -91,7 +92,7 @@ class ResultController extends GetxController {
     //create result model
     ResultModel _resultModel = ResultModel(
       score: singlePlayerResult?.score,
-      maxScore: singlePlayerResult?.numQuestions,
+      maxScore: singlePlayerResult?.numberOfQuestions?.toInt(),
       difficulty: singlePlayerResult?.difficulty,
       category: singlePlayerResult?.category,
       createdAt: singlePlayerResult?.createdAt,

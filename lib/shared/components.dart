@@ -312,8 +312,8 @@ LoadingButton() {
       child: Expanded(
         child: TextButton(
           style: TextButton.styleFrom(
-            primary: Colors.white,
-            backgroundColor: lighterCardColor,
+            primary: lighterCardColor,
+            backgroundColor: cardColor,
           ),
           onPressed: () {},
           child: const Text(''),
@@ -327,6 +327,25 @@ LoadingButton() {
               valueColor: AlwaysStoppedAnimation<Color>(Colors.white))),
     )
   ]);
+}
+
+GradientContainer({child}) {
+  return Container(
+    padding: const EdgeInsets.all(smallPadding),
+    margin: const EdgeInsets.all(smallPadding),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(smallPadding),
+      gradient: const LinearGradient(
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
+        colors: [
+          lightCardColor,
+          lighterCardColor,
+        ],
+      ),
+    ),
+    child: child,
+  );
 }
 
 //same as map function but with index

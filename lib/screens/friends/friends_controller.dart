@@ -9,12 +9,12 @@ import '../../main_controller.dart';
 import '../../models/user.dart';
 import '../../shared/shared.dart';
 
-//todo here: remove redundant code, improve ui(percentages of screen),
-//todo move user listen to home and make it update shared logged user
+//todo improve ui(percentages of screen),
 //todo flag that game is running so no one enters
 //todo terminate game on user offline or didnt answer 3 in a row
 //todo add search by name also with shimmer effect
 //todo charts in history screen
+//todo after signup or login new account new user is not loaded
 
 class FriendsController extends GetxController {
   var friendsObs = [].obs; //list of UserModel

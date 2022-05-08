@@ -11,8 +11,3 @@ class ApiModel {
     });
   }
 }
-/*apiModelToJson(ApiModel apiModel){
-  return{
-
-  };
-}*/

@@ -95,8 +95,9 @@ class FindGameScreen extends StatelessWidget {
                           child: TextButton(
                             child: Text('${category['category']}'),
                             onPressed: () {
-                              mainController.selectedCategoryObs.value =
-                                  category['category'];
+                              mainController.queueEntryObs.value?.quizSettings
+                                  ?.category = category['category'];
+                              mainController.forceUpdateUi();
                             },
                           ),
                           color: findGameController
@@ -124,18 +125,6 @@ class FindGameScreen extends StatelessWidget {
             children: [
               Text('Question amount ',
                   style: Theme.of(context).textTheme.subtitle1),
-              /*Slider(
-                value: mainController.numOfQuestionsObs.value,
-                max: 20,
-                min: 2,
-                divisions: 9,
-                thumbColor: lightCardColor,
-                activeColor: lightCardColor,
-                label: mainController.numOfQuestionsObs.round().toString(),
-                onChanged: (double value) {
-                  mainController.numOfQuestionsObs.value = value;
-                },
-              ),*/
               SizedBox(
                 height: 50,
               ),
@@ -154,9 +143,13 @@ class FindGameScreen extends StatelessWidget {
                     shouldAlwaysShowTooltip: true,
                     tooltipShape: SfPaddleTooltipShape(),
                     enableTooltip: true,
-                    value: mainController.numOfQuestionsObs.value?.round(),
+                    value: mainController
+                        .queueEntryObs.value?.quizSettings?.numberOfQuestions
+                        ?.round(),
                     onChanged: (dynamic newValue) {
-                      mainController.numOfQuestionsObs.value = newValue;
+                      mainController.queueEntryObs.value?.quizSettings
+                          ?.numberOfQuestions = newValue;
+                      mainController.forceUpdateUi();
                     },
                   ),
                 ),
@@ -195,14 +188,16 @@ class FindGameScreen extends StatelessWidget {
       margin: EdgeInsets.all(smallPadding),
       child: InkWell(
         onTap: () {
-          mainController.selectedDifficultyObs.value = difficulty;
+          mainController.queueEntryObs.value?.quizSettings?.difficulty =
+              difficulty;
+          mainController.forceUpdateUi();
         },
         child: CircleAvatar(
           radius: 25.0,
-          backgroundColor:
-              difficulty == mainController.selectedDifficultyObs.value
-                  ? secondaryTextColor
-                  : lightCardColor,
+          backgroundColor: difficulty ==
+                  mainController.queueEntryObs.value?.quizSettings?.difficulty
+              ? secondaryTextColor
+              : lightCardColor,
           child: CircleAvatar(
             backgroundColor: difficulty == 'easy'.tr
                 ? Colors.green

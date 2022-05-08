@@ -42,15 +42,14 @@ class ReceivedInviteScreen extends StatelessWidget {
                       return InkWell(
                         onTap: () {
                           //start game
-                       //   receivedInvitesController.acceptInvite(index);
+                          //   receivedInvitesController.acceptInvite(index);
                         },
                         child: Padding(
-                          padding: const EdgeInsets.all(MyTheme.smallPadding),
+                          padding: EdgeInsets.all(smallPadding),
                           child: Card(
                             color: Colors.grey[200],
                             child: Padding(
-                              padding:
-                                  const EdgeInsets.all(MyTheme.mediumPadding),
+                              padding: const EdgeInsets.all(mediumPadding),
                               child: Wrap(
                                 spacing:
                                     20, // to apply margin in the main axis of the wrap

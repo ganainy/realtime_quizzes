@@ -46,7 +46,8 @@ dependencies:
   timeago: ^3.2.2
   html_unescape: ^2.0.0
   syncfusion_flutter_sliders: ^20.1.52
-  numberpicker: ^2.1.1
+  shared_preferences: ^2.0.13
+  shimmer: ^2.0.0
 
 dev_dependencies:
   flutter_test:

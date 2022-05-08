@@ -54,20 +54,7 @@ class FriendsScreen extends StatelessWidget {
                                   element?.user?.email !=
                                   Shared.loggedUser?.email)
                               .user;
-                          return Container(
-                            padding: const EdgeInsets.all(smallPadding),
-                            margin: const EdgeInsets.all(smallPadding),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(smallPadding),
-                              gradient: const LinearGradient(
-                                begin: Alignment.topRight,
-                                end: Alignment.bottomLeft,
-                                colors: [
-                                  lightCardColor,
-                                  lighterCardColor,
-                                ],
-                              ),
-                            ),
+                          return GradientContainer(
                             child: Column(
                               children: [
                                 Container(
@@ -260,22 +247,7 @@ class FriendsScreen extends StatelessWidget {
             return Row(
               children: [
                 ...friendsController.receivedFriendRequestsObs.value
-                    .map((incomingFriendRequest) => Container(
-                          padding: const EdgeInsets.all(smallPadding),
-                          margin: const EdgeInsets.all(smallPadding),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(smallPadding),
-                            gradient: const LinearGradient(
-                              begin: Alignment.topRight,
-                              end: Alignment.bottomLeft,
-                              colors: [
-                                lightCardColor,
-                                lighterCardColor,
-                              ],
-                            ),
-                          ),
-                          width: MediaQuery.of(context).size.width -
-                              smallPadding * 2,
+                    .map((incomingFriendRequest) => GradientContainer(
                           child: Wrap(
                             alignment: WrapAlignment.center,
                             crossAxisAlignment: WrapCrossAlignment.center,

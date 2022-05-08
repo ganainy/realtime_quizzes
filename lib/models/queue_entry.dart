@@ -1,49 +1,40 @@
 import 'package:realtime_quizzes/models/question.dart';
+import 'package:realtime_quizzes/models/quiz_settings.dart';
 
 import 'player.dart';
 
-class QueueEntryModel {
-  //difficultyType to show user , api_param for API call
+//state of the invite that was sent to a friend
+enum InviteStatus {
+  OPEN_INVITE, //invite any random can accept
+  FRIEND_ACCEPTED_INVITE, //friend accepted invite
+  FRIEND_DECLINED_INVITE, //friend declined invite
+  SENDER_CANCELED_INVITE, //sender canceled invite
+}
 
-  String? difficulty = 'Random';
-  String? category = 'Random';
-  int? numberOfQuestions = 10;
+class QueueEntryModel {
+  InviteStatus? inviteStatus;
+
+  QuizSettings? quizSettings = QuizSettings(
+      numberOfQuestions: 10.0, difficulty: "Random", category: "Random");
   String?
       queueEntryId; //this will be also the email of the player to prevent multiple entry to queue by same user
+
   List<PlayerModel?>? players = [];
   List<QuestionModel?>? questions = [];
-  int? createdAt; //milliseconssinceepoch
-  String?
-      invitedFriend; //this field used when sending invite to friends not with random queue
-  bool hasFriendDeclinedInvite =
-      false; //this field used when sending invite to friends not with random queue
-  bool hasFriendAcceptedInvite =
-      false; //this field used when sending invite to friends not with random queue
-  bool hasOponnentLeftGame =
+
+  bool hasOpponentLeftGame =
       false; //this flag to notify user that opponent has left the game
-  bool archiveInvite =
-      false; //this flag to check if game invite is active or not
+
   QueueEntryModel(
-      {this.difficulty,
-      this.category,
-      this.numberOfQuestions,
-      this.queueEntryId,
+      {this.queueEntryId,
       this.players,
-      this.createdAt,
-      this.invitedFriend,
-      this.questions});
+      this.questions,
+      this.quizSettings,
+      this.inviteStatus});
 
   QueueEntryModel.fromJson(var json) {
-    difficulty = json['difficulty'];
-    category = json['category'];
-    createdAt = json['createdAt'];
-    numberOfQuestions = (json['numberOfQuestions']);
     queueEntryId = (json['queueEntryId']);
-    invitedFriend = (json['invitedFriend']);
-    hasFriendDeclinedInvite = (json['hasFriendDeclinedInvite']);
-    hasFriendAcceptedInvite = (json['hasFriendAcceptedInvite']);
-    hasOponnentLeftGame = (json['hasOponnentLeftGame']);
-    archiveInvite = (json['archiveInvite']);
+    quizSettings = QuizSettings.fromJson(json['quizSettings']);
 
     json['players']?.forEach((playerJson) {
       players?.add(PlayerModel.fromJson(playerJson));
@@ -52,6 +43,25 @@ class QueueEntryModel {
     json['questions']?.forEach((questionJson) {
       questions?.add(QuestionModel.fromJson(questionJson));
     });
+
+    hasOpponentLeftGame = (json['hasOpponentLeftGame']);
+
+    switch (json['inviteStatus']) {
+      case "OPEN_INVITE":
+        inviteStatus = InviteStatus.OPEN_INVITE;
+        break;
+      case "FRIEND_ACCEPTED_INVITE":
+        inviteStatus = InviteStatus.FRIEND_ACCEPTED_INVITE;
+        break;
+      case "FRIEND_DECLINED_INVITE":
+        inviteStatus = InviteStatus.FRIEND_DECLINED_INVITE;
+        break;
+      case "SENDER_CANCELED_INVITE":
+        inviteStatus = InviteStatus.SENDER_CANCELED_INVITE;
+        break;
+      default:
+        throw Exception("InviteStatus not found");
+    }
   }
 }
 
@@ -66,18 +76,31 @@ queueEntryModelToJson(QueueEntryModel? queueEntryModel) {
     questionsList.add(questionModelToJson(question));
   });
 
+  var inviteStatus;
+
+  switch (queueEntryModel?.inviteStatus) {
+    case InviteStatus.OPEN_INVITE:
+      inviteStatus = "OPEN_INVITE";
+      break;
+    case InviteStatus.FRIEND_ACCEPTED_INVITE:
+      inviteStatus = "FRIEND_ACCEPTED_INVITE";
+      break;
+    case InviteStatus.FRIEND_DECLINED_INVITE:
+      inviteStatus = "FRIEND_DECLINED_INVITE";
+      break;
+    case InviteStatus.SENDER_CANCELED_INVITE:
+      inviteStatus = "SENDER_CANCELED_INVITE";
+      break;
+    default:
+      throw Exception("InviteStatus not found");
+  }
+
   return {
-    'difficulty': (queueEntryModel?.difficulty),
-    'category': (queueEntryModel?.category),
-    'numberOfQuestions': (queueEntryModel?.numberOfQuestions),
     'queueEntryId': (queueEntryModel?.queueEntryId),
-    'createdAt': (queueEntryModel?.createdAt),
+    'quizSettings': quizSettingsToJson(queueEntryModel?.quizSettings),
+    'hasOpponentLeftGame': queueEntryModel?.hasOpponentLeftGame,
     'players': playersList,
-    'invitedFriend': queueEntryModel?.invitedFriend,
-    'hasFriendDeclinedInvite': queueEntryModel?.hasFriendDeclinedInvite,
-    'hasFriendAcceptedInvite': queueEntryModel?.hasFriendAcceptedInvite,
-    'hasOponnentLeftGame': queueEntryModel?.hasOponnentLeftGame,
-    'archiveInvite': queueEntryModel?.archiveInvite,
     'questions': questionsList,
+    'inviteStatus': inviteStatus,
   };
 }

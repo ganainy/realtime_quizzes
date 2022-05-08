@@ -3,8 +3,10 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/screens/friends/friends_controller.dart';
 import 'package:realtime_quizzes/screens/search/search_controller.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../customization/theme.dart';
+import '../../models/user.dart';
 import '../../shared/components.dart';
 import '../../shared/shared.dart';
 
@@ -35,70 +37,28 @@ class SearchScreen extends StatelessWidget {
                     controller: searchTextEditingController,
                     suffixIcon: IconButton(
                         onPressed: () {
-                          searchController
-                              .findUser(searchTextEditingController.value.text);
+                          searchController.searchQuery.value =
+                              searchTextEditingController.value.text;
+                          searchController.findUserMatches();
                         },
                         icon: const Icon(Icons.search))),
                 Expanded(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: searchController.downloadState.value ==
-                              DownloadState.LOADING
-                          ? CircularProgressIndicator()
+                  child: searchController.downloadState.value ==
+                          DownloadState.LOADING
+                      ? ShimmerLoading()
+                      : searchController.downloadState.value ==
+                              DownloadState.INITIAL
+                          ? Text(
+                              'Find a user by his name or email address',
+                              style: Theme.of(context).textTheme.headline2,
+                            )
                           : searchController.downloadState.value ==
-                                  DownloadState.INITIAL
+                                  DownloadState.EMPTY
                               ? Text(
-                                  'Find a user by his email address',
+                                  'No matches found',
                                   style: Theme.of(context).textTheme.headline2,
                                 )
-                              : searchController.downloadState.value ==
-                                      DownloadState.ERROR
-                                  ? Text(
-                                      '${searchController.errorObs.value}',
-                                      style:
-                                          Theme.of(context).textTheme.headline2,
-                                    )
-                                  : SizedBox(
-                                      height: 180,
-                                      child: Card(
-                                        color: lightCardColor,
-                                        child: Column(
-                                          children: [
-                                            DefaultStatusImage(
-                                                isOnline: searchController
-                                                    .userObs.value?.isOnline,
-                                                imageUrl: searchController
-                                                    .userObs.value?.imageUrl),
-                                            Text(
-                                                '${searchController.userObs.value?.name}',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .subtitle1),
-                                            searchController
-                                                    .sentFriendRequestObs.value
-                                                ? DefaultIconButton(
-                                                    text: 'Sent friend request',
-                                                    onPressed: () {},
-                                                    icon: null,
-                                                  )
-                                                : DefaultIconButton(
-                                                    text: 'Add friend',
-                                                    onPressed: () {
-                                                      searchController
-                                                          .sendFriendRequest(
-                                                              searchController
-                                                                  .userObs
-                                                                  .value);
-                                                    },
-                                                    icon: Icons.group_add,
-                                                  ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                    ),
-                  ),
+                              : QueryResults(),
                 ),
               ],
             ),
@@ -106,6 +66,110 @@ class SearchScreen extends StatelessWidget {
           // This trailing comma makes auto-formatting nicer for build methods.
         );
       }),
+    );
+  }
+
+  QueryResults() {
+    return ListView.separated(
+        itemBuilder: (context, index) {
+          var currentUser = searchController.results.value.elementAt(index);
+          return SizedBox(
+            child: GradientContainer(
+              child: Row(
+                children: [
+                  DefaultCircularNetworkImage(imageUrl: currentUser.imageUrl),
+                  Expanded(
+                    child: Text(
+                      '${currentUser.name} ',
+                      style: Theme.of(context).textTheme.subtitle1,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  InteractButton(currentUser: currentUser),
+                ],
+              ),
+            ),
+          );
+        },
+        separatorBuilder: (context, index) {
+          return const SizedBox();
+        },
+        itemCount: searchController.results.value.length);
+  }
+
+  //this button text and image changes based on the current result's status
+  InteractButton({UserModel? currentUser}) {
+    var text;
+
+    switch (currentUser?.userStatus) {
+      case UserStatus.NOT_FRIEND:
+        text = 'Add';
+        break;
+      case UserStatus.FRIEND:
+        text = 'Friend';
+        break;
+      case UserStatus.SENT_FRIEND_REQUEST:
+        text = 'Accept request';
+        break;
+      case UserStatus.RECEIVED_FRIEND_REQUEST:
+        text = 'Already sent request';
+        break;
+      default:
+        Exception('Unknown user status');
+        break;
+    }
+
+    return Container(
+      constraints: BoxConstraints(maxWidth: 100),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(smallPadding),
+        color: cardColor,
+      ),
+      child: TextButton(
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+        ),
+        onPressed: () {
+          searchController.interactWithUser(currentUser);
+        },
+      ),
+    );
+  }
+
+  ShimmerLoading() {
+    //todo test shimmer
+    return ListView.separated(
+        itemBuilder: (context, index) {
+          return SizedBox(
+            child: GradientContainer(
+              child: Row(
+                children: [
+                  ShimmerWrapper(
+                      child: DefaultCircularNetworkImage(imageUrl: '')),
+                  Expanded(
+                    child: ShimmerWrapper(child: const Text('')),
+                  ),
+                  ShimmerWrapper(child: InteractButton()),
+                ],
+              ),
+            ),
+          );
+        },
+        separatorBuilder: (context, index) {
+          return const SizedBox();
+        },
+        itemCount: searchController.results.value.length);
+  }
+
+  ShimmerWrapper({required child}) {
+    return SizedBox(
+      child: Shimmer.fromColors(
+        baseColor: cardColor,
+        highlightColor: lighterCardColor,
+        child: child,
+      ),
     );
   }
 }

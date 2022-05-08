@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
+import 'package:realtime_quizzes/models/quiz_settings.dart';
 import 'package:realtime_quizzes/screens/friends/friends_controller.dart';
 
 import '../../models/api.dart';
@@ -34,9 +35,7 @@ class MainController extends GetxController {
 
   //observables to update ui
   var userObs = Rxn<UserModel?>();
-  var numOfQuestionsObs = Rxn<double?>();
-  var selectedCategoryObs = Rxn<String?>();
-  var selectedDifficultyObs = Rxn<String?>();
+  var queueEntryObs = Rxn<QueueEntryModel?>();
   var selectedDifficultyListObs = [false, true, false].obs;
   var receivedInvitesObs = [].obs; //list of QueueEntryModel
   /*Function eq = const ListEquality().equals; //function to compare two lists*/
@@ -47,43 +46,29 @@ class MainController extends GetxController {
   late FriendsController friendsController;
   @override
   void onInit() {
-    friendsController = Get.put(FriendsController());
     //initialize user email
     Shared.loggedUser = UserModel(email: auth.currentUser?.email);
+    friendsController = Get.put(FriendsController());
     //set user as online on app start
     changeUserStatus(true);
     //keep listening to received invites
     observeGameInvites();
     //set initial values of quiz parameters
-    numOfQuestionsObs.value =
-        double.parse(Shared.queueEntryModel.numberOfQuestions.toString());
-    selectedCategoryObs.value = Shared.queueEntryModel.category;
-    selectedDifficultyObs.value = Shared.queueEntryModel.difficulty;
+    queueEntryObs.value = Shared.queueEntryModel;
     //save latest game setting values in shared class to access through app
-    numOfQuestionsObs.listen((p0) {
-      Shared.queueEntryModel.numberOfQuestions = p0?.toInt();
-    });
-
-    selectedCategoryObs.listen((p0) {
-      Shared.queueEntryModel.category = p0;
-
-      /* Shared.category = Constants.categoryList
-          .firstWhere((element) => element['category'] == p0)['api'];*/
-    });
-
-    selectedDifficultyObs.listen((p0) {
-      Shared.queueEntryModel.difficulty = p0;
+    queueEntryObs.listen((p0) {
+      Shared.queueEntryModel = p0!;
     });
 
     selectedDifficultyListObs.listen((p0) {
       if (selectedDifficultyListObs.value.elementAt(0)) {
-        Shared.queueEntryModel.difficulty = 'easy';
+        Shared.queueEntryModel.quizSettings?.difficulty = 'easy';
       }
       if (selectedDifficultyListObs.value.elementAt(1)) {
-        Shared.queueEntryModel.difficulty = 'medium';
+        Shared.queueEntryModel.quizSettings?.difficulty = 'medium';
       }
       if (selectedDifficultyListObs.value.elementAt(2)) {
-        Shared.queueEntryModel.difficulty = 'hard';
+        Shared.queueEntryModel.quizSettings?.difficulty = 'hard';
       }
     });
   }
@@ -130,8 +115,8 @@ class MainController extends GetxController {
       debugPrint('invites received: ${event.docs.length}');
       event.docs.forEach((element) {
         var gameInvite = QueueEntryModel.fromJson(element.data());
-        if (!gameInvite.archiveInvite) {
-          //only show game invite if not archived
+        if (gameInvite.inviteStatus != InviteStatus.SENDER_CANCELED_INVITE) {
+          //only show game invite if not canceled by sender
           receivedInvitesObs.value.add(gameInvite);
         }
         receivedInvitesObs.refresh();
@@ -152,7 +137,7 @@ class MainController extends GetxController {
     //convert category name to match the param thats passed to api
     Constants.categoryList.forEach((categoryMap) {
       if (categoryMap['category'].toString().toLowerCase() ==
-          Shared.queueEntryModel.category?.toLowerCase()) {
+          Shared.queueEntryModel.quizSettings?.category?.toLowerCase()) {
         categoryApi = categoryMap['api'];
       }
     });
@@ -160,14 +145,14 @@ class MainController extends GetxController {
     //convert difficulty name to match the param thats passed to api
     Constants.difficultyList.forEach((difficultyMap) {
       if (difficultyMap['difficulty'].toString().toLowerCase() ==
-          Shared.queueEntryModel.difficulty?.toLowerCase()) {
+          Shared.queueEntryModel.quizSettings?.difficulty?.toLowerCase()) {
         difficultyApi = difficultyMap['api'];
       }
     });
 
     var params = {
       'difficulty': difficultyApi,
-      'amount': Shared.queueEntryModel.numberOfQuestions,
+      'amount': Shared.queueEntryModel.quizSettings?.numberOfQuestions,
       'category': categoryApi,
       'type': 'multiple',
     };
@@ -252,7 +237,7 @@ class MainController extends GetxController {
   }
 
   void archiveInvite() {
-    Shared.queueEntryModel.archiveInvite = true;
+    Shared.queueEntryModel.inviteStatus = InviteStatus.SENDER_CANCELED_INVITE;
     invitesCollection
         .doc(Shared.queueEntryModel.queueEntryId)
         .update(queueEntryModelToJson(Shared.queueEntryModel))
@@ -281,16 +266,18 @@ class MainController extends GetxController {
         debugPrint('sendGameInvite');
 
         Shared.queueEntryModel = QueueEntryModel(
-          difficulty: Shared.queueEntryModel.difficulty,
-          category: Shared.queueEntryModel.category,
-          numberOfQuestions: Shared.queueEntryModel.numberOfQuestions,
+          quizSettings: QuizSettings(
+            difficulty: Shared.queueEntryModel.quizSettings?.difficulty,
+            category: Shared.queueEntryModel.quizSettings?.category,
+            numberOfQuestions:
+                Shared.queueEntryModel.quizSettings?.numberOfQuestions,
+            createdAt: DateTime.now().millisecondsSinceEpoch,
+          ),
           queueEntryId: Shared.queueEntryModel.queueEntryId,
           players: [
             PlayerModel(user: Shared.loggedUser),
             PlayerModel(user: friend)
           ],
-          createdAt: DateTime.now().millisecondsSinceEpoch,
-          invitedFriend: friend?.email,
           questions: apiModel.questions,
         );
 
@@ -318,7 +305,7 @@ class MainController extends GetxController {
 
   void acceptGameInvite(QueueEntryModel incomingGameInvite) {
     //scenario 2
-    incomingGameInvite.hasFriendAcceptedInvite = true;
+    incomingGameInvite.inviteStatus = InviteStatus.FRIEND_ACCEPTED_INVITE;
     Shared.queueEntryModel = incomingGameInvite;
 
     invitesCollection
@@ -341,10 +328,12 @@ class MainController extends GetxController {
         .listen((queueEntryJson) {
       Shared.queueEntryModel = QueueEntryModel.fromJson(queueEntryJson.data());
 
-      if (Shared.queueEntryModel.hasFriendAcceptedInvite) {
+      if (Shared.queueEntryModel.inviteStatus ==
+          InviteStatus.FRIEND_ACCEPTED_INVITE) {
         startGame();
         debugPrint('invite accepted , match should start');
-      } else if (Shared.queueEntryModel.hasFriendDeclinedInvite) {
+      } else if (Shared.queueEntryModel.inviteStatus ==
+          InviteStatus.FRIEND_DECLINED_INVITE) {
         showInfoDialog(
             message: 'your game invite was declined.',
             title: 'invite declined');
@@ -372,7 +361,7 @@ class MainController extends GetxController {
   }*/
 
   void declineGameInvite(QueueEntryModel incomingGameInvite) {
-    incomingGameInvite.hasFriendDeclinedInvite = true;
+    incomingGameInvite.inviteStatus = InviteStatus.FRIEND_DECLINED_INVITE;
     Shared.queueEntryModel = incomingGameInvite;
     //game invite observer won't be automatically activated, so we have to
     //remove invite on decline manually
@@ -436,129 +425,6 @@ class MainController extends GetxController {
 
   /// Dialogs**/
 
-  //dialog used to select game settings when creating game against friend
-  void showQuizSpecDialog(UserModel? friend) {
-    Get.back();
-
-    Widget startButton = TextButton(
-      child: Text("Start"),
-      onPressed: () {
-        inviteFriendToGame(friend: friend);
-      },
-    );
-    Widget cancelButton = TextButton(
-      child: Text("Cancel"),
-      onPressed: () {
-        Get.back();
-      },
-    );
-
-    Get.defaultDialog(
-      actions: [startButton, cancelButton],
-      title: 'Select game options',
-      barrierDismissible: false,
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Obx(() {
-            return ToggleButtons(
-              children: <Widget>[
-                Container(
-                  width: 30,
-                  height: 30,
-                  color: Colors.green,
-                ),
-                Container(
-                  width: 30,
-                  height: 30,
-                  color: Colors.orange,
-                ),
-                Container(
-                  width: 30,
-                  height: 30,
-                  color: Colors.red,
-                ),
-              ],
-              isSelected: selectedDifficultyListObs.value,
-              onPressed: (int index) {
-                switch (index) {
-                  case 0:
-                    selectedDifficultyListObs.value[0] = true;
-                    selectedDifficultyListObs.value[1] = false;
-                    selectedDifficultyListObs.value[2] = false;
-                    break;
-                  case 1:
-                    selectedDifficultyListObs.value[0] = false;
-                    selectedDifficultyListObs.value[1] = true;
-                    selectedDifficultyListObs.value[2] = false;
-                    break;
-                  case 2:
-                    selectedDifficultyListObs.value[0] = false;
-                    selectedDifficultyListObs.value[1] = false;
-                    selectedDifficultyListObs.value[2] = true;
-                    break;
-                }
-                showQuizSpecDialog(friend);
-              },
-            );
-          }),
-          DropdownButton<String>(
-            items: Constants.categoryNames.map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-            onChanged: (value) {
-              selectedCategoryObs.value = value!;
-              debugPrint('$value');
-              showQuizSpecDialog(friend);
-            },
-            value: selectedCategoryObs.value,
-          ),
-          DropdownButton<String>(
-            items: [
-              '2',
-              '3',
-              '4',
-              '5',
-              '6',
-              '7',
-              '8',
-              '9',
-              '10',
-              '11',
-              '12',
-              '13',
-              '14',
-              '15',
-              '16',
-              '17',
-              '18',
-              '19',
-              '19',
-              '20',
-            ].map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text('$value'),
-              );
-            }).toList(),
-            onChanged: (value) {
-              numOfQuestionsObs.value = double.parse(value!);
-              debugPrint('$value');
-              showQuizSpecDialog(friend);
-            },
-            value: numOfQuestionsObs.value?.round().toString(),
-          )
-        ],
-
-        //  Constants.categoryList.map((category) =>
-      ),
-    );
-  }
-
   void showWaitingDialog() {
     Get.back();
     Widget cancelButton = TextButton(
@@ -579,8 +445,8 @@ class MainController extends GetxController {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-              "${Shared.queueEntryModel.difficulty}-${Shared.queueEntryModel.category}-"
-              "${Shared.queueEntryModel.numberOfQuestions} ${'questions'.tr} ",
+              "${Shared.queueEntryModel.quizSettings?.difficulty}-${Shared.queueEntryModel.quizSettings?.category}-"
+              "${Shared.queueEntryModel.quizSettings?.numberOfQuestions} ${'questions'.tr} ",
               style: TextStyle(fontSize: 14)),
           SizedBox(
             height: 10,
@@ -639,7 +505,7 @@ class MainController extends GetxController {
       child: Text("Invite to game"),
       onPressed: () {
         Get.back();
-        showQuizSpecDialog(friend);
+        //todo inviteFriendToGame(friend);
       },
     );
     Widget cancelButton = TextButton(
@@ -699,7 +565,7 @@ class MainController extends GetxController {
       onPressed: () {
         if (isOnlineGame) {
           //in case of online game also delete from queue
-          Shared.queueEntryModel.hasOponnentLeftGame = true;
+          Shared.queueEntryModel.hasOpponentLeftGame = true;
           updateGame();
         }
         Get.back();
@@ -804,5 +670,11 @@ class MainController extends GetxController {
       errorDialog(error.toString());
       printError(info: 'updateGame error :' + error.toString());
     });
+  }
+
+  //updating only fields inside observable object and not the whole object
+  //doesn't trigger rebuild, so we need to do it manually
+  void forceUpdateUi() {
+    queueEntryObs.refresh();
   }
 }

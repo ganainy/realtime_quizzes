@@ -52,38 +52,46 @@ class RegisterController extends GetxController {
                 }).onError((error, stackTrace) {
                   debugPrint('updateUserImageUrl error : ' + error.toString());
                   mainController.errorDialog(error.toString());
+                  downloadState.value = DownloadState.INITIAL;
                 });
               }).onError((error, stackTrace) {
                 debugPrint('getImageDownloadURL error : ' + error.toString());
                 mainController.errorDialog(error.toString());
+                downloadState.value = DownloadState.INITIAL;
               });
             }).onError((error, stackTrace) {
               debugPrint('uploadImage error : ' + error.toString());
               mainController.errorDialog(error.toString());
+              downloadState.value = DownloadState.INITIAL;
             });
           }
         }).onError((error, stackTrace) {
           debugPrint('saveUserToFirestore error : ' + error.toString());
           mainController.errorDialog(error.toString());
+          downloadState.value = DownloadState.INITIAL;
         });
       }).onError((error, stackTrace) {
         debugPrint(
             'createUserWithEmailAndPassword error : ' + error.toString());
         mainController.errorDialog(error.toString());
+        downloadState.value = DownloadState.INITIAL;
       });
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
         debugPrint('The password provided is too weak.');
         mainController.errorDialog('The password provided is too weak.');
+        downloadState.value = DownloadState.INITIAL;
       } else if (e.code == 'email-already-in-use') {
         debugPrint('The account already exists for that email.');
         mainController
             .errorDialog('The account already exists for that email.');
+        downloadState.value = DownloadState.INITIAL;
       }
     } catch (error) {
       mainController.errorDialog(error.toString());
 
       debugPrint(error.toString());
+      downloadState.value = DownloadState.INITIAL;
     }
   }
 

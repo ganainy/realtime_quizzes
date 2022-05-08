@@ -43,7 +43,7 @@ class MultiPlayerQuizController extends GetxController {
   void onInit() {
     mainController = Get.find<MainController>();
 
-    if (Shared.queueEntryModel.invitedFriend != null &&
+    if (Shared.queueEntryModel.inviteStatus != InviteStatus.OPEN_INVITE &&
         Shared.loggedUser!.email == Shared.queueEntryModel.queueEntryId) {
       //this means that game is between friends
       moveGameToQueue().then((_) {

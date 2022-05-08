@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/layouts/home/home.dart';
 import 'package:realtime_quizzes/main_controller.dart';
-import 'package:realtime_quizzes/models/single_player_quiz_result.dart';
+import 'package:realtime_quizzes/models/quiz_settings.dart';
 import 'package:realtime_quizzes/screens/result/result_controller.dart';
 import 'package:realtime_quizzes/shared/components.dart';
 
@@ -165,7 +165,7 @@ class ResultScreen extends StatelessWidget {
     );
   }
 
-  SinglePlayerResult(SinglePlayerQuizResult result, BuildContext context) {
+  SinglePlayerResult(QuizSettings result, BuildContext context) {
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -206,7 +206,7 @@ class ResultScreen extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: largePadding,
                                     vertical: smallPadding),
-                                child: Text('${result.numQuestions}',
+                                child: Text('${result.numberOfQuestions}',
                                     style:
                                         Theme.of(context).textTheme.subtitle1),
                               ),
