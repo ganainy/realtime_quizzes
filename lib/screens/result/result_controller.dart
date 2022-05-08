@@ -118,18 +118,4 @@ class ResultController extends GetxController {
     }).catchError(
         (error) => printError(info: "Failed to upload player result: $error"));
   }
-
-  //delete game from queueCollection since its over and reset queueEntryModel
-  deleteGame() {
-    queueCollection
-        .doc(Shared.queueEntryModel.queueEntryId)
-        .delete()
-        .then((value) {
-      debugPrint('removed from queueCollection');
-      Shared.resetQueueEntry();
-    }).onError((error, stackTrace) {
-      printError(info: 'error remove from queueCollection');
-      Shared.resetQueueEntry();
-    });
-  }
 }

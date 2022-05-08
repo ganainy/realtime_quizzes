@@ -1,10 +1,14 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/scheduler/ticker.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/customization/theme.dart';
+import 'package:realtime_quizzes/main_controller.dart';
 import 'package:realtime_quizzes/screens/multiplayer_quiz/multiplayer_quiz_controller.dart';
 import 'package:realtime_quizzes/shared/components.dart';
+
+import '../../layouts/home/home.dart';
 
 class MultiPlayerQuizScreen extends StatelessWidget {
   MultiPlayerQuizScreen({Key? key}) : super(key: key);
@@ -12,16 +16,23 @@ class MultiPlayerQuizScreen extends StatelessWidget {
   final MultiPlayerQuizController multiPlayerQuizController =
       Get.put(MultiPlayerQuizController());
 
+  final MainController mainController = Get.find<MainController>();
+
   @override
   Widget build(BuildContext context) {
-    return SafeArea(child: Scaffold(
-      body: Obx(() {
-        return multiPlayerQuizController
-                .queueEntryModelObs.value!.questions!.isEmpty
-            ? const Center(child: CircularProgressIndicator())
-            : Question(multiPlayerQuizController, context);
-      }),
-    ));
+    return WillPopScope(
+      onWillPop: () {
+        mainController.confirmExitDialog(isOnlineGame: true);
+        return Future.value(false);
+      },
+      child: SafeArea(child: Scaffold(
+        body: Obx(() {
+          return multiPlayerQuizController.queueEntryModelObs.value == null
+              ? const Center(child: CircularProgressIndicator())
+              : Question(multiPlayerQuizController, context);
+        }),
+      )),
+    );
   }
 
   Question(
@@ -38,6 +49,39 @@ class MultiPlayerQuizScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            multiPlayerQuizController
+                    .queueEntryModelObs.value!.hasOponnentLeftGame
+                ? Card(
+                    margin: const EdgeInsets.all(smallPadding),
+                    color: Colors.yellow[200],
+                    child: Container(
+                        padding: const EdgeInsets.all(smallPadding),
+                        child: RichText(
+                          text: TextSpan(
+                            children: <TextSpan>[
+                              const TextSpan(
+                                text:
+                                    'Your opponent has left the game,feel free to continue or ',
+                                style: TextStyle(
+                                    color: primaryTextColor,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.normal),
+                              ),
+                              TextSpan(
+                                  text: 'end game',
+                                  style: const TextStyle(
+                                      color: Colors.blue, fontSize: 18),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      mainController.deleteGame();
+                                      Get.offAll(() => HomeScreen());
+                                    }),
+                            ],
+                          ),
+                        )),
+                  )
+                : const SizedBox(),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -133,7 +177,7 @@ class MultiPlayerQuizScreen extends StatelessWidget {
         otherPlayerImageUrl: multiPlayerQuizController.opponent?.user?.imageUrl,
         onPressed: () {
           //if question is already answered do nothing
-          if (!multiPlayerQuizController.isQuestionAnswered) {
+          if (multiPlayerQuizController.isQuestionNotAnswered()) {
             multiPlayerQuizController.registerAnswer(
               text,
             );

@@ -9,6 +9,8 @@ class UserModel {
   bool? isOnline;
   var results = []; // list of ResultModel
   var friends = []; //list of String
+  var removedRequests =
+      []; //save friend requests that were removed and not accepted
   List<dynamic> receivedFriendRequests = [];
   List<dynamic> sentFriendRequests = [];
 
@@ -19,6 +21,7 @@ class UserModel {
     email = json['email'];
     imageUrl = json['imageUrl'];
     friends = json['friends'] ?? [];
+    removedRequests = json['removedRequests'] ?? [];
     receivedFriendRequests = json['receivedFriendRequests'] ?? [];
     sentFriendRequests = json['sentFriendRequests'] ?? [];
     isOnline = json['isOnline'];
@@ -43,6 +46,7 @@ userModelToJson(UserModel? userModel) {
     'isOnline': userModel?.isOnline,
     'results': resultsJson,
     'friends': userModel?.friends,
+    'removedRequests': userModel?.removedRequests,
     'receivedFriendRequests': userModel?.receivedFriendRequests,
     'sentFriendRequests': userModel?.sentFriendRequests,
   };

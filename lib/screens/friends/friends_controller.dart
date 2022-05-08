@@ -18,44 +18,12 @@ import '../../shared/shared.dart';
 
 class FriendsController extends GetxController {
   var friendsObs = [].obs; //list of UserModel
-  var friendSuggestionsObs = [].obs; //list of UserModel
   var receivedFriendRequestsObs = [].obs;
 
   StreamSubscription? queueEntryListener;
   late MainController mainController;
   @override
-  void onInit() {
-    mainController = Get.find<MainController>();
-    addListeners();
-  }
-
-  //
-  Function eq = const ListEquality().equals;
-  var receivedFriendRequestsIdsObs = Rxn<List<dynamic>?>(); //list of String
-  var friendsObsIdsObs = Rxn<List<dynamic>?>(); //list of String
-
-  addListeners() {
-    mainController.userObs.listen((loggedUser) {
-      //load friends , suggestions , friend requests
-
-      loadFriendSuggestions();
-
-      //only fetch friends again if there is difference than already showing friends
-      if (!eq(friendsObsIdsObs.value, loggedUser?.friends)) {
-        debugPrint(' loadFriends()');
-        loadFriends();
-        observeFriendsStatus();
-        friendsObsIdsObs.value = loggedUser?.friends;
-      }
-
-      if (!eq(receivedFriendRequestsIdsObs.value,
-          loggedUser?.receivedFriendRequests)) {
-        debugPrint('receivedFriendRequests()');
-        loadFriendRequests();
-        receivedFriendRequestsIdsObs.value = loggedUser?.receivedFriendRequests;
-      }
-    });
-  }
+  void onInit() {}
 
   addUniqueUser(
       {userModelListObs: Rxn<List<UserModel>>, userModel: UserModel}) {
@@ -89,41 +57,6 @@ class FriendsController extends GetxController {
     });
   }
 
-  loadFriendSuggestions() {
-    //listen to changes to logged user and update friend suggestion
-    //(to prevent suggestions to be also in incoming friend requests)
-    usersCollection.limit(10).get().then((value) {
-      friendSuggestionsObs.value.clear();
-      friendSuggestionsObs.refresh();
-
-      value.docs.forEach((element) {
-        var userModel = UserModel.fromJson(element.data());
-
-        //don't show in suggestions if in pending state (in received or sent) or already friend
-        if (Shared.loggedUser!.friends.contains(userModel.email)) {
-          if (Shared.loggedUser!.receivedFriendRequests
-              .contains(userModel.email)) {
-            if (Shared.loggedUser!.sentFriendRequests
-                .contains(userModel.email)) {
-              //don't show the user himself in suggestions
-              if (userModel.email != Shared.loggedUser!.email) {
-                //don't add suggestion if already in suggestions
-                if (!friendSuggestionsObs.value.contains(userModel)) {
-                  friendSuggestionsObs.value.add(userModel);
-                  friendSuggestionsObs.refresh();
-                  debugPrint('success friend suggestion added');
-                }
-              }
-            }
-          }
-        }
-      });
-    }).onError((error, stackTrace) {
-      printError(info: 'error loadFriendSuggestions' + error.toString());
-      mainController.errorDialog(error.toString());
-    });
-  }
-
   loadFriendRequests() {
     //get ids of users who sent friend requests
 
@@ -132,17 +65,22 @@ class FriendsController extends GetxController {
 
     //get full profile of each user who sent friend request
     Shared.loggedUser?.receivedFriendRequests.forEach((receivedFriendRequest) {
-      usersCollection.doc(receivedFriendRequest).get().then((value) {
-        var friendRequest = UserModel.fromJson(value.data());
-        addUniqueUser(
-            userModelListObs: receivedFriendRequestsObs,
-            userModel: friendRequest);
-        debugPrint('success single loadFriendRequest profile');
-      }).onError((error, stackTrace) {
-        mainController.errorDialog(error.toString());
-        printError(
-            info: 'error single loadFriendRequest profile' + error.toString());
-      });
+      if (Shared.loggedUser!.removedRequests.contains(receivedFriendRequest)) {
+        //dont show friend request if user removed it before
+      } else {
+        usersCollection.doc(receivedFriendRequest).get().then((value) {
+          var friendRequest = UserModel.fromJson(value.data());
+          addUniqueUser(
+              userModelListObs: receivedFriendRequestsObs,
+              userModel: friendRequest);
+          debugPrint('success single loadFriendRequest profile');
+        }).onError((error, stackTrace) {
+          mainController.errorDialog(error.toString());
+          printError(
+              info:
+                  'error single loadFriendRequest profile' + error.toString());
+        });
+      }
     });
   }
 
@@ -215,28 +153,17 @@ class FriendsController extends GetxController {
     });
   }
 
-  void deleteFriend(UserModel friend) {
-    /* friendsObs.value.remove(friend);
-    friendsObs.refresh();*/
-
-    //remove other user from logged user friends
-    usersCollection.doc(Shared.loggedUser?.email).update({
-      'friends': FieldValue.arrayRemove([friend.email])
-    }).then((value) {
-      debugPrint("1 deleteFriend ");
+  void removeFriendRequest(UserModel incomingFriendRequest) {
+    Shared.loggedUser?.removedRequests.add(incomingFriendRequest.email);
+    //add other user to logged user friends
+    usersCollection
+        .doc(Shared.loggedUser?.email)
+        .update(userModelToJson(Shared.loggedUser))
+        .then((value) {
+      debugPrint("removeFriendRequest ");
     }).onError((error, stackTrace) {
       mainController.errorDialog(error.toString());
-      printError(info: "1 Failed to deleteFriend: $error");
-    });
-
-    //remove logged user from other user friends
-    usersCollection.doc(friend.email).update({
-      'friends': FieldValue.arrayRemove([Shared.loggedUser?.email])
-    }).then((value) {
-      debugPrint("2 deleteFriend ");
-    }).onError((error, stackTrace) {
-      mainController.errorDialog(error.toString());
-      printError(info: "2 Failed to deleteFriend: $error");
+      printError(info: "Failed to removeFriendRequest: $error");
     });
   }
 

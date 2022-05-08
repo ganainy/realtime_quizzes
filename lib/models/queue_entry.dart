@@ -19,7 +19,10 @@ class QueueEntryModel {
       false; //this field used when sending invite to friends not with random queue
   bool hasFriendAcceptedInvite =
       false; //this field used when sending invite to friends not with random queue
-
+  bool hasOponnentLeftGame =
+      false; //this flag to notify user that opponent has left the game
+  bool archiveInvite =
+      false; //this flag to check if game invite is active or not
   QueueEntryModel(
       {this.difficulty,
       this.category,
@@ -39,6 +42,8 @@ class QueueEntryModel {
     invitedFriend = (json['invitedFriend']);
     hasFriendDeclinedInvite = (json['hasFriendDeclinedInvite']);
     hasFriendAcceptedInvite = (json['hasFriendAcceptedInvite']);
+    hasOponnentLeftGame = (json['hasOponnentLeftGame']);
+    archiveInvite = (json['archiveInvite']);
 
     json['players']?.forEach((playerJson) {
       players?.add(PlayerModel.fromJson(playerJson));
@@ -71,6 +76,8 @@ queueEntryModelToJson(QueueEntryModel? queueEntryModel) {
     'invitedFriend': queueEntryModel?.invitedFriend,
     'hasFriendDeclinedInvite': queueEntryModel?.hasFriendDeclinedInvite,
     'hasFriendAcceptedInvite': queueEntryModel?.hasFriendAcceptedInvite,
+    'hasOponnentLeftGame': queueEntryModel?.hasOponnentLeftGame,
+    'archiveInvite': queueEntryModel?.archiveInvite,
     'questions': questionsList,
   };
 }

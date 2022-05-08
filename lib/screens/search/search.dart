@@ -15,7 +15,7 @@ class SearchScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
 
   final SearchController searchController = Get.put(SearchController());
-  final FriendsController friendsController = Get.put(FriendsController());
+  final FriendsController friendsController = Get.find<FriendsController>();
 
   @override
   Widget build(BuildContext context) {

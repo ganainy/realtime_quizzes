@@ -16,9 +16,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DioHelper.init();
   await Firebase.initializeApp();
-
   Get.put(MainController());
-
   late Widget startWidget;
 
   //navigate to home or register based on auth state
@@ -44,9 +42,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Widget startWidget;
   _MyAppState(this.startWidget);
 
-  final MainController mainController = Get.put(MainController())
-    ..changeUserStatus(true);
-
+  final MainController mainController = Get.find<MainController>();
   @override
   void initState() {
     WidgetsBinding.instance?.addObserver(this);

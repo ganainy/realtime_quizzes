@@ -30,7 +30,7 @@ class FindGameController extends GetxController {
     var queueEntryModel = QueueEntryModel(
         difficulty: mainController.selectedDifficultyObs.value,
         category: mainController.selectedCategoryObs.value,
-        numberOfQuestions: mainController.numOfQuestionsObs.value.toInt(),
+        numberOfQuestions: mainController.numOfQuestionsObs.value?.toInt(),
         queueEntryId: Shared.loggedUser?.email,
         players: players,
         createdAt: DateTime.now().millisecondsSinceEpoch);
@@ -53,7 +53,9 @@ class FindGameController extends GetxController {
 
   //this method will be triggered if this player is matched with another player
   void searchAvailableQueues(BuildContext context) {
-    mainController.loadingDialog();
+    mainController.loadingDialog(
+        loadingMessage: 'Looking for games online',
+        onCancel: mainController.cancelQueue);
     //todo composite index
     //first try to find alreay existing matching queue entry
     // .where('numberOfQuestions', isEqualTo: numOfQuestions.value.toInt())

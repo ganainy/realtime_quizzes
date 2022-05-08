@@ -45,6 +45,8 @@ dependencies:
   cached_network_image: ^3.2.0
   timeago: ^3.2.2
   html_unescape: ^2.0.0
+  syncfusion_flutter_sliders: ^20.1.52
+  numberpicker: ^2.1.1
 
 dev_dependencies:
   flutter_test:

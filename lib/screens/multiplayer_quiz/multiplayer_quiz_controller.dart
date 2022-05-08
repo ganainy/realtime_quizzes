@@ -16,11 +16,7 @@ import '../result/result_screen.dart';
 class MultiPlayerQuizController extends GetxController {
   //fire store
   var queueEntryModelObs = Rxn<QueueEntryModel?>();
-/*  var questionsObs = [].obs;
-  var currentQuestionObs = Rxn<QuestionModel?>();
-  var correctAnswerObs = Rxn<String>();
-  var players = Rxn<List<PlayerModel?>>();
-  var opponentObs = Rxn<PlayerModel?>();*/
+
   PlayerModel? loggedPlayer;
   PlayerModel? opponent;
 
@@ -28,7 +24,6 @@ class MultiPlayerQuizController extends GetxController {
   var timerValueObs = 0.obs; //question timer
   var nextQuestionTimerValueObs = 0.obs; //timer for interval between questions
   var currentQuestionIndexObs = 0.obs;
-  var isQuestionAnswered = false;
   var isQuestionTimeEndedObs =
       false.obs; //flag used to show right answer when time is ended
   var isGameAlreadyStarted = false;
@@ -94,7 +89,6 @@ class MultiPlayerQuizController extends GetxController {
   //save user answer in fire store
   void registerAnswer(String answer) {
     selectedAnswerLocalObs.value = answer;
-    isQuestionAnswered = true;
 
     var _isCorrectAnswer = queueEntryModelObs.value?.questions!
             .elementAt(currentQuestionIndexObs.value)
@@ -113,7 +107,7 @@ class MultiPlayerQuizController extends GetxController {
 
     queueCollection
         .doc(queueEntryModelObs.value?.queueEntryId)
-        .set(queueEntryModelToJson(queueEntryModelObs.value))
+        .update(queueEntryModelToJson(queueEntryModelObs.value))
         .then((value) {
       debugPrint("added answer to player ");
     }).onError((error, stackTrace) {
@@ -174,8 +168,6 @@ class MultiPlayerQuizController extends GetxController {
   void updateCurrentQuestionIndex() {
     //reset local selected answer to remove selected answer yellow  background
     selectedAnswerLocalObs.value = null;
-    //reset question to not answered to remove red and green answer background
-    isQuestionAnswered = false;
     //reset question to not answered to remove red and green answer background
     isQuestionTimeEndedObs.value = false;
     //update current question index to show next question
@@ -301,37 +293,9 @@ class MultiPlayerQuizController extends GetxController {
             text);
   }
 
-  //return true if answer is wrong and user selected it
-  bool getIsSelectedWrongAnswer(String text) {
-    return (loggedPlayer!.answers!.length > currentQuestionIndexObs.value &&
-        isQuestionTimeEndedObs.value &&
-        loggedPlayer!.answers!
-                .elementAt(currentQuestionIndexObs.value)
-                ?.answer ==
-            text);
-  }
-
-  //this flag used to show logged player avatar beside the selected answer
-  bool getIsSelectedLoggedPlayer(String text) {
-    return isQuestionTimeEndedObs.value &&
-        loggedPlayer!.answers!.length > currentQuestionIndexObs.value &&
-        text ==
-            loggedPlayer!.answers!
-                .elementAt(currentQuestionIndexObs.value)
-                ?.answer;
-  }
-
-  //this flag used to show other player avatar beside the selected answer
-  bool getIsSelectedOtherPlayer(String text) {
-    return isQuestionTimeEndedObs.value &&
-        opponent!.answers!.length > currentQuestionIndexObs.value &&
-        text ==
-            opponent!.answers!.elementAt(currentQuestionIndexObs.value)?.answer;
-  }
-
   //this flag used to show orange background to indicate that player selected this answer
   getIsSelectedLocalAnswer(String text) {
-    return isQuestionAnswered && text == selectedAnswerLocalObs.value;
+    return text == selectedAnswerLocalObs.value;
   }
 
   //delete from invites collection (friends game)
@@ -345,5 +309,50 @@ class MultiPlayerQuizController extends GetxController {
     return await queueCollection.doc(Shared.queueEntryModel.queueEntryId).set(
           queueEntryModelToJson(Shared.queueEntryModel),
         );
+  }
+
+  /// flag functions */
+
+  bool isQuestionNotAnswered() {
+    return selectedAnswerLocalObs.value == null;
+  }
+
+  //return true if answer is wrong and user selected it
+  bool getIsSelectedWrongAnswer(String text) {
+    try {
+      return (isQuestionTimeEndedObs.value &&
+          loggedPlayer!.answers!
+                  .elementAt(currentQuestionIndexObs.value)
+                  ?.answer ==
+              text);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  //this flag used to show logged player avatar beside the selected answer
+  bool getIsSelectedLoggedPlayer(String text) {
+    try {
+      return isQuestionTimeEndedObs.value &&
+          text ==
+              loggedPlayer?.answers
+                  ?.elementAt(currentQuestionIndexObs.value)
+                  ?.answer;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  //this flag used to show other player avatar beside the selected answer
+  bool getIsSelectedOtherPlayer(String text) {
+    try {
+      return isQuestionTimeEndedObs.value &&
+          text ==
+              opponent?.answers
+                  ?.elementAt(currentQuestionIndexObs.value)
+                  ?.answer;
+    } catch (e) {
+      return false;
+    }
   }
 }

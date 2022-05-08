@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/layouts/home/home.dart';
+import 'package:realtime_quizzes/main_controller.dart';
 import 'package:realtime_quizzes/models/single_player_quiz_result.dart';
 import 'package:realtime_quizzes/screens/result/result_controller.dart';
 import 'package:realtime_quizzes/shared/components.dart';
@@ -14,6 +15,7 @@ class ResultScreen extends StatelessWidget {
   ResultScreen({Key? key}) : super(key: key);
 
   ResultController resultController = Get.put(ResultController(Get.arguments));
+  MainController mainController = Get.find<MainController>();
 
   ///game arguments are different based on if single player or multiplayer game
   ///single
@@ -155,7 +157,7 @@ class ResultScreen extends StatelessWidget {
           DefaultButton(
               text: 'back home',
               onPressed: () {
-                resultController.deleteGame();
+                mainController.deleteGame();
                 Get.offAll(() => HomeScreen());
               })
         ],
@@ -229,7 +231,7 @@ class ResultScreen extends StatelessWidget {
           DefaultButton(
               text: 'back home',
               onPressed: () {
-                resultController.deleteGame();
+                mainController.deleteGame();
                 Get.offAll(() => HomeScreen());
               })
         ],

@@ -47,6 +47,12 @@ class SinglePlayerQuizController extends GetxController {
     });
   }
 
+  @override
+  void onClose() {
+    cancelTimer();
+    super.onClose();
+  }
+
   void checkAnswer({
     //answer that user selected or null if timer runs out without any answer selected
     required String answer,

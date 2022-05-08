@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
+import 'package:syncfusion_flutter_core/theme.dart';
+import 'package:syncfusion_flutter_sliders/sliders.dart';
 
 import '../../customization/theme.dart';
 import '../../main_controller.dart';
@@ -122,7 +124,7 @@ class FindGameScreen extends StatelessWidget {
             children: [
               Text('Question amount ',
                   style: Theme.of(context).textTheme.subtitle1),
-              Slider(
+              /*Slider(
                 value: mainController.numOfQuestionsObs.value,
                 max: 20,
                 min: 2,
@@ -133,6 +135,31 @@ class FindGameScreen extends StatelessWidget {
                 onChanged: (double value) {
                   mainController.numOfQuestionsObs.value = value;
                 },
+              ),*/
+              SizedBox(
+                height: 50,
+              ),
+              SfSliderTheme(
+                data: SfSliderThemeData(
+                  thumbRadius: 10,
+                  inactiveTrackColor: lighterCardColor,
+                  activeTrackColor: lightCardColor,
+                  tooltipBackgroundColor: lightCardColor,
+                ),
+                child: Center(
+                  child: SfSlider(
+                    min: 2,
+                    max: 20,
+                    interval: 1,
+                    shouldAlwaysShowTooltip: true,
+                    tooltipShape: SfPaddleTooltipShape(),
+                    enableTooltip: true,
+                    value: mainController.numOfQuestionsObs.value?.round(),
+                    onChanged: (dynamic newValue) {
+                      mainController.numOfQuestionsObs.value = newValue;
+                    },
+                  ),
+                ),
               ),
             ],
           ),
