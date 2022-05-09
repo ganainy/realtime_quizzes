@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/models/player.dart';
@@ -15,11 +16,11 @@ class FriendsScreen extends StatelessWidget {
 
   FriendsController friendsController = Get.find<FriendsController>();
   MainController mainController = Get.find<MainController>();
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Container(
-          child: Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           GameInvites(context),
@@ -32,7 +33,7 @@ class FriendsScreen extends StatelessWidget {
           ),
           Friends(context),
         ],
-      )),
+      ),
     );
   }
 
@@ -175,95 +176,128 @@ class FriendsScreen extends StatelessWidget {
   /**/
 
   Friends(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Obx(() {
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            ...friendsController.friendsObs.value.map((friend) => SizedBox(
-                  width: cardWidth,
-                  child: Column(
-                    children: [
-                      InkWell(
-                        child: DefaultStatusImage(
-                            imageUrl: friend.imageUrl,
-                            isOnline: friend.isOnline),
-                        onTap: () {
-                          mainController.showFriendDialog(friend);
-                        },
-                      ),
-                      Text(
-                        '${friend.name}',
-                        style: Theme.of(context).textTheme.subtitle1,
-                      ),
-                      /* DefaultIconButton(
-                                      text: 'challenge',
-                                      onPressed: () {
-                                        mainController
-                                            .showQuizSpecDialog(friend);
-                                      },
-                                      icon: Icons.wine_bar),
-                                  DefaultIconButton(
-                                      text: 'remove',
-                                      onPressed: () {
-                                        friendsController
-                                            .deleteFriend(friend);
-                                      },
-                                      icon: Icons.delete),*/
-                    ],
-                  ),
-                )),
-            Column(
+    return Obx(() {
+      return friendsController.friendsObs.value.isNotEmpty
+          ? Row(
               children: [
-                InkWell(
-                  onTap: () {
-                    Get.to(() => SearchScreen());
-                  },
-                  child: const CircleAvatar(
-                    radius: 35,
-                    child: const Icon(Icons.add, size: 50),
+                const SizedBox(
+                  width: smallPadding,
+                ),
+                Column(
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        Get.to(() => SearchScreen());
+                      },
+                      child: const CircleAvatar(
+                        radius: 35,
+                        child: const Icon(Icons.add, size: 50),
+                      ),
+                    ),
+                    SizedBox(height: smallPadding),
+                    Text(
+                      'Discover',
+                      style: Theme.of(context).textTheme.subtitle1,
+                    )
+                  ],
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemBuilder: (context, index) {
+                      var friend = friendsController.friendsObs.value[index];
+                      return Column(
+                        children: [
+                          InkWell(
+                            child: DefaultStatusImage(
+                                imageUrl: friend.imageUrl,
+                                isOnline: friend.isOnline),
+                            onTap: () {
+                              mainController.showFriendDialog(friend);
+                            },
+                          ),
+                          Text(
+                            '${friend.name}',
+                            style: Theme.of(context).textTheme.subtitle1,
+                          ),
+                        ],
+                      );
+                    },
+                    itemCount: friendsController.friendsObs.value.length,
+                    shrinkWrap: true,
                   ),
                 ),
-                SizedBox(height: smallPadding),
-                Text(
-                  'Discover',
-                  style: Theme.of(context).textTheme.subtitle1,
-                )
               ],
             )
-          ],
-        );
-      }),
-    );
+          : Container(
+              margin: const EdgeInsets.all(largePadding),
+              child: Column(
+                children: [
+                  Text(
+                    'No friends yet',
+                    style: Theme.of(context).textTheme.headline1,
+                  ),
+                  SvgPicture.asset('assets/images/empty.svg',
+                      semanticsLabel: 'Empty',
+                      height: MediaQuery.of(context).size.height * 0.5),
+                  InkWell(
+                    onTap: () {
+                      Get.to(() => SearchScreen());
+                    },
+                    child: Card(
+                        elevation: 2,
+                        child: Container(
+                            margin: const EdgeInsets.all(smallPadding),
+                            child: Text(
+                              'Add friends',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .subtitle1
+                                  ?.copyWith(color: primaryTextColor),
+                            )),
+                        color: lightCardColor),
+                  )
+                ],
+              ),
+            );
+    });
   }
 
   IncomingFriendRequests(BuildContext context) {
-    return Column(
-      children: [
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Obx(() {
-            return Row(
-              children: [
-                ...friendsController.receivedFriendRequestsObs.value
-                    .map((incomingFriendRequest) => GradientContainer(
-                          child: Wrap(
-                            alignment: WrapAlignment.center,
-                            crossAxisAlignment: WrapCrossAlignment.center,
+    return mainController.receivedFriendRequestsObs.isNotEmpty
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                margin: const EdgeInsetsDirectional.only(start: smallPadding),
+                child: Text(
+                  'Incoming Friend Requests',
+                  style: Theme.of(context).textTheme.subtitle1,
+                ),
+              ),
+              Obx(() {
+                return ListView.builder(
+                  itemBuilder: (BuildContext context, int index) {
+                    var incomingFriendRequest =
+                        mainController.receivedFriendRequestsObs.value[index];
+
+                    return GradientContainer(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          DefaultCircularNetworkImage(
+                            imageUrl: incomingFriendRequest.imageUrl,
+                          ),
+                          Expanded(
+                            child: Text(
+                              '${incomingFriendRequest.name}',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.subtitle1,
+                            ),
+                          ),
+                          Column(
                             children: [
-                              DefaultCircularNetworkImage(
-                                imageUrl: incomingFriendRequest.imageUrl,
-                              ),
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width - 130,
-                                child: Text(
-                                  ' ${incomingFriendRequest.name} sent you a friend request',
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.subtitle1,
-                                ),
-                              ),
                               InkWell(
                                 onTap: () {
                                   friendsController.acceptFriendRequest(
@@ -307,13 +341,18 @@ class FriendsScreen extends StatelessWidget {
                                     color: lightCardColor),
                               ),
                             ],
-                          ),
-                        ))
-              ],
-            );
-          }),
-        ),
-      ],
-    );
+                          )
+                        ],
+                      ),
+                    );
+                  },
+                  itemCount:
+                      mainController.receivedFriendRequestsObs.value.length,
+                  shrinkWrap: true,
+                );
+              }),
+            ],
+          )
+        : const SizedBox();
   }
 }

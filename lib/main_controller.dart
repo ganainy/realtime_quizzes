@@ -42,6 +42,7 @@ class MainController extends GetxController {
   StreamSubscription? queueEntryListener;
   var receivedFriendRequestsIdsObs = Rxn<List<dynamic>?>(); //list of String
   var friendsObsIdsObs = Rxn<List<dynamic>?>(); //list of String
+  var receivedFriendRequestsObs = [].obs; //list of UserModel
 
   late FriendsController friendsController;
   @override
@@ -92,7 +93,7 @@ class MainController extends GetxController {
       /*if (!eq(receivedFriendRequestsIdsObs.value,
           Shared.loggedUser?.receivedFriendRequests)) {*/
       debugPrint('receivedFriendRequests()');
-      friendsController.loadFriendRequests();
+      loadFriendRequests();
       receivedFriendRequestsIdsObs.value =
           Shared.loggedUser?.receivedFriendRequests;
       /*}*/
@@ -101,6 +102,34 @@ class MainController extends GetxController {
     }).onError((error, stackTrace) {
       errorDialog(error.toString());
       printError(info: 'error observe logged user' + error.toString());
+    });
+  }
+
+  //load accounts info of users who sent friend requests
+  loadFriendRequests() {
+    debugPrint('loadFriendRequests() called');
+
+    receivedFriendRequestsObs.value.clear();
+    //get full profile of each user who sent friend request
+    Shared.loggedUser?.receivedFriendRequests.forEach((receivedFriendRequest) {
+      if (Shared.loggedUser!.removedRequests.contains(receivedFriendRequest)) {
+        //dont show friend request if user removed it before
+      } else {
+        usersCollection.doc(receivedFriendRequest).get().then((value) {
+          var friendRequest = UserModel.fromJson(value.data());
+          /*addUniqueUser(
+              userModelListObs: receivedFriendRequestsObs,
+              userModel: friendRequest);*/
+          receivedFriendRequestsObs.value.add(friendRequest);
+          receivedFriendRequestsObs.refresh();
+          debugPrint('success single loadFriendRequest profile');
+        }).onError((error, stackTrace) {
+          errorDialog(error.toString());
+          printError(
+              info:
+                  'error single loadFriendRequest profile' + error.toString());
+        });
+      }
     });
   }
 
@@ -638,8 +667,10 @@ class MainController extends GetxController {
     );
   }
 
-  void errorDialog(String? errorMessage) {
-    Get.back(); //hide any showing dialog before opening new one
+  void errorDialog(String? errorMessage, {shouldGoBack = true}) {
+    if (shouldGoBack) {
+      Get.back(); //hide any showing dialog before opening new one
+    }
     cancelQueue();
     errorMessage ?? 'Something went wrong';
 

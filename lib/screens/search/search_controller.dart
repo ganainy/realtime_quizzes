@@ -62,10 +62,11 @@ class SearchController extends GetxController {
     if (result?.userStatus == null) {
       Exception("User status is null");
     } else if (result!.userStatus == UserStatus.FRIEND) {
-      mainController.errorDialog('User is already your friend');
+      mainController.errorDialog('User is already your friend',
+          shouldGoBack: false);
     } else if (result.userStatus == UserStatus.RECEIVED_FRIEND_REQUEST) {
-      mainController
-          .errorDialog('You already sent friend request to this user');
+      mainController.errorDialog('You already sent friend request to this user',
+          shouldGoBack: false);
     } else if (result.userStatus == UserStatus.SENT_FRIEND_REQUEST) {
       acceptFriendRequest(result);
     } else {

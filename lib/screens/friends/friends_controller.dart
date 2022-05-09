@@ -18,7 +18,6 @@ import '../../shared/shared.dart';
 
 class FriendsController extends GetxController {
   var friendsObs = [].obs; //list of UserModel
-  var receivedFriendRequestsObs = [].obs;
 
   StreamSubscription? queueEntryListener;
   late MainController mainController;
@@ -43,44 +42,19 @@ class FriendsController extends GetxController {
 
   loadFriends() {
     friendsObs.value.clear();
-    friendsObs.refresh();
 
     Shared.loggedUser?.friends.forEach((friendId) {
       usersCollection.doc(friendId).get().then((value) {
         var friend = UserModel.fromJson(value.data());
-        addUniqueUser(userModelListObs: friendsObs, userModel: friend);
+        /* addUniqueUser(userModelListObs: friendsObs, userModel: friend);*/
+        friendsObs.value.add(friend);
+        friendsObs.refresh();
+
         debugPrint('success single loadFriend profile');
       }).onError((error, stackTrace) {
         printError(info: 'error single loadFriend profile' + error.toString());
         mainController.errorDialog(error.toString());
       });
-    });
-  }
-
-  loadFriendRequests() {
-    //get ids of users who sent friend requests
-
-    receivedFriendRequestsObs.value.clear();
-    receivedFriendRequestsObs.refresh();
-
-    //get full profile of each user who sent friend request
-    Shared.loggedUser?.receivedFriendRequests.forEach((receivedFriendRequest) {
-      if (Shared.loggedUser!.removedRequests.contains(receivedFriendRequest)) {
-        //dont show friend request if user removed it before
-      } else {
-        usersCollection.doc(receivedFriendRequest).get().then((value) {
-          var friendRequest = UserModel.fromJson(value.data());
-          addUniqueUser(
-              userModelListObs: receivedFriendRequestsObs,
-              userModel: friendRequest);
-          debugPrint('success single loadFriendRequest profile');
-        }).onError((error, stackTrace) {
-          mainController.errorDialog(error.toString());
-          printError(
-              info:
-                  'error single loadFriendRequest profile' + error.toString());
-        });
-      }
     });
   }
 
@@ -154,6 +128,9 @@ class FriendsController extends GetxController {
   }
 
   void removeFriendRequest(UserModel incomingFriendRequest) {
+    /*  receivedFriendRequestsObs.value.remove(incomingFriendRequest);
+    receivedFriendRequestsObs.refresh();*/
+
     Shared.loggedUser?.removedRequests.add(incomingFriendRequest.email);
     //add other user to logged user friends
     usersCollection
@@ -186,60 +163,4 @@ class FriendsController extends GetxController {
       });
     });
   }
-
-  /*
-
-    sentInviteQueueEntryModelObs.value = queueEntryModel;*/
-
-  /*void uploadQuiz(List<QuestionModel> questions, UserModel friend,
-      List<PlayerModel> players) {
-    //scenario 1
-    sentInviteQueueEntryModelObs.value?.questions = questions;
-    sentInviteQueueEntryModelObs.value?.createdAt =
-        DateTime.now().millisecondsSinceEpoch;
-    //upload quiz to firestore
-    invitesCollection
-        .doc(sentInviteQueueEntryModelObs.value?.queueEntryId)
-        .set(queueEntryModelToJson(sentInviteQueueEntryModelObs.value))
-        .then((value) {
-      loadOtherPlayerProfile(players, friend).then((value) {
-        sendGameInvite(friend);
-      });
-    }).onError((error, stackTrace) {
-      mainController.errorDialog(error.toString());
-      printError(info: 'firestore add questions error : ' + error.toString());
-    });
-  }*/
-
-  /*void startGame() {
-    //scenario 1,2
-    queueEntryListener?.cancel();
-    Get.to(() => MultiPlayerQuizScreen(),
-        arguments: (sentInviteQueueEntryModelObs.value));
-  }*/
-
-  ///-----------Scenario 2, user accept invite from friend-------------
-
-  /*Future<void> loadOtherPlayerProfile(
-      List<PlayerModel> players, UserModel friend) async {
-    //add the logged player info (like name and image etc...)to the sentInviteQueueEntryModel
-    sentInviteQueueEntryModelObs.value?.players
-        ?.firstWhere(
-            (element) => element?.user?.email == Shared.loggedUser?.email)
-        ?.user = Shared.loggedUser;
-
-    //add the other player info (like name and image etc...)to the sentInviteQueueEntryModel
-    await Future.wait([
-      usersCollection.doc(friend.email).get().then((json) {
-        debugPrint('other player loaded');
-        var otherUser = UserModel.fromJson(json.data());
-        sentInviteQueueEntryModelObs.value?.players
-            ?.firstWhere((element) => element?.user?.email == otherUser.email)
-            ?.user = otherUser;
-      }).onError((error, stackTrace) {
-        printError(info: 'error loading other player' + error.toString());
-      })
-    ]);
-  }*/
-
 }
