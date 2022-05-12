@@ -44,8 +44,9 @@ DefaultFormField({
 }
 
 DefaultButton({
-  required String text,
-  required VoidCallback onPressed,
+  String? text,
+  VoidCallback? onPressed,
+  bool isLoading = false,
 }) {
   return Container(
     margin: const EdgeInsets.all(smallPadding),
@@ -53,11 +54,18 @@ DefaultButton({
     width: double.infinity,
     child: Expanded(
       child: TextButton(
-        onPressed: onPressed,
-        child: Text(
-          text.toUpperCase(),
-          style: const TextStyle(fontSize: 16),
-        ),
+        onPressed: onPressed ?? () {/*do nothing*/},
+        child: isLoading
+            ? const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Center(
+                    child: CircularProgressIndicator(
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Colors.white))))
+            : Text(
+                '${text?.toUpperCase()}',
+                style: const TextStyle(fontSize: 16),
+              ),
         style: TextButton.styleFrom(
           primary: lighterCardColor,
           backgroundColor: cardColor,
@@ -304,7 +312,7 @@ DefaultResultImage({
   );
 }
 
-LoadingButton() {
+/*LoadingButton() {
   return Stack(children: [
     Container(
       height: 50,
@@ -327,7 +335,7 @@ LoadingButton() {
               valueColor: AlwaysStoppedAnimation<Color>(Colors.white))),
     )
   ]);
-}
+}*/
 
 GradientContainer({child}) {
   return Container(
@@ -363,4 +371,14 @@ Iterable<E> mapIndexed<E, T>(
 String formatTimeAgo(int millisecondsSinceEpoch) {
   return timeago
       .format(DateTime.fromMillisecondsSinceEpoch(millisecondsSinceEpoch));
+}
+
+//extension function to update item of list using index
+extension ListUpdate<T> on List<T> {
+  List<T> update(int pos, T t) {
+    List<T> list = [];
+    list.add(t);
+    replaceRange(pos, pos + 1, list);
+    return this;
+  }
 }

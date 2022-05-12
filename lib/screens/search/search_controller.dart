@@ -1,131 +1,107 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:realtime_quizzes/main_controller.dart';
 import 'package:realtime_quizzes/models/user.dart';
+import 'package:realtime_quizzes/shared/components.dart';
 
+import '../../models/UserStatus.dart';
 import '../../shared/shared.dart';
 
 class SearchController extends GetxController {
-  var downloadState = DownloadState.INITIAL.obs;
-  var results = [].obs; //list of users
-  var searchQuery = ''.obs; //input to search box
+  var downloadStateObs = DownloadState.INITIAL.obs;
+  var queryResultsObs = [].obs; //list of users
+  var searchQueryObs = ''.obs; //input to search box
 
   late MainController mainController;
 
   @override
-  void onInit() {
+  void onReady() {
+    super.onReady();
     mainController = Get.find<MainController>();
+  }
+
+  //whenever logged user connections are updated, update the queryResultsObs
+  //so that in case queryResultsObs are also logged user connections, latest state will be displayed
+  void updateQueryResultsState() {
+    debugPrint('updateQueryResultsState');
+
+    if (queryResultsObs.value.isEmpty) {
+      return;
+    }
+
+    queryResultsObs.value.forEach((queryResult) {
+      for (var connection in Shared.loggedUser!.connections) {
+        /* queryResultsObs.value
+              .firstWhere((element) => element.email == queryResult.email)
+              .userStatus = connection.userStatus;*/
+        var index = queryResultsObs.value.indexOf(queryResultsObs.value
+            .firstWhereOrNull(
+                (queryResult) => queryResult.email == connection!.email));
+        queryResultsObs.value.update(index, queryResult);
+      }
+    });
+
+    queryResultsObs.refresh();
   }
 
   //find user with name or email that matches search query
   void findUserMatches() {
-    downloadState.value = DownloadState.LOADING;
+    downloadStateObs.value = DownloadState.LOADING;
     usersCollection.get().then((value) {
-      results.clear();
+      queryResultsObs.clear();
+      queryResultsObs.refresh();
       value.docs.forEach((userDoc) {
         var user = UserModel.fromJson(userDoc.data());
 
-        if (user.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
-            user.email!.toLowerCase().contains(searchQuery.toLowerCase())) {
-          //set result state
-          if (Shared.loggedUser!.friends.contains(user.email)) {
-            user.userStatus = UserStatus.FRIEND;
-          } else if (Shared.loggedUser!.sentFriendRequests
-              .contains(user.email)) {
-            user.userStatus = UserStatus.RECEIVED_FRIEND_REQUEST;
-          } else if (Shared.loggedUser!.receivedFriendRequests
-              .contains(user.email)) {
-            user.userStatus = UserStatus.SENT_FRIEND_REQUEST;
+        if (user.email == Shared.loggedUser?.email)
+          return; //don't show logged user
+
+        if (user.name.toLowerCase().contains(searchQueryObs.toLowerCase()) ||
+            user.email!.toLowerCase().contains(searchQueryObs.toLowerCase())) {
+          //set status of each friend
+          var connection =
+              Shared.loggedUser!.connections.firstWhere((connection) {
+            return connection?.email == user.email;
+          }, orElse: () => null);
+          /*if (connection != null) {
+            //user is friend or sent request or received request or removed
+            user.userStatus = connection.userStatus;
           } else {
+            //user is not friend
             user.userStatus = UserStatus.NOT_FRIEND;
-          }
-          if (user.email != Shared.loggedUser?.email) {
-            results.value.add(user); //only add if not the logged user
-          }
+          }*/
+          queryResultsObs.value.add(user);
+          queryResultsObs.refresh();
         }
       });
-      if (results.isEmpty) {
-        downloadState.value = DownloadState.EMPTY;
+      if (queryResultsObs.isEmpty) {
+        downloadStateObs.value = DownloadState.EMPTY;
       } else {
-        downloadState.value = DownloadState.SUCCESS;
+        downloadStateObs.value = DownloadState.SUCCESS;
       }
     }).catchError((error) {
       mainController.errorDialog(error.toString());
-      downloadState.value = DownloadState.INITIAL;
+      downloadStateObs.value = DownloadState.INITIAL;
     });
   }
 
-  //send friend request or accept friend request or something else based on result status
-  void interactWithUser(UserModel? result) {
-    if (result?.userStatus == null) {
+  //send friend request or accept friend request or something else based on other user status
+  void interactWithUser(UserModel? user, UserStatus? status) {
+    if (status == null) {
       Exception("User status is null");
-    } else if (result!.userStatus == UserStatus.FRIEND) {
-      mainController.errorDialog('User is already your friend',
-          shouldGoBack: false);
-    } else if (result.userStatus == UserStatus.RECEIVED_FRIEND_REQUEST) {
-      mainController.errorDialog('You already sent friend request to this user',
-          shouldGoBack: false);
-    } else if (result.userStatus == UserStatus.SENT_FRIEND_REQUEST) {
-      acceptFriendRequest(result);
-    } else {
-      sendFriendRequest(result);
+    } else if (status == UserStatus.FRIEND) {
+      mainController.errorDialog(
+        'User is already your friend',
+      );
+    } else if (status == UserStatus.RECEIVED_FRIEND_REQUEST) {
+      mainController.acceptFriendRequest(user);
+    } else if (status == UserStatus.SENT_FRIEND_REQUEST) {
+      mainController.errorDialog(
+        'You already sent friend request to this user',
+      );
+    } else if (status == UserStatus.NOT_FRIEND) {
+      mainController.sendFriendRequest(user);
     }
-  }
-
-  void acceptFriendRequest(UserModel? result) {
-    //add to logged user friends ,
-    usersCollection.doc(Shared.loggedUser?.email).update({
-      'friends': FieldValue.arrayUnion([result?.email])
-    }).then((value) {
-      debugPrint("1 added to friends");
-      findUserMatches();
-    }).onError((error, stackTrace) {
-      mainController.errorDialog(error.toString());
-      printError(info: "1 Failed add to friends: $error");
-    });
-    //remove from received friend requests of logged user
-    usersCollection.doc(Shared.loggedUser?.email).update({
-      'receivedFriendRequests': FieldValue.arrayRemove([result?.email])
-    }).then((value) {
-      debugPrint("2 removed from receivedFriendRequests");
-    }).onError((error, stackTrace) {
-      mainController.errorDialog(error.toString());
-      printError(info: "2 Failed remove from receivedFriendRequests: $error");
-    });
-    //remove from sent friend requests of result user
-    usersCollection.doc(result?.email).update({
-      'sentFriendRequests': FieldValue.arrayRemove([Shared.loggedUser?.email])
-    }).then((value) {
-      debugPrint("3 removed from sentFriendRequests");
-    }).onError((error, stackTrace) {
-      mainController.errorDialog(error.toString());
-      printError(info: "3 Failed remove from sentFriendRequests: $error");
-    });
-  }
-
-  void sendFriendRequest(UserModel? result) {
-    //add other user to logged user sent friends requests
-    usersCollection.doc(Shared.loggedUser?.email).update({
-      'sentFriendRequests': FieldValue.arrayUnion([result?.email])
-    }).then((value) {
-      debugPrint("1 sentFriendRequests ");
-      findUserMatches();
-    }).onError((error, stackTrace) {
-      mainController.errorDialog(error.toString());
-      printError(info: "1 Failed sentFriendRequests: $error");
-    });
-
-    //add logged user to other user received friends requests
-    usersCollection.doc(result?.email).update({
-      'receivedFriendRequests':
-          FieldValue.arrayUnion([Shared.loggedUser?.email])
-    }).then((value) {
-      debugPrint("1 sentFriendRequests ");
-    }).onError((error, stackTrace) {
-      mainController.errorDialog(error.toString());
-      printError(info: "1 Failed sentFriendRequests: $error");
-    });
   }
 }

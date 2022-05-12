@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:realtime_quizzes/models/quiz_settings.dart';
 import 'package:realtime_quizzes/screens/friends/friends_controller.dart';
+import 'package:realtime_quizzes/screens/search/search_controller.dart';
 
 import '../../models/api.dart';
 import '../../models/player.dart';
@@ -18,38 +18,31 @@ import '../../screens/single_player_quiz/single_player_quiz_screen.dart';
 import '../../shared/constants.dart';
 import '../../shared/shared.dart';
 import 'layouts/home/home.dart';
+import 'models/Connection.dart';
+import 'models/UserStatus.dart';
 import 'models/user.dart';
 
 class MainController extends GetxController {
   var isOnlineObs = Rxn<bool>();
 
-  void changeUserStatus(bool isOnline) {
-    //set user as online and offline based on if using app or not
-    usersCollection.doc(Shared.loggedUser?.email).update({
-      'isOnline': isOnline,
-    }).then((value) {
-      debugPrint('update status success');
-      isOnlineObs.value = isOnline;
-    });
-  }
-
   //observables to update ui
   var userObs = Rxn<UserModel?>();
   var queueEntryObs = Rxn<QueueEntryModel?>();
   var selectedDifficultyListObs = [false, true, false].obs;
-  var receivedInvitesObs = [].obs; //list of QueueEntryModel
+  var receivedGameInvitesObs = [].obs; //list of QueueEntryModel
   /*Function eq = const ListEquality().equals; //function to compare two lists*/
   StreamSubscription? queueEntryListener;
-  var receivedFriendRequestsIdsObs = Rxn<List<dynamic>?>(); //list of String
-  var friendsObsIdsObs = Rxn<List<dynamic>?>(); //list of String
-  var receivedFriendRequestsObs = [].obs; //list of UserModel
 
   late FriendsController friendsController;
+  late SearchController searchController;
+
+  bool isDialogOpen = false; //flag to check if dialog is open
   @override
   void onInit() {
     //initialize user email
     Shared.loggedUser = UserModel(email: auth.currentUser?.email);
     friendsController = Get.put(FriendsController());
+    searchController = Get.put(SearchController());
     //set user as online on app start
     changeUserStatus(true);
     //keep listening to received invites
@@ -74,6 +67,17 @@ class MainController extends GetxController {
     });
   }
 
+  //set user status to online or offline
+  void changeUserStatus(bool isOnline) {
+    //set user as online and offline based on if using app or not
+    usersCollection.doc(Shared.loggedUser?.email).update({
+      'isOnline': isOnline,
+    }).then((value) {
+      debugPrint('update status success');
+      isOnlineObs.value = isOnline;
+    });
+  }
+
   //observe changes of logged user to update the profile
   observeProfileChanges() {
     usersCollection.doc(Shared.loggedUser?.email).snapshots().listen((event) {
@@ -84,52 +88,13 @@ class MainController extends GetxController {
       //only fetch friends again if there is difference than already showing friends
       /*if (!eq(friendsObsIdsObs.value, Shared.loggedUser?.friends)) {
         debugPrint(' loadFriends()');*/
-      friendsController.loadFriends();
-      friendsController.observeFriendsStatus();
-      friendsObsIdsObs.value = Shared.loggedUser?.friends;
+      friendsController.loadConnections();
+      searchController.updateQueryResultsState();
       /*  }*/
-
-      //listen to upcoming friend requests
-      /*if (!eq(receivedFriendRequestsIdsObs.value,
-          Shared.loggedUser?.receivedFriendRequests)) {*/
-      debugPrint('receivedFriendRequests()');
-      loadFriendRequests();
-      receivedFriendRequestsIdsObs.value =
-          Shared.loggedUser?.receivedFriendRequests;
-      /*}*/
-
-      debugPrint('logged user changed');
+      debugPrint('logged user changed ${userModelToJson(Shared.loggedUser)}');
     }).onError((error, stackTrace) {
       errorDialog(error.toString());
       printError(info: 'error observe logged user' + error.toString());
-    });
-  }
-
-  //load accounts info of users who sent friend requests
-  loadFriendRequests() {
-    debugPrint('loadFriendRequests() called');
-
-    receivedFriendRequestsObs.value.clear();
-    //get full profile of each user who sent friend request
-    Shared.loggedUser?.receivedFriendRequests.forEach((receivedFriendRequest) {
-      if (Shared.loggedUser!.removedRequests.contains(receivedFriendRequest)) {
-        //dont show friend request if user removed it before
-      } else {
-        usersCollection.doc(receivedFriendRequest).get().then((value) {
-          var friendRequest = UserModel.fromJson(value.data());
-          /*addUniqueUser(
-              userModelListObs: receivedFriendRequestsObs,
-              userModel: friendRequest);*/
-          receivedFriendRequestsObs.value.add(friendRequest);
-          receivedFriendRequestsObs.refresh();
-          debugPrint('success single loadFriendRequest profile');
-        }).onError((error, stackTrace) {
-          errorDialog(error.toString());
-          printError(
-              info:
-                  'error single loadFriendRequest profile' + error.toString());
-        });
-      }
     });
   }
 
@@ -140,15 +105,15 @@ class MainController extends GetxController {
         .where('invitedFriend', isEqualTo: (Shared.loggedUser?.email))
         .snapshots()
         .listen((event) {
-      receivedInvitesObs.value.clear();
+      receivedGameInvitesObs.value.clear();
       debugPrint('invites received: ${event.docs.length}');
       event.docs.forEach((element) {
         var gameInvite = QueueEntryModel.fromJson(element.data());
         if (gameInvite.inviteStatus != InviteStatus.SENDER_CANCELED_INVITE) {
           //only show game invite if not canceled by sender
-          receivedInvitesObs.value.add(gameInvite);
+          receivedGameInvitesObs.value.add(gameInvite);
         }
-        receivedInvitesObs.refresh();
+        receivedGameInvitesObs.refresh();
       });
     }).onError((error) {
       errorDialog(error.toString());
@@ -326,7 +291,7 @@ class MainController extends GetxController {
         });
       }
     }).onError((error, stackTrace) {
-      printError(info: 'error loading questions from API' + error.toString());
+      printError(info: 'error loading questions from API: ' + error.toString());
 
       errorDialog('error loading questions from API');
     });
@@ -376,30 +341,17 @@ class MainController extends GetxController {
     });
   }
 
-/*  //delete sent invite
-  void removeGameInvite() {
-    invitesCollection
-        .doc(Shared.queueEntryModel.queueEntryId)
-        .delete()
-        .then((value) {
-      debugPrint('delete game successful');
-    }).onError((error, stackTrace) {
-      errorDialog(error.toString());
-      printError(info: 'delete game error' + error.toString());
-    });
-  }*/
-
   void declineGameInvite(QueueEntryModel incomingGameInvite) {
     incomingGameInvite.inviteStatus = InviteStatus.FRIEND_DECLINED_INVITE;
     Shared.queueEntryModel = incomingGameInvite;
     //game invite observer won't be automatically activated, so we have to
     //remove invite on decline manually
     Future.delayed(const Duration(milliseconds: 100), () {
-      receivedInvitesObs.value.removeWhere((receivedInvite) {
+      receivedGameInvitesObs.value.removeWhere((receivedInvite) {
         return Shared.queueEntryModel.queueEntryId ==
             receivedInvite.queueEntryId;
       });
-      receivedInvitesObs.refresh();
+      receivedGameInvitesObs.refresh();
     });
 
     invitesCollection
@@ -427,40 +379,189 @@ class MainController extends GetxController {
     });
   }
 
-  void deleteFriend(UserModel? friend) {
-    /* friendsObs.value.remove(friend);
-    friendsObs.refresh();*/
+  void sendFriendRequest(UserModel? friendSuggestion) {
+    //add other user to logged user sent friends requests
+    Connection? loggedUserConnection =
+        Shared.loggedUser?.connections.firstWhere((connection) {
+      return connection?.email == friendSuggestion?.email;
+    }, orElse: () => null);
+    if (loggedUserConnection != null) {
+      //this should never be true
+      Shared.loggedUser?.connections.remove(loggedUserConnection);
+    }
+    Shared.loggedUser?.connections.add(Connection(
+        email: friendSuggestion?.email,
+        userStatus: UserStatus.SENT_FRIEND_REQUEST));
 
-    //remove other user from logged user friends
-    usersCollection.doc(Shared.loggedUser?.email).update({
-      'friends': FieldValue.arrayRemove([friend?.email])
-    }).then((value) {
-      debugPrint("1 deleteFriend ");
+    usersCollection
+        .doc(Shared.loggedUser?.email)
+        .set(userModelToJson(Shared.loggedUser))
+        .then((value) {
+      debugPrint("1 SENT_FRIEND_REQUEST ");
+    }).onError((error, stackTrace) {
+      printError(info: "1 Failed SENT_FRIEND_REQUEST: $error");
+      errorDialog(error.toString());
+    });
+
+    //add logged user to other user received friends requests
+    Connection? otherUserConnection =
+        friendSuggestion?.connections.firstWhere((connection) {
+      return connection?.email == Shared.loggedUser?.email;
+    }, orElse: () => null);
+    if (otherUserConnection != null) {
+      //this should never be true
+      friendSuggestion?.connections.remove(otherUserConnection);
+    }
+    friendSuggestion?.connections.add(Connection(
+        email: Shared.loggedUser?.email,
+        userStatus: UserStatus.RECEIVED_FRIEND_REQUEST));
+
+    usersCollection
+        .doc(friendSuggestion?.email)
+        .set(userModelToJson(friendSuggestion))
+        .then((value) {
+      debugPrint("2 RECEIVED_FRIEND_REQUEST ");
     }).onError((error, stackTrace) {
       errorDialog(error.toString());
-      printError(info: "1 Failed to deleteFriend: $error");
+      printError(info: "2 Failed RECEIVED_FRIEND_REQUEST: $error");
+    });
+  }
+
+  void acceptFriendRequest(UserModel? incomingFriendRequest) {
+    Connection? loggedUserConnection =
+        Shared.loggedUser?.connections.firstWhere((connection) {
+      return connection?.email == incomingFriendRequest?.email;
+    }, orElse: () => null);
+    if (loggedUserConnection != null) {
+      Shared.loggedUser?.connections.remove(loggedUserConnection);
+    }
+    Shared.loggedUser?.connections.add(Connection(
+        email: incomingFriendRequest?.email, userStatus: UserStatus.FRIEND));
+
+    //add other user to logged user friends
+    usersCollection
+        .doc(Shared.loggedUser?.email)
+        .update(userModelToJson(Shared.loggedUser))
+        .then((value) {
+      debugPrint("1 FRIEND ");
+    }).onError((error, stackTrace) {
+      errorDialog(error.toString());
+      printError(info: "1 Failed to FRIEND: $error");
+    });
+
+    //add logged user to other user friends
+    Connection? otherUserConnection =
+        incomingFriendRequest?.connections.firstWhere((connection) {
+      return connection?.email == Shared.loggedUser?.email;
+    }, orElse: () => null);
+    if (otherUserConnection != null) {
+      incomingFriendRequest?.connections.remove(otherUserConnection);
+    }
+    incomingFriendRequest?.connections.add(Connection(
+        email: Shared.loggedUser?.email, userStatus: UserStatus.FRIEND));
+
+    usersCollection
+        .doc(incomingFriendRequest?.email)
+        .update(userModelToJson(incomingFriendRequest))
+        .then((value) {
+      debugPrint("2 FRIEND ");
+    }).onError((error, stackTrace) {
+      errorDialog(error.toString());
+      printError(info: "2 Failed  FRIEND: $error");
+    });
+  }
+
+  void removeFriendRequest(UserModel incomingFriendRequest) {
+    //add other user to logged user removed requests
+    Connection? loggedUserConnection =
+        Shared.loggedUser?.connections.firstWhere((connection) {
+      return connection?.email == incomingFriendRequest.email;
+    }, orElse: () => null);
+    if (loggedUserConnection != null) {
+      //this should never be true
+      Shared.loggedUser?.connections.remove(loggedUserConnection);
+    }
+    Shared.loggedUser?.connections.add(Connection(
+        email: incomingFriendRequest.email,
+        userStatus: UserStatus.REMOVED_REQUEST));
+
+    usersCollection
+        .doc(Shared.loggedUser?.email)
+        .update(userModelToJson(Shared.loggedUser))
+        .then((value) {
+      debugPrint("removeFriendRequest ");
+    }).onError((error, stackTrace) {
+      errorDialog(error.toString());
+      printError(info: "Failed to removeFriendRequest: $error");
+    });
+  }
+
+  void deleteFriend(UserModel? friend) {
+    //remove other user from logged user friends
+    Connection? loggedUserConnection =
+        Shared.loggedUser?.connections.firstWhere((connection) {
+      return connection?.email == friend?.email;
+    }, orElse: () => null);
+
+    Shared.loggedUser?.connections.remove(loggedUserConnection);
+    debugPrint("connections: ${Shared.loggedUser?.connections.length}");
+
+    usersCollection
+        .doc(Shared.loggedUser?.email)
+        .set(userModelToJson(Shared.loggedUser))
+        .then((value) {
+      debugPrint("1 remove friend ");
+    }).onError((error, stackTrace) {
+      printError(info: "1 Failed remove friend: $error");
+      errorDialog(error.toString());
     });
 
     //remove logged user from other user friends
-    usersCollection.doc(friend?.email).update({
-      'friends': FieldValue.arrayRemove([Shared.loggedUser?.email])
-    }).then((value) {
-      debugPrint("2 deleteFriend ");
+    Connection? otherUserConnection =
+        friend?.connections.firstWhere((connection) {
+      return connection?.email == Shared.loggedUser?.email;
+    }, orElse: () => null);
+    friend?.connections.remove(otherUserConnection);
+    usersCollection
+        .doc(friend?.email)
+        .set(userModelToJson(friend))
+        .then((value) {
+      debugPrint("2 remove friend ");
     }).onError((error, stackTrace) {
       errorDialog(error.toString());
-      printError(info: "2 Failed to deleteFriend: $error");
+      printError(info: "2 Failed remove friend: $error");
     });
+  }
+
+  void updateGame() {
+    hideOldDialog();
+    queueCollection
+        .doc(Shared.queueEntryModel.queueEntryId)
+        .update(queueEntryModelToJson(Shared.queueEntryModel))
+        .then((value) {
+      debugPrint('updateGame success ');
+    }).onError((error, stackTrace) {
+      errorDialog(error.toString());
+      printError(info: 'updateGame error :' + error.toString());
+    });
+  }
+
+  //updating only fields inside observable object and not the whole object
+  //doesn't trigger rebuild, so we need to do it manually
+  void forceUpdateUi() {
+    queueEntryObs.refresh();
   }
 
   /// Dialogs**/
 
   void showWaitingDialog() {
-    Get.back();
+    hideOldDialog();
+
     Widget cancelButton = TextButton(
       child: Text("Cancel"),
       onPressed: () {
         archiveInvite();
-        Get.back();
+        hideCurrentDialog();
       },
     );
 
@@ -487,20 +588,19 @@ class MainController extends GetxController {
   }
 
   void inQueueDialog() {
-    Get.back(); //hide any showing dialog before opening new one
-
+    hideOldDialog();
     // set up the buttons
     Widget cancelButton = TextButton(
       child: Text("Cancel"),
       onPressed: () {
         cancelQueue();
-        Get.back();
+        hideCurrentDialog();
       },
     );
     Widget continueButton = TextButton(
       child: Text("Play offline"),
       onPressed: () {
-        Get.back();
+        hideCurrentDialog();
         Get.to(
           () => SinglePlayerQuizScreen(),
         );
@@ -529,24 +629,25 @@ class MainController extends GetxController {
   }
 
   void showFriendDialog(UserModel? friend) {
+    hideOldDialog();
     // set up the buttons
     Widget sendInviteButton = TextButton(
       child: Text("Invite to game"),
       onPressed: () {
-        Get.back();
-        //todo inviteFriendToGame(friend);
+        inviteFriendToGame(friend: friend);
+        hideCurrentDialog();
       },
     );
     Widget cancelButton = TextButton(
       child: Text("Cancel"),
       onPressed: () {
-        Get.back();
+        hideCurrentDialog();
       },
     );
     Widget deleteButton = TextButton(
       child: Text("Delete friend"),
       onPressed: () {
-        Get.back();
+        hideCurrentDialog();
         deleteFriend(friend);
       },
     );
@@ -564,12 +665,12 @@ class MainController extends GetxController {
   }
 
   void showInfoDialog({String? title, required String message}) {
-    Get.back(); //hide any showing dialog before opening new one
+    hideOldDialog();
     // set up the buttons
     Widget cancelButton = TextButton(
       child: Text("Ok"),
       onPressed: () {
-        Get.back();
+        hideCurrentDialog();
       },
     );
 
@@ -582,11 +683,12 @@ class MainController extends GetxController {
   }
 
   void confirmExitDialog({bool isOnlineGame = false}) {
+    hideOldDialog();
     // set up the buttons
     Widget cancelButton = TextButton(
       child: Text("Cancel"),
       onPressed: () {
-        Get.back();
+        hideCurrentDialog();
       },
     );
     Widget confirmButton = TextButton(
@@ -597,7 +699,7 @@ class MainController extends GetxController {
           Shared.queueEntryModel.hasOpponentLeftGame = true;
           updateGame();
         }
-        Get.back();
+        hideCurrentDialog();
         Get.offAll(() => HomeScreen());
       },
     );
@@ -612,14 +714,14 @@ class MainController extends GetxController {
   }
 
   void foundMatchDialog() {
-    Get.back(); //hide any showing dialog before opening new one
+    hideOldDialog();
 
     // set up the buttons
     Widget cancelButton = TextButton(
       child: Text("Cancel"),
       onPressed: () {
         cancelQueue();
-        Get.back();
+        hideCurrentDialog();
       },
     );
 
@@ -642,14 +744,14 @@ class MainController extends GetxController {
   }
 
   void loadingDialog({required loadingMessage, required onCancel}) {
-    Get.back(); //hide any showing dialog before opening new one
+    hideOldDialog();
 
     // set up the buttons
     Widget cancelButton = TextButton(
       child: Text("Cancel"),
       onPressed: () {
         onCancel();
-        Get.back();
+        hideCurrentDialog();
       },
     );
 
@@ -667,11 +769,9 @@ class MainController extends GetxController {
     );
   }
 
-  void errorDialog(String? errorMessage, {shouldGoBack = true}) {
-    if (shouldGoBack) {
-      Get.back(); //hide any showing dialog before opening new one
-    }
-    cancelQueue();
+  void errorDialog(String? errorMessage) {
+    hideOldDialog();
+    cancelQueue(); //todo not all call cancelqueue
     errorMessage ?? 'Something went wrong';
 
     // set up the buttons
@@ -679,7 +779,7 @@ class MainController extends GetxController {
       child: Text("Ok"),
       onPressed: () {
         cancelQueue();
-        Get.back();
+        hideCurrentDialog();
       },
     );
 
@@ -691,21 +791,15 @@ class MainController extends GetxController {
     );
   }
 
-  void updateGame() {
-    queueCollection
-        .doc(Shared.queueEntryModel.queueEntryId)
-        .update(queueEntryModelToJson(Shared.queueEntryModel))
-        .then((value) {
-      debugPrint('updateGame success ');
-    }).onError((error, stackTrace) {
-      errorDialog(error.toString());
-      printError(info: 'updateGame error :' + error.toString());
-    });
+  void hideOldDialog() {
+    if (isDialogOpen) {
+      Get.back(); //hide any showing dialog before opening new one
+    }
+    isDialogOpen = true;
   }
 
-  //updating only fields inside observable object and not the whole object
-  //doesn't trigger rebuild, so we need to do it manually
-  void forceUpdateUi() {
-    queueEntryObs.refresh();
+  void hideCurrentDialog() {
+    Get.back();
+    isDialogOpen = false;
   }
 }

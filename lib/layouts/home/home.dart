@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:realtime_quizzes/customization/theme.dart';
+import 'package:realtime_quizzes/screens/search/search.dart';
 
 import '../../screens/find_game/find_game.dart';
 import '../../screens/friends/friends.dart';
@@ -22,6 +24,8 @@ class HomeScreen extends StatelessWidget {
       body: buildPageView(),
       bottomNavigationBar: Obx(() {
         return BottomNavigationBar(
+          selectedItemColor: secondaryTextColor,
+          unselectedItemColor: cardColor,
           currentIndex: homeController.bottomSelectedIndex.value,
           items: buildBottomNavBarItems(),
           onTap: ((index) {
@@ -36,17 +40,21 @@ class HomeScreen extends StatelessWidget {
 
   List<BottomNavigationBarItem> buildBottomNavBarItems() {
     return [
-      BottomNavigationBarItem(
-        icon: new Icon(Icons.widgets_rounded),
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.widgets_rounded),
         label: 'Game',
       ),
-      BottomNavigationBarItem(
-        icon: new Icon(Icons.supervised_user_circle_outlined),
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.supervised_user_circle_outlined),
         label: 'Friends',
       ),
-      BottomNavigationBarItem(
-        icon: new Icon(Icons.account_circle),
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.account_circle),
         label: 'Profile',
+      ),
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.search),
+        label: 'Discover',
       ),
     ];
   }
@@ -61,6 +69,7 @@ class HomeScreen extends StatelessWidget {
         FindGameScreen(),
         FriendsScreen(),
         ProfileScreen(),
+        SearchScreen(),
       ],
     );
   }

@@ -60,7 +60,7 @@ class QueueEntryModel {
         inviteStatus = InviteStatus.SENDER_CANCELED_INVITE;
         break;
       default:
-        throw Exception("InviteStatus not found");
+        break;
     }
   }
 }
@@ -92,7 +92,7 @@ queueEntryModelToJson(QueueEntryModel? queueEntryModel) {
       inviteStatus = "SENDER_CANCELED_INVITE";
       break;
     default:
-      throw Exception("InviteStatus not found");
+      break;
   }
 
   return {

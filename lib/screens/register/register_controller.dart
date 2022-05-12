@@ -40,6 +40,7 @@ class RegisterController extends GetxController {
           .then((value) {
         //user created successfully, save user to info to db
         saveUserToFirestore(name, email).then((value) {
+          Shared.loggedUser = UserModel(email: auth.currentUser?.email);
           if (pickedImageObs.value == null) {
             downloadState.value = DownloadState.SUCCESS;
             Get.to(() => HomeScreen());

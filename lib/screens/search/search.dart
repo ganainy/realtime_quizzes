@@ -7,6 +7,7 @@ import 'package:realtime_quizzes/screens/search/search_controller.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../customization/theme.dart';
+import '../../models/UserStatus.dart';
 import '../../models/user.dart';
 import '../../shared/components.dart';
 import '../../shared/shared.dart';
@@ -17,7 +18,7 @@ class SearchScreen extends StatelessWidget {
   TextEditingController searchTextEditingController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  final SearchController searchController = Get.put(SearchController());
+  final SearchController searchController = Get.find<SearchController>();
   final FriendsController friendsController = Get.find<FriendsController>();
 
   @override
@@ -28,14 +29,14 @@ class SearchScreen extends StatelessWidget {
           body: Form(
             key: _formKey,
             child: SingleChildScrollView(
-              child: searchController.downloadState.value ==
+              child: searchController.downloadStateObs.value ==
                       DownloadState.LOADING
                   ? ShimmerLoadingView(context)
-                  : searchController.downloadState.value ==
+                  : searchController.downloadStateObs.value ==
                           DownloadState.INITIAL
                       ? InitialView(
                           context, 'Find a user by his name or email address')
-                      : searchController.downloadState.value ==
+                      : searchController.downloadStateObs.value ==
                               DownloadState.EMPTY
                           ? InitialView(context, 'No matches found')
                           : ResultsView(),
@@ -69,7 +70,7 @@ class SearchScreen extends StatelessWidget {
 
   void search() {
     if (_formKey.currentState!.validate()) {
-      searchController.searchQuery.value =
+      searchController.searchQueryObs.value =
           searchTextEditingController.value.text;
       searchController.findUserMatches();
     }
@@ -84,7 +85,8 @@ class SearchScreen extends StatelessWidget {
         SearchFormField(),
         ListView.separated(
           itemBuilder: (context, index) {
-            var currentUser = searchController.results.value.elementAt(index);
+            var currentUser =
+                searchController.queryResultsObs.value.elementAt(index);
             return SizedBox(
               child: GradientContainer(
                 child: Row(
@@ -107,7 +109,7 @@ class SearchScreen extends StatelessWidget {
           separatorBuilder: (context, index) {
             return const SizedBox();
           },
-          itemCount: searchController.results.value.length,
+          itemCount: searchController.queryResultsObs.value.length,
           shrinkWrap: true,
           primary: false,
         ),
@@ -115,11 +117,21 @@ class SearchScreen extends StatelessWidget {
     );
   }
 
-  //this button text and image changes based on the current result's status
+  //this button text changes based on the current result's connection to logged user
   InteractButton({UserModel? currentUser}) {
     var text;
 
-    switch (currentUser?.userStatus) {
+    var connection = Shared.loggedUser?.connections.firstWhereOrNull(
+        (connection) => connection!.email == currentUser!.email);
+
+    var status;
+    if (connection == null) {
+      status = UserStatus.NOT_FRIEND;
+    } else {
+      status = connection.userStatus;
+    }
+
+    switch (status) {
       case UserStatus.NOT_FRIEND:
         text = 'Add';
         break;
@@ -127,10 +139,10 @@ class SearchScreen extends StatelessWidget {
         text = 'Friend';
         break;
       case UserStatus.SENT_FRIEND_REQUEST:
-        text = 'Accept request';
+        text = 'Sent request';
         break;
       case UserStatus.RECEIVED_FRIEND_REQUEST:
-        text = 'Sent request';
+        text = 'Accept request';
         break;
       default:
         Exception('Unknown user status');
@@ -149,7 +161,7 @@ class SearchScreen extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         onPressed: () {
-          searchController.interactWithUser(currentUser);
+          searchController.interactWithUser(currentUser, status);
         },
       ),
     );

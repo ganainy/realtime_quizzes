@@ -93,7 +93,7 @@ class LoginScreen extends StatelessWidget {
                       ),
                       loginController.downloadState.value ==
                               DownloadState.LOADING
-                          ? LoadingButton()
+                          ? DefaultButton(isLoading: true)
                           : DefaultButton(
                               onPressed: () {
                                 if (_formKey.currentState!.validate()) {
