@@ -8,6 +8,7 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../customization/theme.dart';
 import '../../models/UserStatus.dart';
+import '../../models/download_state.dart';
 import '../../models/user.dart';
 import '../../shared/components.dart';
 import '../../shared/shared.dart';

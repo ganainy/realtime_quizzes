@@ -1,22 +1,21 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
-import 'package:realtime_quizzes/models/quiz_settings.dart';
 import 'package:realtime_quizzes/screens/friends/friends_controller.dart';
 import 'package:realtime_quizzes/screens/search/search_controller.dart';
 
-import '../../models/api.dart';
+import '../../models/game.dart';
 import '../../models/player.dart';
 import '../../models/question.dart';
-import '../../models/queue_entry.dart';
 import '../../network/dio_helper.dart';
 import '../../screens/multiplayer_quiz/multiplayer_quiz_screen.dart';
-import '../../screens/single_player_quiz/single_player_quiz_screen.dart';
 import '../../shared/constants.dart';
 import '../../shared/shared.dart';
+import 'customization/theme.dart';
 import 'layouts/home/home.dart';
 import 'models/Connection.dart';
 import 'models/UserStatus.dart';
@@ -27,9 +26,8 @@ class MainController extends GetxController {
 
   //observables to update ui
   var userObs = Rxn<UserModel?>();
-  var queueEntryObs = Rxn<QueueEntryModel?>();
-  var selectedDifficultyListObs = [false, true, false].obs;
-  var receivedGameInvitesObs = [].obs; //list of QueueEntryModel
+  var gameObs = Rxn<GameModel?>();
+  var receivedGameInvitesObs = [].obs; //list of game
   /*Function eq = const ListEquality().equals; //function to compare two lists*/
   StreamSubscription? queueEntryListener;
 
@@ -45,27 +43,15 @@ class MainController extends GetxController {
     searchController = Get.put(SearchController());
     //set user as online on app start
     changeUserStatus(true);
-    //keep listening to received invites
-    observeGameInvites();
     //set initial values of quiz parameters
-    queueEntryObs.value = Shared.queueEntryModel;
+    gameObs.value = Shared.game;
     //save latest game setting values in shared class to access through app
-    queueEntryObs.listen((p0) {
-      Shared.queueEntryModel = p0!;
-    });
-
-    selectedDifficultyListObs.listen((p0) {
-      if (selectedDifficultyListObs.value.elementAt(0)) {
-        Shared.queueEntryModel.quizSettings?.difficulty = 'easy';
-      }
-      if (selectedDifficultyListObs.value.elementAt(1)) {
-        Shared.queueEntryModel.quizSettings?.difficulty = 'medium';
-      }
-      if (selectedDifficultyListObs.value.elementAt(2)) {
-        Shared.queueEntryModel.quizSettings?.difficulty = 'hard';
-      }
+    gameObs.listen((p0) {
+      Shared.game = p0!;
     });
   }
+
+  /// ******************************* Logged User ****************************/
 
   //set user status to online or offline
   void changeUserStatus(bool isOnline) {
@@ -85,12 +71,16 @@ class MainController extends GetxController {
       Shared.loggedUser = user;
       userObs.value = user;
 
-      //only fetch friends again if there is difference than already showing friends
-      /*if (!eq(friendsObsIdsObs.value, Shared.loggedUser?.friends)) {
-        debugPrint(' loadFriends()');*/
+      //load user connection
       friendsController.loadConnections();
+      //update state of search results
       searchController.updateQueryResultsState();
-      /*  }*/
+      //update stated of user created game (if any)
+      updateGameStatus(
+          game: Shared.game,
+          gameStatus: user.isOnline ? GameStatus.ACTIVE : GameStatus.INACTIVE);
+      //check incoming invites
+      checkGameInvites();
       debugPrint('logged user changed ${userModelToJson(Shared.loggedUser)}');
     }).onError((error, stackTrace) {
       errorDialog(error.toString());
@@ -99,28 +89,32 @@ class MainController extends GetxController {
   }
 
 //check if logged user became any game invites
-  void observeGameInvites() {
-    //scenario 1,2
-    invitesCollection
-        .where('invitedFriend', isEqualTo: (Shared.loggedUser?.email))
-        .snapshots()
-        .listen((event) {
-      receivedGameInvitesObs.value.clear();
-      debugPrint('invites received: ${event.docs.length}');
-      event.docs.forEach((element) {
-        var gameInvite = QueueEntryModel.fromJson(element.data());
-        if (gameInvite.inviteStatus != InviteStatus.SENDER_CANCELED_INVITE) {
+  void checkGameInvites() {
+    debugPrint('check game invites');
+
+    receivedGameInvitesObs.value.clear();
+    receivedGameInvitesObs.refresh();
+
+    if (Shared.loggedUser!.invites.isEmpty) {
+      return;
+    }
+
+    Shared.loggedUser?.invites.forEach((inviteId) {
+      gameCollection.doc(inviteId).get().then((value) {
+        var gameInvite = GameModel.fromJson(value.data());
+        if (gameInvite.gameStatus == GameStatus.ACTIVE) {
           //only show game invite if not canceled by sender
           receivedGameInvitesObs.value.add(gameInvite);
+          receivedGameInvitesObs.refresh();
         }
-        receivedGameInvitesObs.refresh();
+      }).onError((error, stackTrace) {
+        errorDialog(error.toString());
+        printError(info: 'checkGameInvites error :' + error.toString());
       });
-    }).onError((error) {
-      errorDialog(error.toString());
-      printError(info: 'observeGameInvites error :' + error.toString());
     });
   }
 
+  /// ******************************* API ***********************************/
   //load questions from api
   Future<dynamic> fetchQuiz({String? queueEntryId}) async {
     debugPrint('fetchQuiz');
@@ -131,7 +125,7 @@ class MainController extends GetxController {
     //convert category name to match the param thats passed to api
     Constants.categoryList.forEach((categoryMap) {
       if (categoryMap['category'].toString().toLowerCase() ==
-          Shared.queueEntryModel.quizSettings?.category?.toLowerCase()) {
+          Shared.game.gameSettings?.category?.toLowerCase()) {
         categoryApi = categoryMap['api'];
       }
     });
@@ -139,14 +133,14 @@ class MainController extends GetxController {
     //convert difficulty name to match the param thats passed to api
     Constants.difficultyList.forEach((difficultyMap) {
       if (difficultyMap['difficulty'].toString().toLowerCase() ==
-          Shared.queueEntryModel.quizSettings?.difficulty?.toLowerCase()) {
+          Shared.game.gameSettings?.difficulty?.toLowerCase()) {
         difficultyApi = difficultyMap['api'];
       }
     });
 
     var params = {
       'difficulty': difficultyApi,
-      'amount': Shared.queueEntryModel.quizSettings?.numberOfQuestions,
+      'amount': Shared.game.gameSettings?.numberOfQuestions?.round() ?? 10,
       'category': categoryApi,
       'type': 'multiple',
     };
@@ -160,6 +154,8 @@ class MainController extends GetxController {
             'Random'.tr /*this is not real category its just for UI*/) {
       params.remove('category');
     }
+
+    debugPrint('final params: $params');
 
     return await DioHelper.getQuestions(queryParams: params);
   }
@@ -175,163 +171,28 @@ class MainController extends GetxController {
       questionsJson.add(questionModelToJson(question));
     });
     //upload quiz to firestore
-    return await queueCollection
-        .doc(Shared.queueEntryModel.queueEntryId)
-        .update({
+    return await gameCollection.doc(Shared.game.gameId).update({
       'questions': questionsJson,
       'createdAt': DateTime.now().millisecondsSinceEpoch
     });
   }
 
-  //this method will listen for when another player enters logged player queue
-  void observeQueueChanges(BuildContext context) {
-    queueEntryListener = queueCollection
+  /// ******************************* Game ***********************************/
+  //this method will listen for when another player enters logged player game
+  //to start game automatically
+  void observeAnotherPlayerJoins() {
+    queueEntryListener = gameCollection
         .doc(Shared.loggedUser?.email)
         .snapshots()
         .listen((queueEntryJson) {
-      var queueEntry = QueueEntryModel.fromJson(queueEntryJson.data());
-      if (queueEntry.players!.length > 1) {
-        foundMatchDialog();
-        startGame();
-        debugPrint(
-            'scenario 2: another play is add to my entry, match should start');
-      } else {
-        debugPrint('scenario 2: still one player: ');
-      }
-    });
+      Shared.game = GameModel.fromJson(queueEntryJson.data());
 
-    queueEntryListener?.onError((error, stackTrace) {
-      errorDialog(error.toString());
-      printError(
-          info: 'scenario 2: observing my queue entry error :' +
-              error.toString());
-    });
-  }
-
-  void startGame() {
-    //stop listening to updates of queue
-    queueEntryListener?.cancel();
-    Get.back(); //hide any alert dialogs
-    Get.to(() => MultiPlayerQuizScreen());
-  }
-
-  void cancelQueue() {
-    //stop listening to updates of queue
-    queueEntryListener?.cancel();
-    //delete queue entry
-    queueCollection
-        .doc(Shared.queueEntryModel.queueEntryId)
-        .delete()
-        .then((value) {
-      debugPrint('left queue');
-    }).onError((error, stackTrace) {
-      errorDialog(error.toString());
-      printError(info: 'leave queue error :' + error.toString());
-    });
-  }
-
-  void archiveInvite() {
-    Shared.queueEntryModel.inviteStatus = InviteStatus.SENDER_CANCELED_INVITE;
-    invitesCollection
-        .doc(Shared.queueEntryModel.queueEntryId)
-        .update(queueEntryModelToJson(Shared.queueEntryModel))
-        .then((value) {
-      debugPrint('archived game');
-    }).onError((error, stackTrace) {
-      errorDialog(error.toString());
-      printError(info: 'archive game error :' + error.toString());
-    });
-  }
-
-  //sends game invite to a friend
-  void inviteFriendToGame({UserModel? friend}) {
-    Shared.queueEntryModel.queueEntryId = Shared.loggedUser?.email;
-
-    loadingDialog(
-        loadingMessage: 'Sending invite to ${friend?.name ?? 'friend'}...',
-        onCancel: archiveInvite);
-
-    fetchQuiz().then((jsonResponse) {
-      ApiModel apiModel = ApiModel.fromJson(jsonResponse.data);
-      if (apiModel.responseCode == null || apiModel.responseCode != 0) {
-        errorDialog('error_loading_quiz'.tr);
-        printError(info: 'error API response code');
-      } else {
-        debugPrint('sendGameInvite');
-
-        Shared.queueEntryModel = QueueEntryModel(
-          quizSettings: QuizSettings(
-            difficulty: Shared.queueEntryModel.quizSettings?.difficulty,
-            category: Shared.queueEntryModel.quizSettings?.category,
-            numberOfQuestions:
-                Shared.queueEntryModel.quizSettings?.numberOfQuestions,
-            createdAt: DateTime.now().millisecondsSinceEpoch,
-          ),
-          queueEntryId: Shared.queueEntryModel.queueEntryId,
-          players: [
-            PlayerModel(user: Shared.loggedUser),
-            PlayerModel(user: friend)
-          ],
-          questions: apiModel.questions,
-        );
-
-        var queueEntryModelJson = queueEntryModelToJson(Shared.queueEntryModel);
-
-        invitesCollection
-            .doc(Shared.queueEntryModel.queueEntryId)
-            .set(queueEntryModelJson)
-            .then((value) {
-          debugPrint('created invite');
-          Get.back();
-          showWaitingDialog();
-          observeSentInviteChanges();
-        }).onError((error, stackTrace) {
-          errorDialog(error.toString());
-          printError(info: 'create invite error :' + error.toString());
-        });
-      }
-    }).onError((error, stackTrace) {
-      printError(info: 'error loading questions from API: ' + error.toString());
-
-      errorDialog('error loading questions from API');
-    });
-  }
-
-  void acceptGameInvite(QueueEntryModel incomingGameInvite) {
-    //scenario 2
-    incomingGameInvite.inviteStatus = InviteStatus.FRIEND_ACCEPTED_INVITE;
-    Shared.queueEntryModel = incomingGameInvite;
-
-    invitesCollection
-        .doc(Shared.queueEntryModel.queueEntryId)
-        .update(queueEntryModelToJson(Shared.queueEntryModel))
-        .then((value) {
-      startGame();
-      debugPrint('invite accepted ');
-    }).onError((error, stackTrace) {
-      errorDialog(error.toString());
-      printError(info: 'acceptGameInvite error :' + error.toString());
-    });
-  }
-
-  //listen to updates to sent invite to know when friend accepts invite
-  void observeSentInviteChanges() {
-    queueEntryListener = invitesCollection
-        .doc(Shared.loggedUser?.email)
-        .snapshots()
-        .listen((queueEntryJson) {
-      Shared.queueEntryModel = QueueEntryModel.fromJson(queueEntryJson.data());
-
-      if (Shared.queueEntryModel.inviteStatus ==
-          InviteStatus.FRIEND_ACCEPTED_INVITE) {
-        startGame();
+      if (Shared.game.gameStatus == GameStatus.INVITE_ACCEPTED &&
+          Shared.game.players!.length > 1) {
+        updateGameStatus(game: Shared.game, gameStatus: GameStatus.INACTIVE);
+        opponentJoinedDialog();
+        startMultiPlayerGame();
         debugPrint('invite accepted , match should start');
-      } else if (Shared.queueEntryModel.inviteStatus ==
-          InviteStatus.FRIEND_DECLINED_INVITE) {
-        showInfoDialog(
-            message: 'your game invite was declined.',
-            title: 'invite declined');
-        archiveInvite();
       }
 
       queueEntryListener?.onError((error, stackTrace) {
@@ -341,41 +202,91 @@ class MainController extends GetxController {
     });
   }
 
-  void declineGameInvite(QueueEntryModel incomingGameInvite) {
-    incomingGameInvite.inviteStatus = InviteStatus.FRIEND_DECLINED_INVITE;
-    Shared.queueEntryModel = incomingGameInvite;
-    //game invite observer won't be automatically activated, so we have to
-    //remove invite on decline manually
-    Future.delayed(const Duration(milliseconds: 100), () {
-      receivedGameInvitesObs.value.removeWhere((receivedInvite) {
-        return Shared.queueEntryModel.queueEntryId ==
-            receivedInvite.queueEntryId;
-      });
-      receivedGameInvitesObs.refresh();
-    });
+  void startMultiPlayerGame() {
+    //stop listening to updates of queue
+    queueEntryListener?.cancel();
+    Get.back(); //hide any alert dialogs
+    Get.to(() => MultiPlayerQuizScreen());
+  }
 
-    invitesCollection
-        .doc(Shared.queueEntryModel.queueEntryId)
-        .update(queueEntryModelToJson(Shared.queueEntryModel))
+  void joinGame(GameModel? incomingGameInvite) {
+    incomingGameInvite?.gameStatus = GameStatus.INVITE_ACCEPTED;
+    incomingGameInvite?.players?.add(PlayerModel(user: Shared.loggedUser));
+    Shared.game = incomingGameInvite!;
+
+    gameCollection
+        .doc(Shared.game.gameId)
+        .update(gameModelToJson(Shared.game))
         .then((value) {
-      debugPrint('invite declined ');
+      startMultiPlayerGame();
+      debugPrint('invite accepted ');
     }).onError((error, stackTrace) {
       errorDialog(error.toString());
-      printError(info: 'declineGameInvite error :' + error.toString());
+      printError(info: 'acceptGameInvite error :' + error.toString());
     });
   }
 
-  //delete game from queueCollection since its over and reset queueEntryModel
-  deleteGame() {
-    queueCollection
-        .doc(Shared.queueEntryModel.queueEntryId)
-        .delete()
+  void removeInvite(GameModel incomingGameInvite) {
+    Shared.loggedUser?.invites.remove(incomingGameInvite.gameId);
+    usersCollection
+        .doc(Shared.loggedUser?.email)
+        .update(userModelToJson(Shared.loggedUser))
         .then((value) {
-      debugPrint('removed from queueCollection');
-      Shared.resetQueueEntry();
+      debugPrint('invite removed ');
     }).onError((error, stackTrace) {
-      printError(info: 'error remove from queueCollection');
-      Shared.resetQueueEntry();
+      errorDialog(error.toString());
+      printError(info: 'invite remove error :' + error.toString());
+    });
+  }
+
+  //delete game from gamesCollection since its over and reset game
+  deleteGame(String? gameId) {
+    gameCollection.doc(gameId).delete().then((value) {
+      debugPrint('removed from gamesCollection');
+      Shared.resetGame();
+    }).onError((error, stackTrace) {
+      printError(info: 'error remove from gamesCollection');
+      Shared.resetGame();
+    });
+  }
+
+  //
+  void updateGameStatus(
+      {required GameModel game, required GameStatus gameStatus}) {
+    //scenario 2
+    game.gameStatus = gameStatus;
+    gameCollection.doc(game.gameId).update(gameModelToJson(game)).then((value) {
+      debugPrint('game set as $gameStatus ');
+    }).onError((error, stackTrace) {
+      printError(info: 'update game status error :' + error.toString());
+    });
+  }
+
+  //updating only fields inside observable object and not the whole object
+  //doesn't trigger rebuild, so we need to do it manually
+  void forceUpdateUi() {
+    gameObs.refresh();
+  }
+
+  void deleteLoggedUserGame() {
+    gameCollection.doc(Shared.loggedUser?.email).delete().then((value) {
+      //showSnackbar(message: 'Deleted game successfully');
+    }).onError((error, stackTrace) {
+      printError(info: 'deleteLoggedUserGame error :' + error.toString());
+    });
+  }
+
+  /// ********************************* Friends ******************************/
+
+  void inviteFriendToGame({UserModel? friend}) {
+    //add invite to other user
+    usersCollection.doc(friend?.email).update({
+      'invites': FieldValue.arrayUnion([Shared.game.gameId])
+    }).then((value) {
+      showSnackbar(message: 'Invite sent successfully');
+      debugPrint('added to other user invites');
+    }).onError((error, stackTrace) {
+      printError(info: 'error add to other user invites');
     });
   }
 
@@ -533,100 +444,18 @@ class MainController extends GetxController {
     });
   }
 
-  void updateGame() {
-    hideOldDialog();
-    queueCollection
-        .doc(Shared.queueEntryModel.queueEntryId)
-        .update(queueEntryModelToJson(Shared.queueEntryModel))
-        .then((value) {
-      debugPrint('updateGame success ');
-    }).onError((error, stackTrace) {
-      errorDialog(error.toString());
-      printError(info: 'updateGame error :' + error.toString());
-    });
+  /// ******************************** Snack bar *****************************/
+
+  void showSnackbar({String? message, int? duration}) {
+    duration ??= 3;
+    Get.snackbar('$message', '',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: cardColor,
+        colorText: Colors.white,
+        duration: Duration(seconds: duration));
   }
 
-  //updating only fields inside observable object and not the whole object
-  //doesn't trigger rebuild, so we need to do it manually
-  void forceUpdateUi() {
-    queueEntryObs.refresh();
-  }
-
-  /// Dialogs**/
-
-  void showWaitingDialog() {
-    hideOldDialog();
-
-    Widget cancelButton = TextButton(
-      child: Text("Cancel"),
-      onPressed: () {
-        archiveInvite();
-        hideCurrentDialog();
-      },
-    );
-
-    Get.defaultDialog(
-      actions: [cancelButton],
-      title:
-          'Waiting for ${Shared.queueEntryModel.players?.elementAt(1)?.user?.name ?? 'opponent'} to accept',
-      barrierDismissible: false,
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-              "${Shared.queueEntryModel.quizSettings?.difficulty}-${Shared.queueEntryModel.quizSettings?.category}-"
-              "${Shared.queueEntryModel.quizSettings?.numberOfQuestions} ${'questions'.tr} ",
-              style: TextStyle(fontSize: 14)),
-          SizedBox(
-            height: 10,
-          ),
-          CircularProgressIndicator(),
-        ],
-      ),
-    );
-  }
-
-  void inQueueDialog() {
-    hideOldDialog();
-    // set up the buttons
-    Widget cancelButton = TextButton(
-      child: Text("Cancel"),
-      onPressed: () {
-        cancelQueue();
-        hideCurrentDialog();
-      },
-    );
-    Widget continueButton = TextButton(
-      child: Text("Play offline"),
-      onPressed: () {
-        hideCurrentDialog();
-        Get.to(
-          () => SinglePlayerQuizScreen(),
-        );
-      },
-    );
-
-    Get.defaultDialog(
-      actions: [cancelButton, continueButton],
-      title: 'In queue',
-      barrierDismissible: false,
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            "Game will start once we find another player with same search paramaters as you",
-            style: TextStyle(fontSize: 14),
-          ),
-          SizedBox(
-            height: 10,
-          ),
-          CircularProgressIndicator(),
-        ],
-      ),
-    );
-  }
+  /// ********************************* Dialogs ******************************/
 
   void showFriendDialog(UserModel? friend) {
     hideOldDialog();
@@ -683,7 +512,6 @@ class MainController extends GetxController {
   }
 
   void confirmExitDialog({bool isOnlineGame = false}) {
-    hideOldDialog();
     // set up the buttons
     Widget cancelButton = TextButton(
       child: Text("Cancel"),
@@ -695,9 +523,8 @@ class MainController extends GetxController {
       child: Text("Confirm"),
       onPressed: () {
         if (isOnlineGame) {
-          //in case of online game also delete from queue
-          Shared.queueEntryModel.hasOpponentLeftGame = true;
-          updateGame();
+          //in case of online game, set as abandoned to notify other player he is alone
+          updateGameStatus(game: Shared.game, gameStatus: GameStatus.ABANDONED);
         }
         hideCurrentDialog();
         Get.offAll(() => HomeScreen());
@@ -708,26 +535,25 @@ class MainController extends GetxController {
       actions: [confirmButton, cancelButton],
       title: 'Exit',
       barrierDismissible: false,
-      content: Text('Are you sure you want to exit game?',
+      content: const Text('Are you sure you want to exit game?',
           style: TextStyle(fontSize: 14)),
     );
   }
 
-  void foundMatchDialog() {
+  void opponentJoinedDialog() {
     hideOldDialog();
 
     // set up the buttons
     Widget cancelButton = TextButton(
       child: Text("Cancel"),
       onPressed: () {
-        cancelQueue();
         hideCurrentDialog();
       },
     );
 
     Get.defaultDialog(
       actions: [cancelButton],
-      title: 'Found match',
+      title: 'Opponent joined',
       barrierDismissible: false,
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -743,7 +569,7 @@ class MainController extends GetxController {
     );
   }
 
-  void loadingDialog({required loadingMessage, required onCancel}) {
+  void loadingDialog({required loadingMessage, onCancel}) {
     hideOldDialog();
 
     // set up the buttons
@@ -771,14 +597,12 @@ class MainController extends GetxController {
 
   void errorDialog(String? errorMessage) {
     hideOldDialog();
-    cancelQueue(); //todo not all call cancelqueue
     errorMessage ?? 'Something went wrong';
 
     // set up the buttons
     Widget cancelButton = TextButton(
       child: Text("Ok"),
       onPressed: () {
-        cancelQueue();
         hideCurrentDialog();
       },
     );

@@ -116,13 +116,12 @@ class SinglePlayerQuizController extends GetxController {
     cancelTimer();
 
     Get.off(() => ResultScreen(), arguments: {
-      'result': QuizSettings(
-          score: currentScore.value,
-          numberOfQuestions:
-              Shared.queueEntryModel.quizSettings?.numberOfQuestions,
-          category: Shared.queueEntryModel.quizSettings?.category,
-          difficulty: Shared.queueEntryModel.quizSettings?.difficulty,
+      'gameSettings': GameSettings(
+          numberOfQuestions: Shared.game.gameSettings?.numberOfQuestions,
+          category: Shared.game.gameSettings?.category,
+          difficulty: Shared.game.gameSettings?.difficulty,
           createdAt: createdAt),
+      'finalScore': currentScore.value,
       'gameType': GameType.SINGLE
     });
   }

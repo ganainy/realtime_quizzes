@@ -1,0 +1,1 @@
+enum DownloadState { INITIAL, LOADING, SUCCESS, ERROR, EMPTY }

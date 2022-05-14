@@ -1,31 +1,27 @@
-class QuizSettings {
-  int? score;
+class GameSettings {
   double? numberOfQuestions;
   String? difficulty;
   String? category;
   int? createdAt;
 
-  QuizSettings({
-    this.score,
+  GameSettings({
     this.numberOfQuestions,
     this.difficulty,
     this.category,
     this.createdAt,
   });
 
-  QuizSettings.fromJson(var json) {
+  GameSettings.fromJson(var json) {
     difficulty = json['difficulty'];
     category = json['category'];
     createdAt = json['createdAt'];
-    numberOfQuestions = (json['numberOfQuestions']);
-    score = (json['score']);
+    numberOfQuestions = (json['numberOfQuestions']).toDouble();
   }
 }
 
-quizSettingsToJson(QuizSettings? quizSettings) {
+quizSettingsToJson(GameSettings? quizSettings) {
   return {
-    'score': quizSettings?.score,
-    'numQuestions': quizSettings?.numberOfQuestions,
+    'numberOfQuestions': quizSettings?.numberOfQuestions,
     'difficulty': quizSettings?.difficulty,
     'category': quizSettings?.category,
     'createdAt': quizSettings?.createdAt,

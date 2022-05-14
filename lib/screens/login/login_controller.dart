@@ -5,6 +5,7 @@ import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 
 import '../../layouts/home/home.dart';
 import '../../main_controller.dart';
+import '../../models/download_state.dart';
 import '../../models/user.dart';
 import '../../shared/shared.dart';
 
@@ -34,6 +35,7 @@ class LoginController extends GetxController {
           .then((value) {
         //user logged successfully, save user to info to db
         Shared.loggedUser = UserModel(email: auth.currentUser?.email);
+        debugPrint('Login email : ${auth.currentUser?.email}');
         Get.off(() => HomeScreen());
       }).onError((error, stackTrace) {
         debugPrint('Login error : ' + error.toString());

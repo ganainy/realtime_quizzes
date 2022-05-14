@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/customization/theme.dart';
+import 'package:realtime_quizzes/screens/games/games_screen.dart';
 import 'package:realtime_quizzes/screens/search/search.dart';
 
-import '../../screens/find_game/find_game.dart';
 import '../../screens/friends/friends.dart';
 import '../../screens/profile/profile.dart';
 import 'home_controller.dart';
@@ -66,7 +66,7 @@ class HomeScreen extends StatelessWidget {
         homeController.bottomSelectedIndex.value = index;
       },
       children: <Widget>[
-        FindGameScreen(),
+        GamesScreen(),
         FriendsScreen(),
         ProfileScreen(),
         SearchScreen(),

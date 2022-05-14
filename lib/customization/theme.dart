@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:realtime_quizzes/customization/hex_color.dart';
 
 const smallPadding = 8.00;
 const mediumPadding = 16.00;
 const largePadding = 32.00;
-const cardColor = Color(0xff52b788);
-const lightCardColor = Color(0xff95d5b2);
-const lighterCardColor = Color(0xffd8f3dc);
-const primaryTextColor = Color(0xff081c15);
-const secondaryTextColor = Color(0xff2d6a4f);
+var cardColor = HexColor('#52b788');
+var lightCardColor = HexColor('#95d5b2');
+var lighterCardColor = HexColor('#d8f3dc');
+var primaryTextColor = HexColor('#1d4b39');
+var secondaryTextColor = HexColor('#2d6a4f');
+var bgColor = HexColor('#f8f9fa');
+
 const cardWidth = 160.00;
-const bgColor = (Color(0xfff8f9fa));
 var bgMaterialColor = MyTheme.generateMaterialColorFromColor(bgColor);
 
 class MyTheme {
@@ -19,7 +21,7 @@ class MyTheme {
   static var lighTheme = ThemeData(
     scaffoldBackgroundColor: bgColor,
     primarySwatch: generateMaterialColorFromColor(primaryTextColor),
-    appBarTheme: const AppBarTheme(
+    appBarTheme: AppBarTheme(
 //change  color of any icon in appbar
       iconTheme: IconThemeData(color: primaryTextColor),
       backgroundColor: bgColor,
@@ -31,7 +33,7 @@ class MyTheme {
       ),
     ),
     fontFamily: 'IBM',
-    textTheme: const TextTheme(
+    textTheme: TextTheme(
         headline1: TextStyle(color: primaryTextColor, fontSize: 32),
         headline2: TextStyle(color: primaryTextColor, fontSize: 24),
         subtitle1: TextStyle(color: primaryTextColor, fontSize: 18),

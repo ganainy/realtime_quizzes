@@ -5,8 +5,8 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/screens/register/register_controller.dart';
 
+import '../../models/download_state.dart';
 import '../../shared/components.dart';
-import '../../shared/shared.dart';
 import '../login/login.dart';
 
 class RegisterScreen extends StatelessWidget {

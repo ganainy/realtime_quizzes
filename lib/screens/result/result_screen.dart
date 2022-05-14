@@ -10,6 +10,7 @@ import 'package:realtime_quizzes/shared/components.dart';
 import '../../customization/theme.dart';
 import '../../models/game_type.dart';
 import '../../shared/constants.dart';
+import '../../shared/shared.dart';
 
 class ResultScreen extends StatelessWidget {
   ResultScreen({Key? key}) : super(key: key);
@@ -17,19 +18,7 @@ class ResultScreen extends StatelessWidget {
   ResultController resultController = Get.put(ResultController(Get.arguments));
   MainController mainController = Get.find<MainController>();
 
-  ///game arguments are different based on if single player or multiplayer game
-  ///single
-  /*{
-      'result':
-          SinglePlayerQuizResult(currentScore.value, questions.value.length),
-      'gameType':GameType.SINGLE
-    }*/
-
-  ///multi
-  /*  {
-      'queueEntry': queueEntryModelObs.value,
-      'gameType':GameType.MULTI,
-    }*/
+  ///Note: game arguments are different based on if single player or multiplayer game
 
   @override
   Widget build(BuildContext context) {
@@ -38,13 +27,16 @@ class ResultScreen extends StatelessWidget {
           child: Center(
         child: Get.arguments['gameType'] == GameType.MULTI
             ? MultiPlayerResult(context)
-            : SinglePlayerResult(Get.arguments['result'], context),
+            : SinglePlayerResult(
+                gameSettings: Get.arguments['gameSettings'],
+                finalScore: Get.arguments['finalScore'],
+                context: context),
       )),
     );
   }
 
   SingleChildScrollView MultiPlayerResult(BuildContext context) {
-    var queueEntryModel = resultController.queueEntryModelObs.value;
+    var game = resultController.gameObs.value;
 
     return SingleChildScrollView(
       child: Column(
@@ -66,22 +58,19 @@ class ResultScreen extends StatelessWidget {
                               Column(
                                 children: [
                                   Text(
-                                      '${queueEntryModel?.players!.elementAt(0)?.user?.name}',
+                                      '${game?.players!.elementAt(0)?.user?.name}',
                                       style: Theme.of(context)
                                           .textTheme
                                           .subtitle1),
                                   DefaultResultImage(
-                                    imageUrl: queueEntryModel?.players!
+                                    imageUrl: game?.players!
                                             .elementAt(0)
                                             ?.user
                                             ?.imageUrl ??
                                         Constants.YOU_IMAGE,
-                                    isWinner: queueEntryModel!.players!
-                                            .elementAt(0)!
-                                            .score >
-                                        queueEntryModel.players!
-                                            .elementAt(1)!
-                                            .score,
+                                    isWinner:
+                                        game!.players!.elementAt(0)!.score >
+                                            game.players!.elementAt(1)!.score,
                                   ),
                                 ],
                               ),
@@ -92,7 +81,7 @@ class ResultScreen extends StatelessWidget {
                                       horizontal: largePadding,
                                       vertical: smallPadding),
                                   child: Text(
-                                      '${queueEntryModel.players!.elementAt(0)?.score}',
+                                      '${game.players!.elementAt(0)?.score}',
                                       style: Theme.of(context)
                                           .textTheme
                                           .subtitle1),
@@ -100,28 +89,24 @@ class ResultScreen extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const Text(
+                          Text(
                             ':',
                             style: TextStyle(color: cardColor, fontSize: 30),
                           ),
                           Column(
                             children: [
                               Text(
-                                '${queueEntryModel.players!.elementAt(1)?.user?.name}',
+                                '${game.players!.elementAt(1)?.user?.name}',
                                 style: Theme.of(context).textTheme.subtitle1,
                               ),
                               DefaultResultImage(
-                                imageUrl: queueEntryModel.players!
+                                imageUrl: game.players!
                                         .elementAt(1)
                                         ?.user
                                         ?.imageUrl ??
                                     '',
-                                isWinner: queueEntryModel.players!
-                                        .elementAt(1)!
-                                        .score >
-                                    queueEntryModel.players!
-                                        .elementAt(0)!
-                                        .score,
+                                isWinner: game.players!.elementAt(1)!.score >
+                                    game.players!.elementAt(0)!.score,
                               ),
                               Card(
                                 color: cardColor,
@@ -130,7 +115,7 @@ class ResultScreen extends StatelessWidget {
                                       horizontal: largePadding,
                                       vertical: smallPadding),
                                   child: Text(
-                                      '${queueEntryModel.players!.elementAt(1)?.score}',
+                                      '${game.players!.elementAt(1)?.score}',
                                       style: Theme.of(context)
                                           .textTheme
                                           .subtitle1),
@@ -157,7 +142,7 @@ class ResultScreen extends StatelessWidget {
           DefaultButton(
               text: 'back home',
               onPressed: () {
-                mainController.deleteGame();
+                mainController.deleteGame(game.gameId);
                 Get.offAll(() => HomeScreen());
               })
         ],
@@ -165,7 +150,10 @@ class ResultScreen extends StatelessWidget {
     );
   }
 
-  SinglePlayerResult(QuizSettings result, BuildContext context) {
+  SinglePlayerResult(
+      {required GameSettings gameSettings,
+      required int finalScore,
+      required BuildContext context}) {
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -191,12 +179,12 @@ class ResultScreen extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: largePadding,
                                     vertical: smallPadding),
-                                child: Text('${result.score}',
+                                child: Text('${finalScore}',
                                     style:
                                         Theme.of(context).textTheme.subtitle1),
                               ),
                             ),
-                            const Text(
+                            Text(
                               '/',
                               style: TextStyle(color: cardColor, fontSize: 30),
                             ),
@@ -206,7 +194,8 @@ class ResultScreen extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: largePadding,
                                     vertical: smallPadding),
-                                child: Text('${result.numberOfQuestions}',
+                                child: Text(
+                                    '${gameSettings.numberOfQuestions?.toInt()}',
                                     style:
                                         Theme.of(context).textTheme.subtitle1),
                               ),
@@ -229,9 +218,9 @@ class ResultScreen extends StatelessWidget {
             ],
           ),
           DefaultButton(
-              text: 'back home',
+              text: 'return',
               onPressed: () {
-                mainController.deleteGame();
+                mainController.deleteGame(Shared.game.gameId);
                 Get.offAll(() => HomeScreen());
               })
         ],

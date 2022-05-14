@@ -6,7 +6,7 @@ import 'package:realtime_quizzes/models/player.dart';
 
 import '../../customization/theme.dart';
 import '../../main_controller.dart';
-import '../../models/queue_entry.dart';
+import '../../models/game.dart';
 import '../../shared/components.dart';
 import '../../shared/shared.dart';
 import '../search/search.dart';
@@ -25,6 +25,7 @@ class FriendsScreen extends StatelessWidget {
       child: Obx(() {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             mainController.receivedGameInvitesObs.value.isNotEmpty
                 ? GameInvitesView(
@@ -50,109 +51,97 @@ class FriendsScreen extends StatelessWidget {
   }
 
   Widget GameInvitesView(BuildContext context, receivedGameInvites) {
-    return ListView.builder(
-      itemBuilder: (context, index) {
-        QueueEntryModel? receivedGameInvite =
-            receivedGameInvites.elementAt(index);
-        var otherPlayer = receivedGameInvite?.players
-            ?.firstWhere((PlayerModel? element) =>
-                element?.user?.email != Shared.loggedUser?.email)
-            ?.user;
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.27,
+      child: ListView.builder(
+        itemBuilder: (context, index) {
+          GameModel? receivedGameInvite = receivedGameInvites.elementAt(index);
+          var otherPlayer = receivedGameInvite?.players
+              ?.firstWhere((PlayerModel? element) =>
+                  element?.user?.email != Shared.loggedUser?.email)
+              ?.user;
 
-        return GradientContainer(
-          child: Column(
-            children: [
-              Container(
-                width: MediaQuery.of(context).size.width - 4 * smallPadding,
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    DefaultStatusImage(
-                        imageUrl: otherPlayer?.imageUrl,
-                        isOnline: otherPlayer?.isOnline),
-                    const SizedBox(
-                      width: smallPadding,
+          return GradientContainer(
+            child: Container(
+              width: MediaQuery.of(context).size.width - 4 * smallPadding,
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  DefaultCircularNetworkImage(
+                    imageUrl: otherPlayer?.imageUrl,
+                  ),
+                  const SizedBox(
+                    width: smallPadding,
+                  ),
+                  Container(
+                    width: MediaQuery.of(context).size.width - 200,
+                    child: Text(
+                      '${otherPlayer?.name} sent you game invite.',
+                      style: Theme.of(context)
+                          .textTheme
+                          .subtitle1
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    Container(
-                      width: MediaQuery.of(context).size.width - 200,
-                      child: Text(
-                        '${otherPlayer?.name} sent you game invite.',
-                        style: Theme.of(context)
-                            .textTheme
-                            .subtitle1
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    IconButton(
-                      iconSize: 30,
-                      icon: const Icon(Icons.cancel),
-                      color: primaryTextColor,
-                      onPressed: () {
-                        mainController.declineGameInvite(receivedGameInvite!);
-                      },
-                    ),
-                    ...[
-                      'Difficulty: ${receivedGameInvite?.quizSettings?.difficulty}'
-                      //todo add chips
-                      // 'Category: ' +
-                      //     receivedGameInvite?.category.toString(),
-                      // 'Questions: ' +
-                      //     receivedGameInvite?.numberOfQuestions
-                      //         .toString()
-                    ].map((text) {
-                      return Card(
-                          elevation: 2,
+                  ),
+                  IconButton(
+                    iconSize: 30,
+                    icon: const Icon(Icons.cancel),
+                    color: primaryTextColor,
+                    onPressed: () {
+                      mainController.removeInvite(receivedGameInvite!);
+                    },
+                  ),
+                  ...[
+                    '${receivedGameInvite?.gameSettings?.difficulty}',
+                    '${receivedGameInvite?.gameSettings?.category}',
+                    '${receivedGameInvite?.gameSettings?.numberOfQuestions?.toInt() ?? 10} Questions',
+                    // 'Category: ' +
+                    //     receivedGameInvite?.category.toString(),
+                    // 'Questions: ' +
+                    //     receivedGameInvite?.numberOfQuestions
+                    //         .toString()
+                  ].map((text) {
+                    return CustomChip(label: text);
+                  }),
+                  const SizedBox(
+                    height: smallPadding,
+                    width: double.infinity,
+                  ),
+                  InkWell(
+                    onTap: () {
+                      mainController.joinGame(receivedGameInvite!);
+                    },
+                    child: SizedBox(
+                      width:
+                          MediaQuery.of(context).size.width - 6 * smallPadding,
+                      child: Card(
+                          elevation: 5,
                           child: Container(
                               margin: const EdgeInsets.all(smallPadding),
                               child: Text(
-                                '${text}',
+                                'ACCEPT',
+                                textAlign: TextAlign.center,
                                 style: Theme.of(context)
                                     .textTheme
-                                    .subtitle2
-                                    ?.copyWith(color: primaryTextColor),
+                                    .subtitle1
+                                    ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: primaryTextColor),
                               )),
-                          color: lighterCardColor);
-                    }),
-                    const SizedBox(
-                      height: smallPadding,
-                      width: double.infinity,
+                          color: lightCardColor),
                     ),
-                    InkWell(
-                      onTap: () {
-                        mainController.acceptGameInvite(receivedGameInvite!);
-                      },
-                      child: SizedBox(
-                        width: MediaQuery.of(context).size.width -
-                            6 * smallPadding,
-                        child: Card(
-                            elevation: 5,
-                            child: Container(
-                                margin: const EdgeInsets.all(smallPadding),
-                                child: Text(
-                                  'ACCEPT',
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .subtitle1
-                                      ?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          color: primaryTextColor),
-                                )),
-                            color: lightCardColor),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        );
-      },
-      itemCount: receivedGameInvites.length,
-      scrollDirection: Axis.horizontal,
+            ),
+          );
+        },
+        itemCount: receivedGameInvites.length,
+        scrollDirection: Axis.horizontal,
+      ),
     );
   }
 

@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../layouts/home/home.dart';
 import '../../main_controller.dart';
+import '../../models/download_state.dart';
 import '../../models/user.dart';
 import '../../shared/shared.dart';
 

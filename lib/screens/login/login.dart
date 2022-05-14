@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/screens/login/login_controller.dart';
 
+import '../../models/download_state.dart';
 import '../../shared/components.dart';
-import '../../shared/shared.dart';
 import '../register/register.dart';
 
 class LoginScreen extends StatelessWidget {

@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/scheduler/ticker.dart';
 import 'package:get/get.dart';
@@ -7,8 +6,6 @@ import 'package:realtime_quizzes/customization/theme.dart';
 import 'package:realtime_quizzes/main_controller.dart';
 import 'package:realtime_quizzes/screens/multiplayer_quiz/multiplayer_quiz_controller.dart';
 import 'package:realtime_quizzes/shared/components.dart';
-
-import '../../layouts/home/home.dart';
 
 class MultiPlayerQuizScreen extends StatelessWidget {
   MultiPlayerQuizScreen({Key? key}) : super(key: key);
@@ -27,7 +24,7 @@ class MultiPlayerQuizScreen extends StatelessWidget {
       },
       child: SafeArea(child: Scaffold(
         body: Obx(() {
-          return multiPlayerQuizController.queueEntryModelObs.value == null
+          return multiPlayerQuizController.gameObs.value == null
               ? const Center(child: CircularProgressIndicator())
               : Question(multiPlayerQuizController, context);
         }),
@@ -39,8 +36,7 @@ class MultiPlayerQuizScreen extends StatelessWidget {
     MultiPlayerQuizController multiPlayerQuizController,
     BuildContext context,
   ) {
-    var currentQuestion = multiPlayerQuizController
-        .queueEntryModelObs.value!.questions!
+    var currentQuestion = multiPlayerQuizController.gameObs.value!.questions!
         .elementAt(multiPlayerQuizController.currentQuestionIndexObs.value);
 
     return SingleChildScrollView(
@@ -49,39 +45,6 @@ class MultiPlayerQuizScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            multiPlayerQuizController
-                    .queueEntryModelObs.value!.hasOpponentLeftGame
-                ? Card(
-                    margin: const EdgeInsets.all(smallPadding),
-                    color: Colors.yellow[200],
-                    child: Container(
-                        padding: const EdgeInsets.all(smallPadding),
-                        child: RichText(
-                          text: TextSpan(
-                            children: <TextSpan>[
-                              const TextSpan(
-                                text:
-                                    'Your opponent has left the game,feel free to continue or ',
-                                style: TextStyle(
-                                    color: primaryTextColor,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.normal),
-                              ),
-                              TextSpan(
-                                  text: 'end game',
-                                  style: const TextStyle(
-                                      color: Colors.blue, fontSize: 18),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () {
-                                      mainController.deleteGame();
-                                      Get.offAll(() => HomeScreen());
-                                    }),
-                            ],
-                          ),
-                        )),
-                  )
-                : const SizedBox(),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -146,7 +109,7 @@ class MultiPlayerQuizScreen extends StatelessWidget {
                       margin: EdgeInsets.all(4),
                       child: Text(
                           'Question: ${(multiPlayerQuizController.currentQuestionIndexObs.value + 1)}'
-                          '/${(multiPlayerQuizController.queueEntryModelObs.value?.questions?.length)}'),
+                          '/${(multiPlayerQuizController.gameObs.value?.questions?.length)}'),
                     ),
                   ),
                 ),

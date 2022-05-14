@@ -19,7 +19,7 @@ class FriendsController extends GetxController {
   var receivedFriendRequestsObs = [].obs; //list of UserModel
   var friendsObs = [].obs; //list of UserModel
 
-  StreamSubscription? queueEntryListener;
+  StreamSubscription? gameListener;
   late MainController mainController;
   @override
   void onInit() {}

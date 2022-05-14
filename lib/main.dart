@@ -19,7 +19,7 @@ Future<void> main() async {
   Get.put(MainController());
   late Widget startWidget;
 
-  //navigate to home or register based on auth state
+  //navigate to games or register based on auth state
   if (auth.currentUser != null) {
     startWidget = HomeScreen();
   } else {

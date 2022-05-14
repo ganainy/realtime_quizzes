@@ -6,6 +6,7 @@ import 'package:realtime_quizzes/models/user.dart';
 import 'package:realtime_quizzes/shared/components.dart';
 
 import '../../models/UserStatus.dart';
+import '../../models/download_state.dart';
 import '../../shared/shared.dart';
 
 class SearchController extends GetxController {

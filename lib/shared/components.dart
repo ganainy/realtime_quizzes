@@ -123,6 +123,7 @@ MultiPlayerAnswerButton({
   if (loggedPlayerImageUrl == null) useLoggedUserFallbackImage = true;
 
   return Container(
+    constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width),
     decoration: BoxDecoration(
       color: multiPlayerQuizController.getIsCorrectAnswer(text)
           ? Colors.green[200]
@@ -138,8 +139,8 @@ MultiPlayerAnswerButton({
     margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     child: TextButton(
       onPressed: onPressed,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Wrap(
+        alignment: WrapAlignment.center,
         children: [
           multiPlayerQuizController.getIsSelectedLoggedPlayer(text)
               ? DefaultCircularNetworkImage(
@@ -177,7 +178,7 @@ SinglePlayerAnswerButton({
   required SinglePlayerQuizController singlePlayerQuizController,
 }) {
   return Container(
-    width: double.infinity,
+    constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width),
     decoration: BoxDecoration(
       color: text == correctAnswer &&
               singlePlayerQuizController.isQuestionAnswered.value
@@ -234,25 +235,6 @@ DefaultCircularNetworkImage({
           errorWidget: (context, url, error) => Icon(Icons.error),
         ),
       ));
-
-  return Container(
-    margin: const EdgeInsets.all(smallPadding),
-    width: width,
-    height: height,
-    child: ClipOval(
-      child: CachedNetworkImage(
-        fit: BoxFit.fill,
-        placeholder: (context, url) => const SizedBox(
-            width: 20, height: 20, child: CircularProgressIndicator()),
-        imageUrl: imageUrl ??
-            (useLoggedUserFallbackImage
-                ? Constants.YOU_IMAGE
-                : 'https://firebasestorage.googleapis.com/v0/b/realtime-quizzes.appspot.com/o/user.png?alt=media&token=00fedb4a-b751-47f1-a8b6-34673648033a'),
-        errorWidget: (context, url, error) =>
-            Image.asset('assets/images/user.png'),
-      ),
-    ),
-  );
 }
 
 //show if user online or offline
@@ -343,7 +325,7 @@ GradientContainer({child}) {
     margin: const EdgeInsets.all(smallPadding),
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(smallPadding),
-      gradient: const LinearGradient(
+      gradient: LinearGradient(
         begin: Alignment.topRight,
         end: Alignment.bottomLeft,
         colors: [
@@ -367,10 +349,33 @@ Iterable<E> mapIndexed<E, T>(
   }
 }
 
+Widget CustomChip({required String label, Color? color, VoidCallback? onTap}) {
+  color ??= cardColor;
+  return InkWell(
+    onTap: onTap,
+    child: Container(
+      margin: const EdgeInsets.only(right: 4),
+      child: Chip(
+        /*avatar: CircleAvatar(
+          backgroundColor: Colors.white70,
+          child: Text(label[0].toUpperCase()),
+        ),*/
+        label: Text(
+          '$label',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
+        backgroundColor: color,
+      ),
+    ),
+  );
+}
+
 //turns MillisecondsSinceEpoch into date time ago (ex: 5 minutes ago)
-String formatTimeAgo(int millisecondsSinceEpoch) {
+String formatTimeAgo(int? millisecondsSinceEpoch) {
   return timeago
-      .format(DateTime.fromMillisecondsSinceEpoch(millisecondsSinceEpoch));
+      .format(DateTime.fromMillisecondsSinceEpoch(millisecondsSinceEpoch ?? 0));
 }
 
 //extension function to update item of list using index
