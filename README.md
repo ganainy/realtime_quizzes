@@ -3,30 +3,27 @@ Flutter app to challenge other players in realtime quizess using Firebase and Tr
 
 Video Preview:<br>
 ----------
-https://user-images.githubusercontent.com/44480226/164798779-9fbf2b6d-81a1-4c08-a8b4-4a6af46f8197.mp4
+<img src="https://user-images.githubusercontent.com/44480226/169395956-e7dbf7da-2fe2-4437-ac14-a75e95e768f3.gif" width="400" height="400" />
+<img src="https://user-images.githubusercontent.com/44480226/169395952-2460aaa0-a265-4574-82dd-49d04fafe5bb.gif" width="200" height="400" />           
 
 
 Features:<br>
 ----------
-Sign up and login <br><br>
-![sign up system](https://user-images.githubusercontent.com/44480226/164798407-8f47aefb-0869-4b64-aa4c-68005a084f3e.png)
+Register and login <br><br>
+<img src="https://user-images.githubusercontent.com/44480226/164798407-8f47aefb-0869-4b64-aa4c-68005a084f3e.png" width="200" height="400" />
 
 Customize game category, length and difficulty <br><br>
-![customize game category length and difficulty](https://user-images.githubusercontent.com/44480226/164798471-0d66c329-a92f-4688-b544-2eee4ef9fbe2.png)
+<img src="https://user-images.githubusercontent.com/44480226/169396688-e4f44fd0-7313-4f1f-994c-d6c099b6cca7.png" width="200" height="400" />
 
-Add and challenge friends<br><br>
-![add and challenge friends](https://user-images.githubusercontent.com/44480226/164798540-33a60eda-34e3-4584-b331-41de4956382b.png)<br>
-![add and challenge friends2](https://user-images.githubusercontent.com/44480226/164798544-c34f7991-c26b-4f38-89a2-c385153d082a.png)
-
-
-Get friend suggestions and search for users <br><br>
-![friend suggestions](https://user-images.githubusercontent.com/44480226/164798616-862a0589-2d90-4e37-b835-1f305296cf4e.png)<br>
-![search for users](https://user-images.githubusercontent.com/44480226/164798622-84882b9f-8a69-41bf-b28f-df43a6d03261.png)
+Search for, add and challenge friends<br><br>
+<img src="https://user-images.githubusercontent.com/44480226/169396781-5fcf10cc-937a-4321-85be-89e517a5289e.png" width="200" height="400" />
+<img src="https://user-images.githubusercontent.com/44480226/169396702-48d4a11c-fcb1-4334-bc83-3487d6e5d38d.png" width="200" height="400" />
+<img src="https://user-images.githubusercontent.com/44480226/169396720-9a81a833-e98d-4102-999c-ffa20bd1c489.png" width="200" height="400" />
+<img src="https://user-images.githubusercontent.com/44480226/169397029-220703ee-3929-4292-b0bf-119939d4888d.png" width="200" height="400" />
 
 
 Answers and scores realtime update <br><br>
-![answers and scores realtime update](https://user-images.githubusercontent.com/44480226/164798689-02bd21f5-d9c9-427b-95a7-63c6cdaa69bd.png)
+<img src="https://user-images.githubusercontent.com/44480226/164798689-02bd21f5-d9c9-427b-95a7-63c6cdaa69bd.png" width="200" height="400" />
 
 See game history in your profile <br><br>
-![show game history in profile](https://user-images.githubusercontent.com/44480226/164798732-d035d5ce-1af0-486e-9760-98efc9691e90.png)<br>
-![show game history in profile2](https://user-images.githubusercontent.com/44480226/164798735-fb181740-fd24-4a79-88a1-e977b9fbff24.png)
+<img src="https://user-images.githubusercontent.com/44480226/169396989-2bbb4916-6a9b-4b20-a68e-bcdba809c6be.png" width="200" height="400" />
