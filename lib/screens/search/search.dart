@@ -89,16 +89,19 @@ class SearchScreen extends StatelessWidget {
             var currentUser =
                 searchController.queryResultsObs.value.elementAt(index);
             return SizedBox(
-              child: GradientContainer(
+              child: CircleBorderContainer(
                 child: Row(
                   children: [
                     DefaultCircularNetworkImage(imageUrl: currentUser.imageUrl),
                     Expanded(
-                      child: Text(
-                        '${currentUser.name} ',
-                        style: Theme.of(context).textTheme.subtitle1,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      child: Padding(
+                        padding: const EdgeInsets.all(smallPadding),
+                        child: Text(
+                          '${currentUser.name} ',
+                          style: Theme.of(context).textTheme.subtitle1,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
                     InteractButton(currentUser: currentUser),
@@ -123,7 +126,7 @@ class SearchScreen extends StatelessWidget {
     var text;
 
     var connection = Shared.loggedUser?.connections.firstWhereOrNull(
-        (connection) => connection!.email == currentUser!.email);
+        (connection) => connection?.email == currentUser?.email);
 
     var status;
     if (connection == null) {
@@ -145,8 +148,11 @@ class SearchScreen extends StatelessWidget {
       case UserStatus.RECEIVED_FRIEND_REQUEST:
         text = 'Accept request';
         break;
+      case UserStatus.REMOVED_REQUEST:
+        text = 'Add';
+        break;
       default:
-        Exception('Unknown user status');
+        Exception('Unknown status');
         break;
     }
 
@@ -154,7 +160,7 @@ class SearchScreen extends StatelessWidget {
       constraints: BoxConstraints(maxWidth: 100),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(smallPadding),
-        color: cardColor,
+        color: darkBg,
       ),
       child: TextButton(
         child: Text(
@@ -180,7 +186,7 @@ class SearchScreen extends StatelessWidget {
           shrinkWrap: true,
           itemBuilder: (context, index) {
             return SizedBox(
-              child: GradientContainer(
+              child: CircleBorderContainer(
                 child: Row(
                   children: [
                     ShimmerWrapper(
@@ -209,8 +215,8 @@ class SearchScreen extends StatelessWidget {
   ShimmerWrapper({required child}) {
     return SizedBox(
       child: Shimmer.fromColors(
-        baseColor: lightCardColor,
-        highlightColor: cardColor,
+        baseColor: darkBg,
+        highlightColor: darkBg,
         child: child,
       ),
     );
@@ -231,15 +237,18 @@ class SearchScreen extends StatelessWidget {
         Text(
           msg,
           textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headline2,
+          style: Theme.of(context).textTheme.headline1,
         ),
         Flexible(
-          child: Container(
-            margin: const EdgeInsets.all(largePadding),
-            child: SvgPicture.asset(
-              'assets/images/search.svg',
-              semanticsLabel:
-                  'Empty', /*height: MediaQuery.of(context).size.height * 0.5*/
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: Container(
+              margin: const EdgeInsets.all(largePadding),
+              child: SvgPicture.asset(
+                'assets/images/search.svg',
+                semanticsLabel:
+                    'Empty', /*height: MediaQuery.of(context).size.height * 0.5*/
+              ),
             ),
           ),
         ),

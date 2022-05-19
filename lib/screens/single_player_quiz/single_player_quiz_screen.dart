@@ -81,7 +81,7 @@ class SinglePlayerQuizScreen extends StatelessWidget {
                 Icon(
                   Icons.access_alarm,
                   size: 40,
-                  color: primaryTextColor,
+                  color: darkText,
                 ),
                 Obx(() {
                   return Text(
@@ -90,7 +90,7 @@ class SinglePlayerQuizScreen extends StatelessWidget {
                         color:
                             singlePlayerQuizController.timerCounter.value! <= 3
                                 ? Colors.red
-                                : primaryTextColor),
+                                : darkText),
                   );
                 }),
               ],

@@ -10,7 +10,6 @@ class UserModel {
   bool isOnline = true;
   var results = []; // list of ResultModel
   List<Connection?> connections = []; //list of Connection
-  var invites = []; // list of String of game ids
 
   UserModel({this.name = '', required this.email, this.imageUrl});
 
@@ -19,7 +18,6 @@ class UserModel {
     email = json['email'];
     imageUrl = json['imageUrl'];
     isOnline = json['isOnline'];
-    invites = json['invites'] ?? [];
     if (json['results'] != null) {
       json['results'].forEach((result) {
         results.add(ResultModel.fromJson(result));
@@ -50,7 +48,6 @@ userModelToJson(UserModel? userModel) {
     'email': userModel?.email,
     'imageUrl': userModel?.imageUrl,
     'isOnline': userModel?.isOnline,
-    'invites': userModel?.invites,
     'results': resultsJson,
     'connections': connectionsJson,
   };

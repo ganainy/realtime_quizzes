@@ -16,7 +16,11 @@ class LoginController extends GetxController {
   late MainController mainController;
   @override
   void onInit() {
-    mainController = Get.find<MainController>();
+    try {
+      mainController = Get.find<MainController>();
+    } catch (e) {
+      mainController = Get.put(MainController());
+    }
   }
 
   changePasswordVisibility() {

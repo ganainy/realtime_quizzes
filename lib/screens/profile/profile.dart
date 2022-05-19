@@ -3,16 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:realtime_quizzes/customization/theme.dart';
+import 'package:realtime_quizzes/main_controller.dart';
 
 import '../../models/result.dart';
 import '../../shared/components.dart';
+import '../../shared/shared.dart';
 import '../login/login.dart';
 import 'profile_controller.dart';
 
 class ProfileScreen extends StatelessWidget {
   ProfileScreen({Key? key}) : super(key: key);
 
-  final ProfileController profileController = Get.put(ProfileController());
+  final ProfileController profileController = Get.find<ProfileController>();
 
   @override
   Widget build(BuildContext context) {
@@ -24,78 +26,24 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 SizedBox(
                   width: double.infinity,
-                  child: Card(
-                    margin: EdgeInsets.all(smallPadding),
-                    color: lightCardColor,
-                    child: Column(
-                      children: [
-                        DefaultStatusImage(
-                            imageUrl: profileController.userObs.value?.imageUrl,
-                            isOnline: profileController.userObs.value?.isOnline,
-                            width: 140.0,
-                            height: 140.0),
-                        Text(
-                          '${profileController.userObs.value?.name?.toUpperCase()}',
-                          style: Theme.of(context).textTheme.headline1,
-                        ),
-                        Obx(() {
-                          return Container(
-                            margin: EdgeInsets.all(mediumPadding),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                Card(
-                                  color: cardColor,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: largePadding,
-                                        vertical: smallPadding),
-                                    child: Column(
-                                      children: [
-                                        Image.asset(
-                                          'assets/images/multiplayer.png',
-                                          width: 40,
-                                          height: 40,
-                                        ),
-                                        Text(
-                                          '${profileController.multiPlayerWonGamesCount.value} won of ${profileController.multiPlayerResultsObs.value?.length} ',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .subtitle1,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                Card(
-                                  color: cardColor,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: largePadding,
-                                        vertical: smallPadding),
-                                    child: Column(
-                                      children: [
-                                        Image.asset(
-                                          'assets/images/offline.png',
-                                          width: 40,
-                                          height: 40,
-                                        ),
-                                        Text(
-                                          '${profileController.singlePlayerResultsObs.value?.length} games',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .subtitle1,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                )
-                              ],
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
+                  child: Column(
+                    children: [
+                      DefaultCircularNetworkImage(
+                          imageUrl: Shared.loggedUser?.imageUrl,
+                          width: 120.0,
+                          height: 120.0),
+                      Text(
+                        '${Shared.loggedUser?.name.toUpperCase()}',
+                        style: Theme.of(context).textTheme.headline1,
+                      ),
+                      Text(
+                        '${Shared.loggedUser?.email}',
+                        style: Theme.of(context).textTheme.subtitle1,
+                      ),
+                      Container(
+                        margin: EdgeInsets.all(mediumPadding),
+                      ),
+                    ],
                   ),
                 ),
                 Column(
@@ -106,37 +54,14 @@ class ProfileScreen extends StatelessWidget {
                                 null
                         ? const Center(child: CircularProgressIndicator())
                         : Obx(() {
-                            return Card(
-                              margin: EdgeInsets.all(smallPadding),
-                              color: lightCardColor,
-                              child: Column(
-                                children: [
-                                  ExpansionTile(
-                                      title: const Text('My online games'),
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.all(
-                                              smallPadding),
-                                          child: ListView.builder(
-                                              itemCount: profileController
-                                                  .multiPlayerResultsObs
-                                                  .value!
-                                                  .length,
-                                              shrinkWrap: true,
-                                              physics:
-                                                  const BouncingScrollPhysics(),
-                                              itemBuilder: (context, index) {
-                                                return GameCard(
-                                                    profileController
-                                                        .multiPlayerResultsObs
-                                                        .value!
-                                                        .elementAt(index),
-                                                    context);
-                                              }),
-                                        ),
-                                      ]),
-                                  ExpansionTile(
-                                      title: const Text('my offline games'),
+                            return Column(
+                              children: [
+                                Card(
+                                  margin: EdgeInsets.all(smallPadding),
+                                  color: lightBg,
+                                  child: ExpansionTile(
+                                      title: Text(
+                                          'my offline games: (Total:${profileController.singlePlayerResultsObs.value?.length} games)'),
                                       children: [
                                         Padding(
                                           padding: const EdgeInsets.all(
@@ -159,8 +84,40 @@ class ProfileScreen extends StatelessWidget {
                                               }),
                                         ),
                                       ]),
-                                ],
-                              ),
+                                ),
+                                SizedBox(
+                                  height: smallPadding,
+                                ),
+                                Card(
+                                  margin: EdgeInsets.all(smallPadding),
+                                  color: lightBg,
+                                  child: ExpansionTile(
+                                      title: Text(
+                                        'My online games: (${profileController.multiPlayerWonGamesCount.value} won of ${profileController.multiPlayerResultsObs.value?.length}) ',
+                                      ),
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(
+                                              smallPadding),
+                                          child: ListView.builder(
+                                              itemCount: profileController
+                                                  .multiPlayerResultsObs
+                                                  .value!
+                                                  .length,
+                                              shrinkWrap: true,
+                                              physics:
+                                                  const BouncingScrollPhysics(),
+                                              itemBuilder: (context, index) {
+                                                return GameCard(
+                                                    profileController
+                                                        .multiPlayerResultsObs
+                                                        .value?[index],
+                                                    context);
+                                              }),
+                                        ),
+                                      ]),
+                                ),
+                              ],
                             );
                           }),
                     DefaultIconButton(
@@ -169,6 +126,7 @@ class ProfileScreen extends StatelessWidget {
                         onPressed: () {
                           FirebaseAuth.instance.signOut();
                           Get.offAll(() => LoginScreen());
+                          Get.delete<MainController>();
                         },
                         icon: Icons.exit_to_app),
                   ],
@@ -182,7 +140,7 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Stack GameCard(ResultModel result, BuildContext context) {
-    result.isMultiPlayer ??= false;
+    result.isMultiPlayer ?? false;
     return Stack(children: [
       Card(
         child: Padding(
@@ -192,10 +150,12 @@ class ProfileScreen extends StatelessWidget {
             runSpacing: 20, // to apply margin in the cross axis of the wrap
             alignment: WrapAlignment.spaceBetween,*/
             children: [
-              Text(
-                'Result: ${result.type}',
-                style: Theme.of(context).textTheme.subtitle1,
-              ),
+              result.isMultiPlayer!
+                  ? Text(
+                      'Result: ${result.type}',
+                      style: Theme.of(context).textTheme.subtitle1,
+                    )
+                  : const SizedBox(),
               Text('Category: ${result.category ?? 'Random'}',
                   style: Theme.of(context).textTheme.subtitle1),
               Text(

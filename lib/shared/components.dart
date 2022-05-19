@@ -2,7 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:realtime_quizzes/customization/theme.dart';
 import 'package:realtime_quizzes/screens/multiplayer_quiz/multiplayer_quiz_controller.dart';
-import 'package:realtime_quizzes/shared/constants.dart';
+import 'package:realtime_quizzes/shared/shared.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../screens/single_player_quiz/single_player_quiz_controller.dart';
@@ -63,12 +63,16 @@ DefaultButton({
                         valueColor:
                             AlwaysStoppedAnimation<Color>(Colors.white))))
             : Text(
-                '${text?.toUpperCase()}',
-                style: const TextStyle(fontSize: 16),
+                '${text}',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
               ),
         style: TextButton.styleFrom(
-          primary: lighterCardColor,
-          backgroundColor: cardColor,
+          primary: darkText,
+          backgroundColor: darkBg,
+          textStyle: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
     ),
@@ -99,13 +103,13 @@ DefaultIconButton({
           ),
           Text(
             text.toUpperCase(),
-            style: const TextStyle(fontSize: 14),
+            style: TextStyle(fontSize: 14, color: bgColor),
           ),
         ],
       ),
       style: TextButton.styleFrom(
-        primary: lighterCardColor,
-        backgroundColor: cardColor,
+        primary: lightBg,
+        backgroundColor: darkBg,
       ),
     ),
   );
@@ -119,9 +123,6 @@ MultiPlayerAnswerButton({
   String? loggedPlayerImageUrl,
   String? otherPlayerImageUrl,
 }) {
-  bool useLoggedUserFallbackImage = false;
-  if (loggedPlayerImageUrl == null) useLoggedUserFallbackImage = true;
-
   return Container(
     constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width),
     decoration: BoxDecoration(
@@ -132,7 +133,7 @@ MultiPlayerAnswerButton({
               : multiPlayerQuizController.getIsSelectedLocalAnswer(text)
                   ? Colors.orange[200]
                   : Colors.white,
-      border: Border.all(color: primaryTextColor),
+      border: Border.all(color: darkText),
       borderRadius: BorderRadius.circular(4),
     ),
     padding: EdgeInsets.all(4),
@@ -144,12 +145,9 @@ MultiPlayerAnswerButton({
         children: [
           multiPlayerQuizController.getIsSelectedLoggedPlayer(text)
               ? DefaultCircularNetworkImage(
-                  imageUrl: loggedPlayerImageUrl,
-                  useLoggedUserFallbackImage: useLoggedUserFallbackImage,
-                  width: 30,
-                  height: 30)
+                  imageUrl: loggedPlayerImageUrl, width: 30, height: 30)
               : const SizedBox(),
-          multiPlayerQuizController.getIsSelectedOtherPlayer(text)
+          multiPlayerQuizController.getIsSelectedOpponent(text)
               ? DefaultCircularNetworkImage(
                   imageUrl: otherPlayerImageUrl, width: 30, height: 30)
               : const SizedBox(),
@@ -188,7 +186,7 @@ SinglePlayerAnswerButton({
                   singlePlayerQuizController.selectedAnswer.value == text
               ? Colors.red[200]
               : Colors.white,
-      border: Border.all(color: primaryTextColor),
+      border: Border.all(color: darkText),
       borderRadius: BorderRadius.circular(4),
     ),
     padding: EdgeInsets.all(4),
@@ -211,30 +209,25 @@ DefaultCircularNetworkImage({
   required String? imageUrl,
   double width = 70.0,
   double height = 70.0,
-  bool useLoggedUserFallbackImage = false,
 }) {
   return Container(
-      margin: const EdgeInsets.all(smallPadding),
       child: CircleAvatar(
-        radius: width / 2 + 3,
-        backgroundColor: Colors.blueGrey,
-        child: CachedNetworkImage(
-          imageUrl: imageUrl ??
-              (useLoggedUserFallbackImage
-                  ? Constants.YOU_IMAGE
-                  : 'https://firebasestorage.googleapis.com/v0/b/realtime-quizzes.appspot.com/o/user.png?alt=media&token=00fedb4a-b751-47f1-a8b6-34673648033a'),
-          imageBuilder: (context, imageProvider) => Container(
-            width: width,
-            height: height,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
-            ),
-          ),
-          placeholder: (context, url) => CircularProgressIndicator(),
-          errorWidget: (context, url, error) => Icon(Icons.error),
+    radius: width / 2 + 3,
+    backgroundColor: Colors.blueGrey,
+    child: CachedNetworkImage(
+      imageUrl: imageUrl ?? DEFAULT_PLAYER_IMAGE_URL,
+      imageBuilder: (context, imageProvider) => Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          image: DecorationImage(image: imageProvider, fit: BoxFit.cover),
         ),
-      ));
+      ),
+      placeholder: (context, url) => CircularProgressIndicator(),
+      errorWidget: (context, url, error) => Icon(Icons.error),
+    ),
+  ));
 }
 
 //show if user online or offline
@@ -250,16 +243,16 @@ DefaultStatusImage({
       DefaultCircularNetworkImage(
           imageUrl: imageUrl, width: width, height: height),
       Positioned(
-        bottom: 10,
-        right: 10,
+        bottom: 3,
+        right: 3,
         child: isOnline
             ? CircleAvatar(
                 backgroundColor: Colors.green,
-                radius: (width.toInt() / 10.0),
+                radius: (width.toInt() / 8.0),
               )
             : CircleAvatar(
                 backgroundColor: Colors.red,
-                radius: (width.toInt() / 10.0),
+                radius: (width.toInt() / 8.0),
               ),
       )
     ],
@@ -286,7 +279,6 @@ DefaultResultImage({
                 'assets/images/win.png',
                 width: 55,
                 height: 55,
-                color: lighterCardColor,
               )
             : const SizedBox(),
       )
@@ -319,20 +311,23 @@ DefaultResultImage({
   ]);
 }*/
 
-GradientContainer({child}) {
+CircleBorderContainer({
+  child,
+}) {
   return Container(
     padding: const EdgeInsets.all(smallPadding),
     margin: const EdgeInsets.all(smallPadding),
     decoration: BoxDecoration(
+      color: lightBg,
       borderRadius: BorderRadius.circular(smallPadding),
-      gradient: LinearGradient(
+      /*gradient: LinearGradient(
         begin: Alignment.topRight,
         end: Alignment.bottomLeft,
         colors: [
-          lightCardColor,
-          lighterCardColor,
+          darkBg,
+          lightBg,
         ],
-      ),
+      ),*/
     ),
     child: child,
   );
@@ -350,7 +345,7 @@ Iterable<E> mapIndexed<E, T>(
 }
 
 Widget CustomChip({required String label, Color? color, VoidCallback? onTap}) {
-  color ??= cardColor;
+  color ??= darkBg;
   return InkWell(
     onTap: onTap,
     child: Container(
@@ -364,7 +359,45 @@ Widget CustomChip({required String label, Color? color, VoidCallback? onTap}) {
           '$label',
           style: TextStyle(
             color: Colors.white,
+            fontSize: 12,
           ),
+        ),
+        backgroundColor: color,
+      ),
+    ),
+  );
+}
+
+Widget CustomChipWithIcon(
+    {required String label,
+    Color? color,
+    VoidCallback? onTap,
+    required IconData icon}) {
+  color ??= darkBg;
+  return InkWell(
+    onTap: onTap,
+    child: Container(
+      margin: const EdgeInsets.only(right: 4),
+      child: Chip(
+        /*avatar: CircleAvatar(
+          backgroundColor: Colors.white70,
+          child: Text(label[0].toUpperCase()),
+        ),*/
+        label: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: Colors.white,
+            ),
+            Text(
+              '$label',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+              ),
+            ),
+          ],
         ),
         backgroundColor: color,
       ),

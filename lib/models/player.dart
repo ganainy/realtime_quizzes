@@ -14,34 +14,25 @@
 
 import 'package:realtime_quizzes/models/user.dart';
 
-import 'answer.dart';
-
 //User + Answer + Score
 class PlayerModel {
   int score = 0;
-  List<AnswerModel?>? answers = [];
+  var answers = [];
   UserModel? user;
 
   PlayerModel({required this.user});
 
   PlayerModel.fromJson(json) {
     user = UserModel.fromJson(json['user']);
-    json['answers'].forEach((answerJson) {
-      answers?.add(AnswerModel.fromJson(answerJson));
-    });
+    answers = json['answers'];
     score = json['score'];
   }
 }
 
 playerModelToJson(PlayerModel? playerModel) {
-  var answersJson = [];
-  playerModel?.answers?.forEach((answer) {
-    answersJson.add(answerModelToJson(answer));
-  });
-
   return {
     'user': userModelToJson(playerModel?.user),
-    'answers': answersJson,
+    'answers': playerModel?.answers,
     'score': playerModel?.score,
   };
 }

@@ -9,7 +9,6 @@ import 'package:realtime_quizzes/shared/components.dart';
 
 import '../../customization/theme.dart';
 import '../../models/game_type.dart';
-import '../../shared/constants.dart';
 import '../../shared/shared.dart';
 
 class ResultScreen extends StatelessWidget {
@@ -24,50 +23,56 @@ class ResultScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-          child: Center(
-        child: Get.arguments['gameType'] == GameType.MULTI
-            ? MultiPlayerResult(context)
-            : SinglePlayerResult(
-                gameSettings: Get.arguments['gameSettings'],
-                finalScore: Get.arguments['finalScore'],
-                context: context),
-      )),
+          child: Get.arguments['gameType'] == GameType.MULTI
+              ? MultiPlayerResult(context)
+              : SinglePlayerResult(
+                  gameSettings: Get.arguments['gameSettings'],
+                  finalScore: Get.arguments['finalScore'],
+                  context: context)),
     );
   }
 
-  SingleChildScrollView MultiPlayerResult(BuildContext context) {
+  Widget MultiPlayerResult(BuildContext context) {
     var game = resultController.gameObs.value;
 
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          Stack(
+    return Column(
+      children: [
+        Expanded(
+          child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.all(smallPadding),
+                padding: const EdgeInsets.only(
+                    right: smallPadding,
+                    left: smallPadding,
+                    top: 2 * largePadding,
+                    bottom: smallPadding),
                 child: Card(
-                  color: lightCardColor,
+                  color: lightBg,
                   child: Container(
-                      width: double.infinity,
                       margin: EdgeInsets.all(largePadding),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Column(
                                 children: [
-                                  Text(
-                                      '${game?.players!.elementAt(0)?.user?.name}',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .subtitle1),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                        '${game?.players!.elementAt(0)?.user?.name}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle1
+                                            ?.copyWith(
+                                                fontWeight: FontWeight.bold)),
+                                  ),
                                   DefaultResultImage(
                                     imageUrl: game?.players!
-                                            .elementAt(0)
-                                            ?.user
-                                            ?.imageUrl ??
-                                        Constants.YOU_IMAGE,
+                                        .elementAt(0)
+                                        ?.user
+                                        ?.imageUrl,
                                     isWinner:
                                         game!.players!.elementAt(0)!.score >
                                             game.players!.elementAt(1)!.score,
@@ -75,7 +80,7 @@ class ResultScreen extends StatelessWidget {
                                 ],
                               ),
                               Card(
-                                color: cardColor,
+                                color: darkBg,
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: largePadding,
@@ -84,32 +89,37 @@ class ResultScreen extends StatelessWidget {
                                       '${game.players!.elementAt(0)?.score}',
                                       style: Theme.of(context)
                                           .textTheme
-                                          .subtitle1),
+                                          .subtitle1
+                                          ?.copyWith(color: bgColor)),
                                 ),
                               ),
                             ],
                           ),
                           Text(
                             ':',
-                            style: TextStyle(color: cardColor, fontSize: 30),
+                            style: TextStyle(color: darkBg, fontSize: 30),
                           ),
                           Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
-                                '${game.players!.elementAt(1)?.user?.name}',
-                                style: Theme.of(context).textTheme.subtitle1,
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  '${game.players!.elementAt(1)?.user?.name}',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .subtitle1
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
                               ),
                               DefaultResultImage(
-                                imageUrl: game.players!
-                                        .elementAt(1)
-                                        ?.user
-                                        ?.imageUrl ??
-                                    '',
+                                imageUrl:
+                                    game.players!.elementAt(1)?.user?.imageUrl,
                                 isWinner: game.players!.elementAt(1)!.score >
                                     game.players!.elementAt(0)!.score,
                               ),
                               Card(
-                                color: cardColor,
+                                color: darkBg,
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: largePadding,
@@ -118,7 +128,8 @@ class ResultScreen extends StatelessWidget {
                                       '${game.players!.elementAt(1)?.score}',
                                       style: Theme.of(context)
                                           .textTheme
-                                          .subtitle1),
+                                          .subtitle1
+                                          ?.copyWith(color: bgColor)),
                                 ),
                               ),
                             ],
@@ -127,26 +138,35 @@ class ResultScreen extends StatelessWidget {
                       )),
                 ),
               ),
-              Align(
-                alignment: Alignment.topCenter,
-                child: Card(
-                  color: cardColor,
-                  child: Container(
-                    padding: EdgeInsets.all(smallPadding),
-                    child: Text('Final Result'),
+              Padding(
+                padding: const EdgeInsets.only(top: largePadding),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Card(
+                    color: darkBg,
+                    child: Container(
+                      padding: EdgeInsets.all(smallPadding),
+                      child: Text(
+                        'Final Result',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headline1
+                            ?.copyWith(color: bgColor),
+                      ),
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          DefaultButton(
-              text: 'back home',
-              onPressed: () {
-                mainController.deleteGame(game.gameId);
-                Get.offAll(() => HomeScreen());
-              })
-        ],
-      ),
+        ),
+        DefaultButton(
+            text: 'Return home',
+            onPressed: () {
+              mainController.deleteGame(game.gameId);
+              Get.offAll(() => HomeScreen());
+            })
+      ],
     );
   }
 
@@ -154,77 +174,96 @@ class ResultScreen extends StatelessWidget {
       {required GameSettings gameSettings,
       required int finalScore,
       required BuildContext context}) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          Stack(
+    return Column(
+      children: [
+        Expanded(
+          child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.all(smallPadding),
+                padding: const EdgeInsets.only(
+                    right: smallPadding,
+                    left: smallPadding,
+                    top: 2 * largePadding,
+                    bottom: smallPadding),
                 child: Card(
-                  color: lightCardColor,
+                  color: lightBg,
                   child: Container(
                       width: double.infinity,
                       margin: EdgeInsets.all(largePadding),
-                      child: Column(children: [
-                        SizedBox(
-                          height: 20,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Card(
-                              color: cardColor,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: largePadding,
-                                    vertical: smallPadding),
-                                child: Text('${finalScore}',
-                                    style:
-                                        Theme.of(context).textTheme.subtitle1),
-                              ),
+                            SizedBox(
+                              height: 20,
                             ),
-                            Text(
-                              '/',
-                              style: TextStyle(color: cardColor, fontSize: 30),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Card(
+                                  color: darkBg,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: largePadding,
+                                        vertical: smallPadding),
+                                    child: Text('${finalScore}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headline1
+                                            ?.copyWith(color: bgColor)),
+                                  ),
+                                ),
+                                Text(
+                                  '/',
+                                  style: TextStyle(color: darkBg, fontSize: 30),
+                                ),
+                                Card(
+                                  color: darkBg,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: largePadding,
+                                        vertical: smallPadding),
+                                    child: Text(
+                                        '${gameSettings.numberOfQuestions!.toInt() + 1}', //todo fix +1 bug
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headline1
+                                            ?.copyWith(color: bgColor)),
+                                  ),
+                                ),
+                              ],
                             ),
-                            Card(
-                              color: cardColor,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: largePadding,
-                                    vertical: smallPadding),
-                                child: Text(
-                                    '${gameSettings.numberOfQuestions?.toInt()}',
-                                    style:
-                                        Theme.of(context).textTheme.subtitle1),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ])),
+                          ])),
                 ),
               ),
-              Align(
-                alignment: Alignment.topCenter,
-                child: Card(
-                  color: cardColor,
-                  child: Container(
-                    padding: EdgeInsets.all(smallPadding),
-                    child: Text('Final Result'),
+              Padding(
+                padding: const EdgeInsets.only(top: largePadding),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Card(
+                    color: darkBg,
+                    child: Container(
+                      padding: EdgeInsets.all(smallPadding),
+                      child: Text(
+                        'Final Result',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headline1
+                            ?.copyWith(color: bgColor),
+                      ),
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          DefaultButton(
-              text: 'return',
-              onPressed: () {
-                mainController.deleteGame(Shared.game.gameId);
-                Get.offAll(() => HomeScreen());
-              })
-        ],
-      ),
+        ),
+        DefaultButton(
+            text: 'Return home',
+            onPressed: () {
+              mainController.deleteGame(Shared.game.gameId);
+              Get.offAll(() => HomeScreen());
+            })
+      ],
     );
   }
 }

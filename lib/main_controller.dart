@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:realtime_quizzes/screens/friends/friends_controller.dart';
+import 'package:realtime_quizzes/screens/profile/profile_controller.dart';
 import 'package:realtime_quizzes/screens/search/search_controller.dart';
 
 import '../../models/game.dart';
@@ -33,14 +33,14 @@ class MainController extends GetxController {
 
   late FriendsController friendsController;
   late SearchController searchController;
+  late ProfileController profileController;
 
   bool isDialogOpen = false; //flag to check if dialog is open
   @override
   void onInit() {
-    //initialize user email
-    Shared.loggedUser = UserModel(email: auth.currentUser?.email);
     friendsController = Get.put(FriendsController());
     searchController = Get.put(SearchController());
+    profileController = Get.put(ProfileController());
     //set user as online on app start
     changeUserStatus(true);
     //set initial values of quiz parameters
@@ -79,38 +79,12 @@ class MainController extends GetxController {
       updateGameStatus(
           game: Shared.game,
           gameStatus: user.isOnline ? GameStatus.ACTIVE : GameStatus.INACTIVE);
-      //check incoming invites
-      checkGameInvites();
-      debugPrint('logged user changed ${userModelToJson(Shared.loggedUser)}');
+      //update match history
+      profileController.updateMatchHistory();
+      debugPrint('logged user changed');
     }).onError((error, stackTrace) {
       errorDialog(error.toString());
       printError(info: 'error observe logged user' + error.toString());
-    });
-  }
-
-//check if logged user became any game invites
-  void checkGameInvites() {
-    debugPrint('check game invites');
-
-    receivedGameInvitesObs.value.clear();
-    receivedGameInvitesObs.refresh();
-
-    if (Shared.loggedUser!.invites.isEmpty) {
-      return;
-    }
-
-    Shared.loggedUser?.invites.forEach((inviteId) {
-      gameCollection.doc(inviteId).get().then((value) {
-        var gameInvite = GameModel.fromJson(value.data());
-        if (gameInvite.gameStatus == GameStatus.ACTIVE) {
-          //only show game invite if not canceled by sender
-          receivedGameInvitesObs.value.add(gameInvite);
-          receivedGameInvitesObs.refresh();
-        }
-      }).onError((error, stackTrace) {
-        errorDialog(error.toString());
-        printError(info: 'checkGameInvites error :' + error.toString());
-      });
     });
   }
 
@@ -188,7 +162,7 @@ class MainController extends GetxController {
       Shared.game = GameModel.fromJson(queueEntryJson.data());
 
       if (Shared.game.gameStatus == GameStatus.INVITE_ACCEPTED &&
-          Shared.game.players!.length > 1) {
+          Shared.game.players!.length == 2) {
         updateGameStatus(game: Shared.game, gameStatus: GameStatus.INACTIVE);
         opponentJoinedDialog();
         startMultiPlayerGame();
@@ -226,27 +200,12 @@ class MainController extends GetxController {
     });
   }
 
-  void removeInvite(GameModel incomingGameInvite) {
-    Shared.loggedUser?.invites.remove(incomingGameInvite.gameId);
-    usersCollection
-        .doc(Shared.loggedUser?.email)
-        .update(userModelToJson(Shared.loggedUser))
-        .then((value) {
-      debugPrint('invite removed ');
-    }).onError((error, stackTrace) {
-      errorDialog(error.toString());
-      printError(info: 'invite remove error :' + error.toString());
-    });
-  }
-
   //delete game from gamesCollection since its over and reset game
   deleteGame(String? gameId) {
     gameCollection.doc(gameId).delete().then((value) {
       debugPrint('removed from gamesCollection');
-      Shared.resetGame();
     }).onError((error, stackTrace) {
       printError(info: 'error remove from gamesCollection');
-      Shared.resetGame();
     });
   }
 
@@ -277,18 +236,6 @@ class MainController extends GetxController {
   }
 
   /// ********************************* Friends ******************************/
-
-  void inviteFriendToGame({UserModel? friend}) {
-    //add invite to other user
-    usersCollection.doc(friend?.email).update({
-      'invites': FieldValue.arrayUnion([Shared.game.gameId])
-    }).then((value) {
-      showSnackbar(message: 'Invite sent successfully');
-      debugPrint('added to other user invites');
-    }).onError((error, stackTrace) {
-      printError(info: 'error add to other user invites');
-    });
-  }
 
   void sendFriendRequest(UserModel? friendSuggestion) {
     //add other user to logged user sent friends requests
@@ -450,8 +397,8 @@ class MainController extends GetxController {
     duration ??= 3;
     Get.snackbar('$message', '',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: cardColor,
-        colorText: Colors.white,
+        backgroundColor: lightBg,
+        colorText: darkText,
         duration: Duration(seconds: duration));
   }
 
@@ -460,13 +407,6 @@ class MainController extends GetxController {
   void showFriendDialog(UserModel? friend) {
     hideOldDialog();
     // set up the buttons
-    Widget sendInviteButton = TextButton(
-      child: Text("Invite to game"),
-      onPressed: () {
-        inviteFriendToGame(friend: friend);
-        hideCurrentDialog();
-      },
-    );
     Widget cancelButton = TextButton(
       child: Text("Cancel"),
       onPressed: () {
@@ -482,7 +422,7 @@ class MainController extends GetxController {
     );
 
     Get.defaultDialog(
-      actions: [sendInviteButton, deleteButton, cancelButton],
+      actions: [deleteButton, cancelButton],
       barrierDismissible: false,
       title: 'Select action for ${friend?.name ?? 'Friend'}',
       content: Column(

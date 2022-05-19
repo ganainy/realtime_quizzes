@@ -4,25 +4,32 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:realtime_quizzes/models/UserStatus.dart';
+import 'package:realtime_quizzes/models/game.dart';
 import 'package:realtime_quizzes/shared/components.dart';
 
 import '../../main_controller.dart';
 import '../../models/user.dart';
 import '../../shared/shared.dart';
 
-//todo improve ui(percentages of screen),
-//todo flag that game is running so no one enters
-//todo terminate game on user offline or didnt answer 3 in a row
-//todo charts in history screen
-
 class FriendsController extends GetxController {
   var receivedFriendRequestsObs = [].obs; //list of UserModel
   var friendsObs = [].obs; //list of UserModel
+  var loggedUserGameObs = Rxn<GameModel?>();
 
   StreamSubscription? gameListener;
   late MainController mainController;
   @override
-  void onInit() {}
+  void onInit() {
+    loadLoggedUserGame();
+  }
+
+  void loadLoggedUserGame() {
+    gameCollection.doc(Shared.loggedUser?.email).snapshots().listen((event) {
+      if (event.exists) {
+        loggedUserGameObs.value = GameModel.fromJson(event.data());
+      }
+    });
+  }
 
   loadConnections() {
 //load received friend requests

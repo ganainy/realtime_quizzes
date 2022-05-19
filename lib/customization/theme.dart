@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:realtime_quizzes/customization/hex_color.dart';
 
 const smallPadding = 8.00;
 const mediumPadding = 16.00;
 const largePadding = 32.00;
-var cardColor = HexColor('#52b788');
-var lightCardColor = HexColor('#95d5b2');
-var lighterCardColor = HexColor('#d8f3dc');
-var primaryTextColor = HexColor('#1d4b39');
-var secondaryTextColor = HexColor('#2d6a4f');
-var bgColor = HexColor('#f8f9fa');
+
+var darkBg = Color(0xFF68869A);
+var lightBg = Color(0xFFC1E2FF);
+
+var darkText = Color(0xFF2C353E);
+var lightText = Color(0xFF455361);
+var whiteText = Colors.white;
+
+Color bgColor = Colors.white;
 
 const cardWidth = 160.00;
 var bgMaterialColor = MyTheme.generateMaterialColorFromColor(bgColor);
@@ -20,24 +22,23 @@ class MyTheme {
 
   static var lighTheme = ThemeData(
     scaffoldBackgroundColor: bgColor,
-    primarySwatch: generateMaterialColorFromColor(primaryTextColor),
+    primarySwatch: generateMaterialColorFromColor(darkText),
     appBarTheme: AppBarTheme(
 //change  color of any icon in appbar
-      iconTheme: IconThemeData(color: primaryTextColor),
+      iconTheme: IconThemeData(color: darkText),
       backgroundColor: bgColor,
       elevation: 0,
       titleTextStyle:
-          TextStyle(color: primaryTextColor, fontSize: 40, fontFamily: 'Plex'),
+          TextStyle(color: darkText, fontSize: 40, fontFamily: 'Plex'),
       systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: bgColor,
       ),
     ),
     fontFamily: 'IBM',
     textTheme: TextTheme(
-        headline1: TextStyle(color: primaryTextColor, fontSize: 32),
-        headline2: TextStyle(color: primaryTextColor, fontSize: 24),
-        subtitle1: TextStyle(color: primaryTextColor, fontSize: 18),
-        subtitle2: TextStyle(color: secondaryTextColor, fontSize: 14)),
+      headline1: TextStyle(color: darkText, fontSize: 32),
+      subtitle1: TextStyle(color: darkText, fontSize: 18),
+    ),
   );
 
   static MaterialColor generateMaterialColorFromColor(Color color) {

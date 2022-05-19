@@ -8,6 +8,7 @@ import 'package:realtime_quizzes/models/game_type.dart';
 import 'package:realtime_quizzes/models/player.dart';
 import 'package:realtime_quizzes/screens/single_player_quiz/single_player_quiz_screen.dart';
 
+import '../../layouts/home/home_controller.dart';
 import '../../main_controller.dart';
 import '../../models/api.dart';
 import '../../models/game.dart';
@@ -19,11 +20,17 @@ class CreateGameController extends GetxController {
   var gameTypeObs = GameType.MULTI.obs;
 
   late MainController mainController;
+  late HomeController homeController;
 
   @override
   void onInit() {
     super.onInit();
-    mainController = Get.find<MainController>();
+    try {
+      mainController = Get.find<MainController>();
+    } catch (e) {
+      mainController = Get.put(MainController());
+    }
+    homeController = Get.find<HomeController>();
   }
 
   void createGame() {
@@ -58,7 +65,7 @@ class CreateGameController extends GetxController {
         //round the number of questions (ex: 8,9 -> 9,0)
         mainController.gameObs.value?.gameSettings?.numberOfQuestions =
             mainController.gameObs.value?.gameSettings?.numberOfQuestions
-                ?.round()
+                ?.ceil()
                 .toDouble();
         var players = [PlayerModel(user: Shared.loggedUser)];
         var game = GameModel(
@@ -74,10 +81,12 @@ class CreateGameController extends GetxController {
 
         gameCollection.doc(game.gameId).set(gameJson).then((value) {
           mainController.hideCurrentDialog();
-          mainController.showSnackbar(
-              message:
-                  'Game is added and will start automatically once opponent joins');
           Get.offAll(() => HomeScreen());
+          mainController.showInfoDialog(
+              title: 'Hint',
+              message:
+                  'Game is now available to other player and will start automatically once opponent joins, you can cancel it from friends tab');
+
           mainController.observeAnotherPlayerJoins();
         }).onError((error, stackTrace) {
           mainController.hideCurrentDialog();
@@ -96,7 +105,7 @@ class CreateGameController extends GetxController {
 
   getCategoryColor(String? category) {
     if (category == mainController.gameObs.value?.gameSettings?.category) {
-      return lightCardColor;
+      return darkBg;
     } else {
       return null;
     }
@@ -104,7 +113,7 @@ class CreateGameController extends GetxController {
 
   getModeColor(GameType? gameType) {
     if (gameType == gameTypeObs.value) {
-      return lightCardColor;
+      return darkBg;
     } else {
       return null;
     }

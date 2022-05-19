@@ -6,12 +6,11 @@ import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:realtime_quizzes/layouts/home/home.dart';
 import 'package:realtime_quizzes/main_controller.dart';
-import 'package:realtime_quizzes/models/answer.dart';
 import 'package:realtime_quizzes/models/game.dart';
-import 'package:realtime_quizzes/models/game_type.dart';
 import 'package:realtime_quizzes/models/player.dart';
 import 'package:realtime_quizzes/shared/shared.dart';
 
+import '../../models/game_type.dart';
 import '../result/result_screen.dart';
 
 class MultiPlayerQuizController extends GetxController {
@@ -39,6 +38,7 @@ class MultiPlayerQuizController extends GetxController {
   //to calculate player score and only update it when different as old score
   var _loggedUserScore = 0;
   late MainController mainController;
+  var rightAnswers; //list of string
 
   @override
   void onInit() {
@@ -62,6 +62,9 @@ class MultiPlayerQuizController extends GetxController {
 
     Shared.game = gameObs.value!;
 
+    rightAnswers =
+        gameObs.value?.questions?.map((e) => e?.correctAnswer).toList();
+
     Shared.game.players?.forEach((player) {
       if (player!.user!.email == Shared.loggedUser!.email) {
         loggedPlayer = player;
@@ -73,45 +76,31 @@ class MultiPlayerQuizController extends GetxController {
 
   //save user answer in fire store
   void registerAnswer(String answer) {
+    debugPrint('register answer: ${answer} ');
+
     selectedAnswerLocalObs.value = answer;
 
-    var _isCorrectAnswer = gameObs.value?.questions!
-            .elementAt(currentQuestionIndexObs.value)
-            ?.correctAnswer ==
-        answer;
+    FirebaseFirestore.instance.runTransaction((transaction) async {
+      // Get the document
+      DocumentSnapshot snapshot =
+          await transaction.get(gameCollection.doc(gameObs.value?.gameId));
 
-    gameObs.value?.players?.forEach((player) {
-      if (player?.user?.email == Shared.loggedUser?.email) {
-        var answers = addUniqueAnswer(
-            answer:
-                AnswerModel(answer: answer, isCorrectAnswer: _isCorrectAnswer),
-            answers: player?.answers);
-        player?.answers = answers;
+      if (!snapshot.exists) {
+        throw Exception("Game entry does not exist!");
       }
-    });
 
-    gameCollection
-        .doc(gameObs.value?.gameId)
-        .update(gameModelToJson(gameObs.value))
-        .then((value) {
-      debugPrint("added answer to player ");
-    }).onError((error, stackTrace) {
-      printError(info: "Failed to update player answers: $error");
-    });
-  }
+      var game = GameModel.fromJson(snapshot.data());
 
-  List<AnswerModel?> addUniqueAnswer(
-      {answers: List<AnswerModel>, answer: AnswerModel}) {
-    bool isUnique = true;
-    answers.forEach((listItem) {
-      if (listItem.answer == answer.answer) {
-        isUnique = false;
-      }
+      //add answer to logged player answers
+      game.players?.forEach((player) {
+        if (player?.user?.email == Shared.loggedUser?.email) {
+          player?.answers.add(answer);
+
+          transaction.update(
+              gameCollection.doc(gameObs.value?.gameId), gameModelToJson(game));
+        }
+      });
     });
-    if (isUnique) {
-      answers.add(answer);
-    }
-    return answers;
   }
 
   //this method will listen to any change in game and update UI accordingly
@@ -128,11 +117,15 @@ class MultiPlayerQuizController extends GetxController {
         startQuestionTimer();
       }
 
+      if (gameObs.value!.players!.length > 2) {
+        Exception('game has more than 2 players');
+      }
+
       if (gameObs.value?.gameStatus == GameStatus.ABANDONED) {
         mainController.deleteGame(gameObs.value?.gameId);
         observeGameListener?.cancel();
         cancelTimer(_timer);
-        Get.offAll(() => HomeScreen());
+        Get.to(() => HomeScreen());
         mainController.showInfoDialog(
             title: 'Game terminated', message: 'Reason: player left the game');
       }
@@ -141,8 +134,8 @@ class MultiPlayerQuizController extends GetxController {
       var _score = 0;
       Shared.game.players?.forEach((player) {
         if (player?.user?.email == Shared.loggedUser?.email) {
-          player?.answers?.forEach((answer) {
-            if (answer!.isCorrectAnswer) {
+          player?.answers.forEach((answer) {
+            if (rightAnswers.contains(answer)) {
               _score++;
             }
           });
@@ -170,29 +163,30 @@ class MultiPlayerQuizController extends GetxController {
 
   //this method is called when time runs out and user doesn't select an answer
   void updateScore(int newScore) {
-    FirebaseFirestore.instance.runTransaction((transaction) async {
-      // Get the document
-      DocumentSnapshot snapshot =
-          await transaction.get(gameCollection.doc(gameObs.value?.gameId));
+    FirebaseFirestore.instance
+        .runTransaction((transaction) async {
+          // Get the document
+          DocumentSnapshot snapshot =
+              await transaction.get(gameCollection.doc(gameObs.value?.gameId));
 
-      if (!snapshot.exists) {
-        throw Exception("Queue entry does not exist!");
-      }
+          if (!snapshot.exists) {
+            throw Exception("Queue entry does not exist!");
+          }
 
-      var _queueEntry = GameModel.fromJson(snapshot.data());
+          var _queueEntry = GameModel.fromJson(snapshot.data());
 
-      _queueEntry.players?.forEach((player) {
-        if (player?.user?.email == Shared.loggedUser?.email) {
-          player?.score = newScore;
-        }
-      });
+          _queueEntry.players?.forEach((player) {
+            if (player?.user?.email == Shared.loggedUser?.email) {
+              player?.score = newScore;
+            }
+          });
 
-      transaction.update(gameCollection.doc(gameObs.value?.gameId),
-          gameModelToJson(_queueEntry));
-    }).then((value) {
-      debugPrint("updated player scores");
-    }).catchError(
-        (error) => printError(info: "Failed to upload player score: $error"));
+          transaction.update(gameCollection.doc(gameObs.value?.gameId),
+              gameModelToJson(_queueEntry));
+        })
+        .then((value) {})
+        .catchError((error) =>
+            printError(info: "Failed to upload player score: $error"));
   }
 
   void showResultScreen() {
@@ -205,7 +199,6 @@ class MultiPlayerQuizController extends GetxController {
   // start 10 sec timer as time limit for question && increase index to show
   //next question or result on countdown end
   void startQuestionTimer() {
-    debugPrint('startTimer()');
     //reset timer if it was running to begin again from 10
     timerValueObs.value = 10;
     isQuestionTimeEndedObs.value = false;
@@ -215,23 +208,16 @@ class MultiPlayerQuizController extends GetxController {
       (Timer timer) {
         if (timerValueObs.value == 0) {
           cancelTimer(_timer);
-          //register answer as empty if no answer selected
-          if (selectedAnswerLocalObs.value == null) {
-            registerAnswer('');
-          }
           //wait two seconds and show next answer or show quiz result if no more questions
           waitThenUpdateQuestionIndex();
-          debugPrint('timer ended');
         } else {
           timerValueObs.value = timerValueObs.value - 1;
-          debugPrint('counter:' + timerValueObs.toString());
         }
       },
     );
   }
 
   void startNextQuestionTimer() {
-    debugPrint('startNextQuestionTimer()');
     //reset next question timer to begin again from 5
     nextQuestionTimerValueObs.value = 5;
 
@@ -240,10 +226,8 @@ class MultiPlayerQuizController extends GetxController {
       (Timer timer) {
         if (nextQuestionTimerValueObs.value == 0) {
           cancelTimer(_nextQuestionTimer);
-          debugPrint('timer ended');
         } else {
           nextQuestionTimerValueObs.value = nextQuestionTimerValueObs.value - 1;
-          debugPrint('counter:' + nextQuestionTimerValueObs.toString());
         }
       },
     );
@@ -283,11 +267,6 @@ class MultiPlayerQuizController extends GetxController {
             text);
   }
 
-  //this flag used to show orange background to indicate that player selected this answer
-  getIsSelectedLocalAnswer(String text) {
-    return text == selectedAnswerLocalObs.value;
-  }
-
 /*  Future<void> moveGameToQueue() async {
     return await gamesCollection.doc(Shared.game.queueEntryId).set(
           gameToJson(Shared.game),
@@ -295,6 +274,11 @@ class MultiPlayerQuizController extends GetxController {
   }*/
 
   /// flag functions */
+
+  //this flag used to show orange background to indicate that player selected this answer
+  getIsSelectedLocalAnswer(String text) {
+    return text == selectedAnswerLocalObs.value;
+  }
 
   bool isQuestionNotAnswered() {
     return selectedAnswerLocalObs.value == null;
@@ -304,10 +288,8 @@ class MultiPlayerQuizController extends GetxController {
   bool getIsSelectedWrongAnswer(String text) {
     try {
       return (isQuestionTimeEndedObs.value &&
-          loggedPlayer!.answers!
-                  .elementAt(currentQuestionIndexObs.value)
-                  ?.answer ==
-              text);
+          !rightAnswers!.contains(text) &&
+          loggedPlayer!.answers.contains(text));
     } catch (e) {
       return false;
     }
@@ -317,23 +299,16 @@ class MultiPlayerQuizController extends GetxController {
   bool getIsSelectedLoggedPlayer(String text) {
     try {
       return isQuestionTimeEndedObs.value &&
-          text ==
-              loggedPlayer?.answers
-                  ?.elementAt(currentQuestionIndexObs.value)
-                  ?.answer;
+          loggedPlayer!.answers.contains(text);
     } catch (e) {
       return false;
     }
   }
 
   //this flag used to show other player avatar beside the selected answer
-  bool getIsSelectedOtherPlayer(String text) {
+  bool getIsSelectedOpponent(String text) {
     try {
-      return isQuestionTimeEndedObs.value &&
-          text ==
-              opponent?.answers
-                  ?.elementAt(currentQuestionIndexObs.value)
-                  ?.answer;
+      return isQuestionTimeEndedObs.value && opponent!.answers.contains(text);
     } catch (e) {
       return false;
     }

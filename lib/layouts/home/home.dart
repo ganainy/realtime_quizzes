@@ -12,29 +12,28 @@ import 'home_controller.dart';
 class HomeScreen extends StatelessWidget {
   HomeScreen({Key? key}) : super(key: key);
 
-  final PageController pageController = PageController();
   HomeController homeController = Get.put(HomeController());
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Quizzes'),
+    return SafeArea(
+      child: Scaffold(
+        /*appBar: AppBar(
+          title: const Text('Quizzes'),
+        ),*/
+        body: buildPageView(),
+        bottomNavigationBar: Obx(() {
+          return BottomNavigationBar(
+            selectedItemColor: darkText,
+            unselectedItemColor: darkBg,
+            currentIndex: homeController.bottomSelectedIndex.value,
+            items: buildBottomNavBarItems(),
+            onTap: ((index) {
+              homeController.navigateBottomsheet(index);
+            }),
+          );
+        }),
       ),
-      body: buildPageView(),
-      bottomNavigationBar: Obx(() {
-        return BottomNavigationBar(
-          selectedItemColor: secondaryTextColor,
-          unselectedItemColor: cardColor,
-          currentIndex: homeController.bottomSelectedIndex.value,
-          items: buildBottomNavBarItems(),
-          onTap: ((index) {
-            homeController.bottomSelectedIndex.value = index;
-            pageController.animateToPage(index,
-                duration: Duration(milliseconds: 500), curve: Curves.ease);
-          }),
-        );
-      }),
     );
   }
 
@@ -61,7 +60,7 @@ class HomeScreen extends StatelessWidget {
 
   Widget buildPageView() {
     return PageView(
-      controller: pageController,
+      controller: homeController.pageController,
       onPageChanged: (index) {
         homeController.bottomSelectedIndex.value = index;
       },

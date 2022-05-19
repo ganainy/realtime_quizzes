@@ -78,7 +78,7 @@ class CreateGameScreen extends StatelessWidget {
 
   CategoriesView(BuildContext context) {
     return Card(
-      color: cardColor,
+      color: lightBg,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -121,7 +121,7 @@ class CreateGameScreen extends StatelessWidget {
   QuestionNumberView(BuildContext context) {
     return Obx(() {
       return Card(
-        color: cardColor,
+        color: lightBg,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
@@ -135,9 +135,9 @@ class CreateGameScreen extends StatelessWidget {
               SfSliderTheme(
                 data: SfSliderThemeData(
                   thumbRadius: 10,
-                  inactiveTrackColor: lighterCardColor,
-                  activeTrackColor: lightCardColor,
-                  tooltipBackgroundColor: lightCardColor,
+                  inactiveTrackColor: bgColor,
+                  activeTrackColor: darkBg,
+                  tooltipBackgroundColor: darkBg,
                 ),
                 child: Center(
                   child: SfSlider(
@@ -149,7 +149,7 @@ class CreateGameScreen extends StatelessWidget {
                     enableTooltip: true,
                     value: mainController
                         .gameObs.value?.gameSettings?.numberOfQuestions
-                        ?.round(),
+                        ?.ceil(),
                     onChanged: (dynamic newValue) {
                       mainController.gameObs.value?.gameSettings
                           ?.numberOfQuestions = newValue;
@@ -168,7 +168,7 @@ class CreateGameScreen extends StatelessWidget {
   DifficultyRowView(BuildContext context) {
     return Obx(() {
       return Card(
-        color: cardColor,
+        color: lightBg,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
@@ -199,8 +199,8 @@ class CreateGameScreen extends StatelessWidget {
           radius: 25.0,
           backgroundColor: difficulty ==
                   mainController.gameObs.value?.gameSettings?.difficulty
-              ? secondaryTextColor
-              : lightCardColor,
+              ? darkText
+              : darkBg,
           child: CircleAvatar(
             backgroundColor: difficulty == 'easy'.tr
                 ? Colors.green
@@ -216,7 +216,7 @@ class CreateGameScreen extends StatelessWidget {
 
   GameModeView(BuildContext context) {
     return Card(
-      color: cardColor,
+      color: lightBg,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(

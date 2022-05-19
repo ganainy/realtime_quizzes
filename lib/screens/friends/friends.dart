@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
-import 'package:realtime_quizzes/models/player.dart';
 
 import '../../customization/theme.dart';
 import '../../main_controller.dart';
 import '../../models/game.dart';
 import '../../shared/components.dart';
-import '../../shared/shared.dart';
+import '../games/games_controller.dart';
 import '../search/search.dart';
 import 'friends_controller.dart';
 
@@ -17,8 +16,8 @@ class FriendsScreen extends StatelessWidget {
 
   FriendsController friendsController = Get.find<FriendsController>();
   MainController mainController = Get.find<MainController>();
+  GamesController gamesController = Get.find<GamesController>();
 
-//todo fix no update ui after add ,remove ,accept request ,send invite
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -27,9 +26,12 @@ class FriendsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            mainController.receivedGameInvitesObs.value.isNotEmpty
-                ? GameInvitesView(
-                    context, mainController.receivedGameInvitesObs.value)
+            const SizedBox(
+              height: smallPadding,
+            ),
+            friendsController.loggedUserGameObs.value != null
+                ? LoggedUserGameView(
+                    context, friendsController.loggedUserGameObs.value)
                 : const SizedBox(),
             const SizedBox(
               height: smallPadding,
@@ -41,170 +43,144 @@ class FriendsScreen extends StatelessWidget {
             const SizedBox(
               height: smallPadding,
             ),
-            friendsController.friendsObs.value.isNotEmpty
-                ? FriendsView(context, friendsController.friendsObs.value)
-                : NoFriendsView(context),
+            FriendsView(context, friendsController.friendsObs.value),
           ],
         );
       }),
     );
   }
 
-  Widget GameInvitesView(BuildContext context, receivedGameInvites) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.27,
-      child: ListView.builder(
-        itemBuilder: (context, index) {
-          GameModel? receivedGameInvite = receivedGameInvites.elementAt(index);
-          var otherPlayer = receivedGameInvite?.players
-              ?.firstWhere((PlayerModel? element) =>
-                  element?.user?.email != Shared.loggedUser?.email)
-              ?.user;
-
-          return GradientContainer(
-            child: Container(
-              width: MediaQuery.of(context).size.width - 4 * smallPadding,
-              child: Wrap(
-                alignment: WrapAlignment.center,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  DefaultCircularNetworkImage(
-                    imageUrl: otherPlayer?.imageUrl,
-                  ),
-                  const SizedBox(
-                    width: smallPadding,
-                  ),
-                  Container(
-                    width: MediaQuery.of(context).size.width - 200,
-                    child: Text(
-                      '${otherPlayer?.name} sent you game invite.',
-                      style: Theme.of(context)
-                          .textTheme
-                          .subtitle1
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  IconButton(
-                    iconSize: 30,
-                    icon: const Icon(Icons.cancel),
-                    color: primaryTextColor,
-                    onPressed: () {
-                      mainController.removeInvite(receivedGameInvite!);
-                    },
-                  ),
-                  ...[
-                    '${receivedGameInvite?.gameSettings?.difficulty}',
-                    '${receivedGameInvite?.gameSettings?.category}',
-                    '${receivedGameInvite?.gameSettings?.numberOfQuestions?.toInt() ?? 10} Questions',
-                    // 'Category: ' +
-                    //     receivedGameInvite?.category.toString(),
-                    // 'Questions: ' +
-                    //     receivedGameInvite?.numberOfQuestions
-                    //         .toString()
-                  ].map((text) {
-                    return CustomChip(label: text);
-                  }),
-                  const SizedBox(
-                    height: smallPadding,
-                    width: double.infinity,
-                  ),
-                  InkWell(
-                    onTap: () {
-                      mainController.joinGame(receivedGameInvite!);
-                    },
-                    child: SizedBox(
-                      width:
-                          MediaQuery.of(context).size.width - 6 * smallPadding,
-                      child: Card(
-                          elevation: 5,
-                          child: Container(
-                              margin: const EdgeInsets.all(smallPadding),
-                              child: Text(
-                                'ACCEPT',
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .subtitle1
-                                    ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: primaryTextColor),
-                              )),
-                          color: lightCardColor),
-                    ),
-                  ),
-                ],
+  Widget LoggedUserGameView(BuildContext context, GameModel? availableGame) {
+    return CircleBorderContainer(
+      child: Column(
+        children: [
+          Row(
+            children: [
+              CustomChip(label: '${availableGame?.gameSettings?.difficulty}'),
+              CustomChip(label: '${availableGame?.gameSettings?.category}'),
+              CustomChip(
+                  label:
+                      '${availableGame?.gameSettings?.numberOfQuestions?.toInt()} Questions'),
+              const Expanded(child: SizedBox()),
+              IconButton(
+                iconSize: 30,
+                icon: const Icon(Icons.cancel),
+                color: darkText,
+                onPressed: () {
+                  mainController.deleteLoggedUserGame();
+                  friendsController.loggedUserGameObs.value = null;
+                },
               ),
-            ),
-          );
-        },
-        itemCount: receivedGameInvites.length,
-        scrollDirection: Axis.horizontal,
+            ],
+          ),
+          Row(
+            children: [
+              const SizedBox(
+                  width: 20, height: 20, child: CircularProgressIndicator()),
+              const SizedBox(
+                width: smallPadding,
+              ),
+              Expanded(
+                child: Text(
+                  'Your game is available to other players and will start automatically once opponent joins',
+                  style: Theme.of(context).textTheme.subtitle1,
+                ),
+              ),
+            ],
+          )
+        ],
       ),
     );
   }
 
   Widget FriendsView(BuildContext context, friends) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(
-          width: smallPadding,
-        ),
-        Column(
-          children: [
-            InkWell(
-              onTap: () {
-                Get.to(() => SearchScreen());
-              },
-              child: const CircleAvatar(
-                radius: 35,
-                child: const Icon(Icons.add, size: 50),
-              ),
-            ),
-            SizedBox(height: smallPadding),
-            Text(
-              'Discover',
-              style: Theme.of(context).textTheme.subtitle1,
-            )
-          ],
-        ),
-        Expanded(
-          child: ListView.builder(
-            itemBuilder: (context, index) {
-              var friend = friends.elementAt(index);
-              return Column(
-                children: [
-                  InkWell(
-                    child: DefaultStatusImage(
-                        imageUrl: friend.imageUrl, isOnline: friend.isOnline),
-                    onTap: () {
-                      mainController.showFriendDialog(friend);
-                    },
-                  ),
-                  Text(
-                    '${friend.name}',
-                    style: Theme.of(context).textTheme.subtitle1,
-                  ),
-                ],
-              );
-            },
-            itemCount: friends.length,
-            shrinkWrap: true,
+        Container(
+          margin: const EdgeInsetsDirectional.only(start: smallPadding),
+          child: Text(
+            'Friends',
+            style: Theme.of(context).textTheme.subtitle1,
           ),
         ),
+        const SizedBox(
+          height: smallPadding,
+        ),
+        friendsController.friendsObs.value.isEmpty
+            ? Container(
+                margin: const EdgeInsetsDirectional.only(start: smallPadding),
+                child: Text(
+                  'No friends yet, find new friends using search screen!',
+                  style: Theme.of(context).textTheme.subtitle1,
+                ),
+              )
+            : SizedBox(
+                height: 140,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(
+                      width: smallPadding,
+                    ),
+                    Column(
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            Get.to(() => SearchScreen());
+                          },
+                          child: const CircleAvatar(
+                            radius: 35,
+                            child: const Icon(Icons.add, size: 50),
+                          ),
+                        ),
+                        SizedBox(height: smallPadding),
+                        Text(
+                          'Discover',
+                          style: Theme.of(context).textTheme.subtitle1,
+                        )
+                      ],
+                    ),
+                    const SizedBox(
+                      width: smallPadding,
+                    ),
+                    ListView.builder(
+                      itemBuilder: (context, index) {
+                        var friend = friends.elementAt(index);
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            InkWell(
+                              child: DefaultStatusImage(
+                                  imageUrl: friend.imageUrl,
+                                  isOnline: friend.isOnline),
+                              onTap: () {
+                                mainController.showFriendDialog(friend);
+                              },
+                            ),
+                            SizedBox(height: 2),
+                            SizedBox(
+                              width: 70,
+                              child: Text(
+                                '${friend.name}',
+                                maxLines: 2,
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.subtitle1,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                      itemCount: friends.length,
+                      scrollDirection: Axis.horizontal,
+                      shrinkWrap: true,
+                    ),
+                  ],
+                ),
+              ),
       ],
-    );
-  }
-
-  Widget NoFriendsView(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(largePadding),
-      child: Text(
-        'No friends yet, visit discover page to add some!',
-        textAlign: TextAlign.center,
-        style: Theme.of(context).textTheme.headline2,
-      ),
     );
   }
 
@@ -223,19 +199,23 @@ class FriendsScreen extends StatelessWidget {
           itemBuilder: (BuildContext context, int index) {
             var incomingFriendRequest = receivedFriendRequests.elementAt(index);
 
-            return GradientContainer(
+            return CircleBorderContainer(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   DefaultCircularNetworkImage(
                     imageUrl: incomingFriendRequest.imageUrl,
                   ),
+                  const SizedBox(width: smallPadding),
                   Expanded(
                     child: Text(
                       '${incomingFriendRequest.name}',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.subtitle1,
+                      style: Theme.of(context)
+                          .textTheme
+                          .subtitle1
+                          ?.copyWith(color: darkText),
                     ),
                   ),
                   Column(
@@ -255,9 +235,9 @@ class FriendsScreen extends StatelessWidget {
                                   style: Theme.of(context)
                                       .textTheme
                                       .subtitle1
-                                      ?.copyWith(color: primaryTextColor),
+                                      ?.copyWith(color: whiteText),
                                 )),
-                            color: lightCardColor),
+                            color: darkBg),
                       ),
                       InkWell(
                         onTap: () {
@@ -274,9 +254,9 @@ class FriendsScreen extends StatelessWidget {
                                   style: Theme.of(context)
                                       .textTheme
                                       .subtitle1
-                                      ?.copyWith(color: primaryTextColor),
+                                      ?.copyWith(color: whiteText),
                                 )),
-                            color: lightCardColor),
+                            color: darkBg),
                       ),
                     ],
                   )

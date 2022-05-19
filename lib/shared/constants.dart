@@ -1,9 +1,6 @@
 import 'package:get/get.dart';
 
 class Constants {
-  static const YOU_IMAGE =
-      'https://firebasestorage.googleapis.com/v0/b/realtime-quizzes.appspot.com/o/users%2FScreenshot_3.png?alt=media&token=f457ca49-48e3-4703-8441-259c4be032a7';
-
   static Map<String, Map<String, String>> translation = {
     'en_US': {
       'num_questions': 'Number of Questions',

@@ -39,7 +39,11 @@ class SearchController extends GetxController {
         var index = queryResultsObs.value.indexOf(queryResultsObs.value
             .firstWhereOrNull(
                 (queryResult) => queryResult.email == connection!.email));
-        queryResultsObs.value.update(index, queryResult);
+
+        if (index != -1) {
+          //index exists
+          queryResultsObs.value.update(index, queryResult);
+        }
       }
     });
 
@@ -101,7 +105,8 @@ class SearchController extends GetxController {
       mainController.errorDialog(
         'You already sent friend request to this user',
       );
-    } else if (status == UserStatus.NOT_FRIEND) {
+    } else if (status == UserStatus.NOT_FRIEND ||
+        status == UserStatus.REMOVED_REQUEST) {
       mainController.sendFriendRequest(user);
     }
   }

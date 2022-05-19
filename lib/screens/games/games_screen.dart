@@ -9,7 +9,6 @@ import '../../main_controller.dart';
 import '../../models/download_state.dart';
 import '../../models/user.dart';
 import '../../shared/components.dart';
-import '../../shared/shared.dart';
 import '../crate_game/create_game.dart';
 
 class GamesScreen extends StatelessWidget {
@@ -23,14 +22,19 @@ class GamesScreen extends StatelessWidget {
     return SafeArea(
       child: Obx(() {
         return Scaffold(
+          floatingActionButton: FloatingActionButton(
+            child: Icon(
+              Icons.add,
+              color: bgColor,
+            ),
+            backgroundColor: darkBg,
+            onPressed: () {
+              Get.to(() => CreateGameScreen());
+            },
+          ),
           body: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(
-                height: smallPadding,
-              ),
-              const SizedBox(
-                height: largePadding,
-              ),
               gamesController.downloadStateObs.value == DownloadState.LOADING
                   ? LoadingView()
                   : gamesController.downloadStateObs.value ==
@@ -40,11 +44,11 @@ class GamesScreen extends StatelessWidget {
                               DownloadState.ERROR
                           ? ErrorView(context)
                           : AvailableGamesView(context: context),
-              DefaultButton(
-                  text: 'Create game',
-                  onPressed: (() {
-                    Get.to(() => CreateGameScreen());
-                  })),
+              gamesController.downloadStateObs.value == DownloadState.EMPTY ||
+                      gamesController.downloadStateObs.value ==
+                          DownloadState.LOADING
+                  ? const SizedBox()
+                  : HintTextView(),
             ],
           ),
 
@@ -54,140 +58,137 @@ class GamesScreen extends StatelessWidget {
     );
   }
 
-  Widget AvailableGamesView({required BuildContext context}) {
-    return SizedBox(
-      child: ListView.builder(
-        shrinkWrap: true,
-        itemBuilder: (context, index) {
-          GameModel? availableGame =
-              gamesController.availableGamesObs.value.elementAt(index);
-          UserModel? availableGameCreator = availableGame?.players
-              ?.firstWhere(
-                  (player) => player?.user?.email == availableGame.gameId)
-              ?.user;
-
-          return availableGameCreator?.email != Shared.loggedUser?.email
-              ? AvailableGameByOthersView(
-                  availableGameCreator, context, availableGame)
-              : LoggedUserGameView(
-                  availableGameCreator, context, availableGame);
-        },
-        itemCount: gamesController.availableGamesObs.value.length,
+  Padding HintTextView() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, bottom: 24.0),
+      child: Card(
+        color: Colors.yellow[200],
+        child: Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: Text('Hint: Tap on a game to join it.',
+              style: TextStyle(color: darkBg, fontSize: 20)),
+        ),
       ),
     );
   }
 
-  Widget LoggedUserGameView(UserModel? availableGameCreator,
-      BuildContext context, GameModel? availableGame) {
-    return GradientContainer(
+  Widget AvailableGamesView({required BuildContext context}) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              ...[
-                '${availableGame?.gameSettings?.difficulty}',
-                '${availableGame?.gameSettings?.category}',
-                '${availableGame?.gameSettings?.numberOfQuestions?.toInt()} Questions',
-              ].map((text) {
-                return CustomChip(label: text);
-              }),
-              const Expanded(child: SizedBox()),
-              CustomChip(
-                  label: 'x',
-                  color: secondaryTextColor,
-                  onTap: () {
-                    mainController.deleteLoggedUserGame();
-                  }),
-            ],
+          Text(
+            'Friends games',
+            style:
+                Theme.of(context).textTheme.headline1?.copyWith(fontSize: 24),
           ),
-          Row(
-            children: [
-              const SizedBox(
-                  width: 20, height: 20, child: CircularProgressIndicator()),
-              const SizedBox(
-                width: smallPadding,
-              ),
-              Expanded(
-                child: Text(
-                  'Your game is available to other players and will start automatically once opponent joins',
-                  style: Theme.of(context).textTheme.subtitle2,
-                ),
-              ),
-            ],
-          )
+          gamesController.friendsGamesObs.value.isEmpty
+              ? Text(
+                  'No Friends games available',
+                  style: Theme.of(context).textTheme.subtitle1,
+                )
+              : AvailableGamesList(
+                  context: context,
+                  gamesList: gamesController.friendsGamesObs.value),
+          Text(
+            'Other games',
+            style:
+                Theme.of(context).textTheme.headline1?.copyWith(fontSize: 24),
+          ),
+          gamesController.availableGamesObs.value.isEmpty
+              ? Text(
+                  'No Other games available',
+                  style: Theme.of(context).textTheme.subtitle1,
+                )
+              : AvailableGamesList(
+                  context: context,
+                  gamesList: gamesController.availableGamesObs.value),
         ],
       ),
     );
+  }
+
+  Widget AvailableGamesList(
+      {required BuildContext context, required gamesList}) {
+    return ListView.builder(
+      shrinkWrap: true,
+      itemBuilder: (context, index) {
+        return AvailableGameListItem(
+            context, index, gamesList.elementAt(index));
+      },
+      itemCount: gamesList.length,
+    );
+  }
+
+  Widget AvailableGameListItem(
+    BuildContext context,
+    int index,
+    game,
+  ) {
+    UserModel? availableGameCreator = game?.players
+        ?.firstWhere((player) => player?.user?.email == game.gameId)
+        ?.user;
+
+    return AvailableGameByOthersView(availableGameCreator, context, game);
   }
 
   Widget AvailableGameByOthersView(UserModel? availableGameCreator,
       BuildContext context, GameModel? availableGame) {
-    return GradientContainer(
-      child: Column(
-        children: [
-          Row(
+    return CircleBorderContainer(
+      child: InkWell(
+        onTap: () {
+          mainController.joinGame(availableGame);
+        },
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width - 6 * smallPadding - 70,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              DefaultCircularNetworkImage(
-                imageUrl: availableGameCreator?.imageUrl,
-              ),
-              const SizedBox(
-                width: smallPadding,
-              ),
-              Expanded(
-                child: Text(
-                  '${availableGameCreator?.name}',
-                  style: Theme.of(context).textTheme.headline2,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(
-                width: smallPadding,
-              ),
-              Text(
-                '${formatTimeAgo(availableGame?.gameSettings?.createdAt)}',
-                style: Theme.of(context).textTheme.subtitle2,
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              ...[
-                '${availableGame?.gameSettings?.difficulty}',
-                '${availableGame?.gameSettings?.category}',
-                '${availableGame?.gameSettings?.numberOfQuestions?.toInt() ?? 10} Questions',
-              ].map((text) {
-                return CustomChip(label: text);
-              }),
-            ],
-          ),
-          const SizedBox(
-            height: smallPadding,
-            width: double.infinity,
-          ),
-          InkWell(
-            onTap: () {
-              mainController.joinGame(availableGame);
-              /* mainController.updateGameInvite(receivedGameInvite!,
-                          InviteStatus.FRIEND_ACCEPTED_INVITE);*/
-            },
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width - 6 * smallPadding,
-              child: Card(
-                  elevation: 5,
-                  child: Container(
-                      margin: const EdgeInsets.all(smallPadding),
-                      child: Text(
-                        'Join game',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.subtitle1?.copyWith(
+              Row(
+                children: [
+                  DefaultCircularNetworkImage(
+                    imageUrl: availableGameCreator?.imageUrl,
+                  ),
+                  const SizedBox(
+                    width: smallPadding,
+                  ),
+                  Expanded(
+                    child: Text(
+                      '${availableGameCreator?.name}',
+                      style: Theme.of(context).textTheme.headline1?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: primaryTextColor),
-                      )),
-                  color: lightCardColor),
-            ),
+                          ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(
+                    width: smallPadding,
+                  ),
+                  Text(
+                    '${formatTimeAgo(availableGame?.gameSettings?.createdAt)}',
+                    style: Theme.of(context).textTheme.subtitle1?.copyWith(
+                          color: lightText,
+                          fontSize: 14,
+                        ),
+                  ),
+                ],
+              ),
+              Wrap(
+                children: [
+                  ...[
+                    '${availableGame?.gameSettings?.difficulty}',
+                    '${availableGame?.gameSettings?.category}',
+                    '${availableGame?.gameSettings?.numberOfQuestions?.toInt() ?? 10} Questions',
+                  ].map((text) {
+                    return CustomChip(label: text);
+                  }),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -199,10 +200,12 @@ class GamesScreen extends StatelessWidget {
   }
 
   EmptyView(BuildContext context) {
-    return Center(
-      child: Text(
-        'No games available',
-        style: Theme.of(context).textTheme.headline2,
+    return Expanded(
+      child: Center(
+        child: Text(
+          'No games available',
+          style: Theme.of(context).textTheme.headline1,
+        ),
       ),
     );
   }
@@ -211,7 +214,7 @@ class GamesScreen extends StatelessWidget {
     return Center(
       child: Text(
         'Something went wrong.',
-        style: Theme.of(context).textTheme.headline2,
+        style: Theme.of(context).textTheme.headline1,
       ),
     );
   }

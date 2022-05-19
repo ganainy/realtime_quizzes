@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/simple/get_controllers.dart';
@@ -89,31 +88,21 @@ class ResultController extends GetxController {
     //create result model
     ResultModel _resultModel = ResultModel(
       score: finalScore,
-      maxScore: gameSettings.numberOfQuestions?.toInt(),
+      maxScore: gameSettings.numberOfQuestions!.toInt() + 1, //todo fix +1 bug
       difficulty: gameSettings.difficulty,
       category: gameSettings.category,
       createdAt: gameSettings.createdAt,
       isMultiPlayer: false,
     );
 
-    //update user profile
-    FirebaseFirestore.instance.runTransaction((transaction) async {
-      // Get the document
-      DocumentSnapshot snapshot =
-          await transaction.get(usersCollection.doc(Shared.loggedUser?.email));
+    Shared.loggedUser?.results.add(_resultModel);
 
-      if (!snapshot.exists) {
-        throw Exception("Queue entry does not exist!");
-      }
-
-      var _userModel = UserModel.fromJson(snapshot.data());
-      _userModel.results.add(_resultModel);
-
-      transaction.update(usersCollection.doc(Shared.loggedUser?.email),
-          userModelToJson(_userModel));
-    }).then((value) {
-      debugPrint("user result saved successfully $value");
-    }).catchError(
-        (error) => printError(info: "Failed to upload player result: $error"));
+    usersCollection
+        .doc(Shared.loggedUser?.email)
+        .update(userModelToJson(Shared.loggedUser))
+        .then((value) {
+      debugPrint("user result saved successfully ");
+    }).catchError((error) =>
+            printError(info: "Failed to upload player result: $error"));
   }
 }

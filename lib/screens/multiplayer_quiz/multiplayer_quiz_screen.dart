@@ -50,6 +50,7 @@ class MultiPlayerQuizScreen extends StatelessWidget {
               children: [
                 Column(
                   children: [
+                    const SizedBox(height: mediumPadding),
                     DefaultCircularNetworkImage(
                         imageUrl: multiPlayerQuizController
                             .loggedPlayer?.user?.imageUrl),
@@ -63,7 +64,7 @@ class MultiPlayerQuizScreen extends StatelessWidget {
                     Icon(
                       Icons.access_alarm,
                       size: 40,
-                      color: primaryTextColor,
+                      color: darkText,
                     ),
                     Text(
                       multiPlayerQuizController.timerValueObs.value.toString(),
@@ -71,7 +72,7 @@ class MultiPlayerQuizScreen extends StatelessWidget {
                           color:
                               multiPlayerQuizController.timerValueObs.value <= 3
                                   ? Colors.red
-                                  : primaryTextColor),
+                                  : darkText),
                     ),
                   ],
                 ),
@@ -118,9 +119,8 @@ class MultiPlayerQuizScreen extends StatelessWidget {
             ...?currentQuestion?.allAnswers.map((answer) {
               return Answer(answer, multiPlayerQuizController, context);
             }),
-            //todo remove
-            Text(
-                'temporary text right answer: ${currentQuestion?.correctAnswer}'),
+            /* Text(
+                'temporary text right answer: ${currentQuestion?.correctAnswer}'),*/
           ],
         ),
       ),
